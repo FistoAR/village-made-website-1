@@ -81,8 +81,8 @@ interface AppContextType {
   
   // User Authentication & Profile States
   user: User | null;
-  registerUser: (mobile: string, optionalData?: { name?: string; phone?: string; email?: string }) => { success: boolean; error?: string };
-  loginUser: (mobile: string) => { success: boolean; error?: string };
+  registerUser: (mobile: string, password?: string, optionalData?: { name?: string; phone?: string; email?: string }) => Promise<{ success: boolean; error?: string }>;
+  loginUser: (mobile: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   logoutUser: () => void;
   updateUserProfile: (data: Partial<User>) => void;
   toggleWishlist: (productId: string) => void;
@@ -223,57 +223,72 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
-  // Authentication Mock Database Actions
-  const registerUser = (mobile: string, optionalData?: { name?: string; phone?: string; email?: string }) => {
+  // Authentication Database Actions
+  const registerUser = async (mobile: string, password?: string, optionalData?: { name?: string; phone?: string; email?: string }) => {
     const cleanMobile = mobile.trim();
     if (!cleanMobile || cleanMobile.length < 10) {
       return { success: false, error: 'Please enter a valid mobile number.' };
     }
 
-    const usersDb = JSON.parse(localStorage.getItem('village_made_users_db') || '[]');
-    const exists = usersDb.some((u: User) => u.mobile === cleanMobile);
-
-    if (exists) {
-      return { success: false, error: 'Mobile number already registered.' };
+    if (!password || password.trim().length < 6) {
+      return { success: false, error: 'Password must be at least 6 characters long.' };
     }
 
-    const newUser: User = {
-      mobile: cleanMobile,
-      name: optionalData?.name || '',
-      phone: optionalData?.phone || cleanMobile,
-      email: optionalData?.email || '',
-      addresses: [],
-      orders: [],
-      wishlist: [],
-      reviews: [],
-      notifications: [
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: 'Welcome to Village Made!',
-          message: 'Thank you for registering. Explore our organic village-crafted malts, millets, and cookies.',
-          date: new Date().toLocaleDateString('en-IN'),
-          read: false
-        }
-      ]
-    };
+    try {
+      const res = await fetch('http://localhost:5001/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mobile: cleanMobile,
+          password: password.trim(),
+          name: optionalData?.name || '',
+          email: optionalData?.email || '',
+          phone: optionalData?.phone || cleanMobile
+        })
+      });
 
-    usersDb.push(newUser);
-    localStorage.setItem('village_made_users_db', JSON.stringify(usersDb));
-    setUser(newUser);
-    return { success: true };
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || 'Registration failed.' };
+      }
+
+      setUser(data.user);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: 'Network error connecting to auth server.' };
+    }
   };
 
-  const loginUser = (mobile: string) => {
+  const loginUser = async (mobile: string, password?: string) => {
     const cleanMobile = mobile.trim();
-    const usersDb = JSON.parse(localStorage.getItem('village_made_users_db') || '[]');
-    const foundUser = usersDb.find((u: User) => u.mobile === cleanMobile);
-
-    if (!foundUser) {
-      return { success: false, error: 'Mobile number not found. Please register first.' };
+    if (!cleanMobile) {
+      return { success: false, error: 'Mobile number is required.' };
     }
 
-    setUser(foundUser);
-    return { success: true };
+    if (!password) {
+      return { success: false, error: 'Password is required.' };
+    }
+
+    try {
+      const res = await fetch('http://localhost:5001/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          mobile: cleanMobile,
+          password: password.trim()
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || 'Login failed.' };
+      }
+
+      setUser(data.user);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: 'Network error connecting to auth server.' };
+    }
   };
 
   const logoutUser = () => {

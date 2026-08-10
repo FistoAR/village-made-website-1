@@ -19,6 +19,7 @@ export default function LoginPage() {
 
   // Form states
   const [mobile, setMobile] = useState('');
+  const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [optionalPhone, setOptionalPhone] = useState('');
@@ -60,6 +61,7 @@ export default function LoginPage() {
     setError('');
     setSuccess('');
     setMobile('');
+    setPassword('');
     setName('');
     setEmail('');
     setOptionalPhone('');
@@ -71,16 +73,19 @@ export default function LoginPage() {
     setSuccess('');
     setLoading(true);
 
-    setTimeout(() => {
-      const res = loginUser(mobile);
+    try {
+      const res = await loginUser(mobile, password);
       setLoading(false);
       if (res.success) {
         setSuccess('Access granted! Logging you in...');
         router.push(redirectTo);
       } else {
-        setError(res.error || 'Mobile number not registered. Please register first.');
+        setError(res.error || 'Invalid credentials. Please try again.');
       }
-    }, 1000);
+    } catch (err) {
+      setLoading(false);
+      setError('An unexpected error occurred. Please try again.');
+    }
   };
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
@@ -89,8 +94,8 @@ export default function LoginPage() {
     setSuccess('');
     setLoading(true);
 
-    setTimeout(() => {
-      const res = registerUser(mobile, {
+    try {
+      const res = await registerUser(mobile, password, {
         name: name || undefined,
         email: email || undefined,
         phone: optionalPhone || undefined,
@@ -102,7 +107,10 @@ export default function LoginPage() {
       } else {
         setError(res.error || 'Failed to create your account.');
       }
-    }, 1000);
+    } catch (err) {
+      setLoading(false);
+      setError('An unexpected error occurred. Please try again.');
+    }
   };
 
   const handleForgotSubmit = async (e: React.FormEvent) => {
@@ -168,8 +176,8 @@ export default function LoginPage() {
                 {activeTab === 'forgot' && 'Account Recovery'}
               </h1>
               <p className="text-[#1a110a]/80 font-jakarta text-xs">
-                {activeTab === 'login' && 'Enter your registered mobile number to continue.'}
-                {activeTab === 'register' && 'Enter a mobile number to create your member profile.'}
+                {activeTab === 'login' && 'Enter your registered credentials to continue.'}
+                {activeTab === 'register' && 'Enter details below to create your member profile.'}
                 {activeTab === 'forgot' && 'Provide your mobile number to retrieve your credentials.'}
               </p>
             </div>
@@ -231,6 +239,18 @@ export default function LoginPage() {
                   />
                 </div>
 
+                <div>
+                  <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Password *</label>
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your account password"
+                    className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
+                  />
+                </div>
+
                 <button
                   type="submit"
                   disabled={loading}
@@ -253,6 +273,18 @@ export default function LoginPage() {
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
                     placeholder="Enter 10-digit mobile number"
+                    className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Password (min 6 characters) *</label>
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Choose a secure account password"
                     className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
                   />
                 </div>

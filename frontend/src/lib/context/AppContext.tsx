@@ -235,7 +235,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const res = await fetch('http://localhost:5001/api/auth/register', {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -270,7 +271,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const res = await fetch('http://localhost:5001/api/auth/login', {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

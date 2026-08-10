@@ -1,0 +1,41 @@
+[
+    { "id": "r1", "categoryId": "rice", "name": "Basmati Premium", "description": "Aged 12 months", "price": 120, "image": "https://images.unsplash.com/photo-1586201375761-83865001e31c?q=80&w=300&auto=format&fit=crop" },
+    { "id": "r2", "categoryId": "rice", "name": "Sona Masoori", "description": "Organic unpolished", "price": 80, "image": "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?q=80&w=300&auto=format&fit=crop" },
+    { "id": "r3", "categoryId": "rice", "name": "Brown Rice", "description": "Whole grain healthy", "price": 90, "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=300&auto=format&fit=crop" },
+    { "id": "r4", "categoryId": "rice", "name": "Idli Rice", "description": "Soft and fluffy", "price": 70, "image": "https://images.unsplash.com/photo-1586201375761-83865001e31c?q=80&w=300&auto=format&fit=crop" },
+
+    { "id": "s1", "categoryId": "spices", "name": "Turmeric Powder", "description": "Sun-dried & ground", "price": 50, "image": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?q=80&w=300&auto=format&fit=crop" },
+    { "id": "s2", "categoryId": "spices", "name": "Garam Masala", "description": "Village blend", "price": 90, "image": "https://images.unsplash.com/photo-1599909533730-f9ba0d4a4d4d?q=80&w=300&auto=format&fit=crop" },
+    { "id": "s3", "categoryId": "spices", "name": "Red Chili Powder", "description": "Hot & spicy", "price": 60, "image": "https://images.unsplash.com/photo-1599909533730-f9ba0d4a4d4d?q=80&w=300&auto=format&fit=crop" },
+    { "id": "s4", "categoryId": "spices", "name": "Coriander Powder", "description": "Fresh aroma", "price": 40, "image": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?q=80&w=300&auto=format&fit=crop" },
+
+    { "id": "m1", "categoryId": "millets", "name": "Ragi Flour", "description": "Stone-milled", "price": 60, "image": "https://images.unsplash.com/photo-1556909211-36987daf7b4d?q=80&w=300&auto=format&fit=crop" },
+    { "id": "m2", "categoryId": "millets", "name": "Foxtail Millet", "description": "Ancient grain", "price": 80, "image": "https://images.unsplash.com/photo-1556909211-36987daf7b4d?q=80&w=300&auto=format&fit=crop" },
+    { "id": "m3", "categoryId": "millets", "name": "Pearl Millet", "description": "High fiber", "price": 50, "image": "https://images.unsplash.com/photo-1556909211-36987daf7b4d?q=80&w=300&auto=format&fit=crop" },
+    { "id": "m4", "categoryId": "millets", "name": "Sorghum (Jowar)", "description": "Gluten-free", "price": 70, "image": "https://images.unsplash.com/photo-1556909211-36987daf7b4d?q=80&w=300&auto=format&fit=crop" },
+
+    { "id": "o1", "categoryId": "oils", "name": "Groundnut Oil", "description": "Wood-pressed", "price": 250, "image": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?q=80&w=300&auto=format&fit=crop" },
+    { "id": "o2", "categoryId": "oils", "name": "Coconut Oil", "description": "Cold-pressed", "price": 300, "image": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?q=80&w=300&auto=format&fit=crop" },
+    { "id": "o3", "categoryId": "oils", "name": "Sesame Oil", "description": "Traditional", "price": 280, "image": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?q=80&w=300&auto=format&fit=crop" },
+    { "id": "o4", "categoryId": "oils", "name": "Mustard Oil", "description": "Pungent & pure", "price": 220, "image": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?q=80&w=300&auto=format&fit=crop" },
+
+    { "id": "sn1", "categoryId": "snacks", "name": "Millet Cookies", "description": "Baked, no sugar", "price": 110, "image": "https://images.unsplash.com/photo-1609205807107-e1d7a14ec852?q=80&w=300&auto=format&fit=crop" },
+    { "id": "sn2", "categoryId": "snacks", "name": "Roasted Peanuts", "description": "Salted", "price": 60, "image": "https://images.unsplash.com/photo-1609205807107-e1d7a14ec852?q=80&w=300&auto=format&fit=crop" },
+    { "id": "sn3", "categoryId": "snacks", "name": "Banana Chips", "description": "Crispy", "price": 90, "image": "https://images.unsplash.com/photo-1609205807107-e1d7a14ec852?q=80&w=300&auto=format&fit=crop" },
+    { "id": "sn4", "categoryId": "snacks", "name": "Puffed Rice", "description": "Light & airy", "price": 40, "image": "https://images.unsplash.com/photo-1609205807107-e1d7a14ec852?q=80&w=300&auto=format&fit=crop" },
+
+    { "id": "pk1", "categoryId": "pickles", "name": "Mango Pickle", "description": "Sun-matured", "price": 150, "image": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=300&auto=format&fit=crop" },
+    { "id": "pk2", "categoryId": "pickles", "name": "Lime Pickle", "description": "Tangy", "price": 130, "image": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=300&auto=format&fit=crop" },
+    { "id": "pk3", "categoryId": "pickles", "name": "Mixed Veg Pickle", "description": "Spicy", "price": 160, "image": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=300&auto=format&fit=crop" },
+    { "id": "pk4", "categoryId": "pickles", "name": "Garlic Pickle", "description": "Aromatic", "price": 140, "image": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=300&auto=format&fit=crop" },
+
+    { "id": "f1", "categoryId": "flour", "name": "Whole Wheat Flour", "description": "Stone-milled", "price": 50, "image": "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=300&auto=format&fit=crop" },
+    { "id": "f2", "categoryId": "flour", "name": "Chickpea Flour", "description": "Fresh", "price": 60, "image": "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=300&auto=format&fit=crop" },
+    { "id": "f3", "categoryId": "flour", "name": "Rice Flour", "description": "Fine ground", "price": 70, "image": "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=300&auto=format&fit=crop" },
+    { "id": "f4", "categoryId": "flour", "name": "Multi-grain Flour", "description": "Nutritious", "price": 90, "image": "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=300&auto=format&fit=crop" },
+
+    { "id": "ot1", "categoryId": "others", "name": "Pure Honey", "description": "Raw & unfiltered", "price": 350, "image": "https://images.unsplash.com/photo-1587049352846-4a222e784d38?q=80&w=300&auto=format&fit=crop" },
+    { "id": "ot2", "categoryId": "others", "name": "Jaggery Blocks", "description": "Traditional", "price": 80, "image": "https://images.unsplash.com/photo-1587049352846-4a222e784d38?q=80&w=300&auto=format&fit=crop" },
+    { "id": "ot3", "categoryId": "others", "name": "Herbal Tea", "description": "Aromatic", "price": 120, "image": "https://images.unsplash.com/photo-1587049352846-4a222e784d38?q=80&w=300&auto=format&fit=crop" },
+    { "id": "ot4", "categoryId": "others", "name": "Dried Fruits", "description": "Sun-dried", "price": 400, "image": "https://images.unsplash.com/photo-1587049352846-4a222e784d38?q=80&w=300&auto=format&fit=crop" }
+]

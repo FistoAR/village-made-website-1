@@ -1,0 +1,21 @@
+{
+    "hero": {
+        "rice": 2,
+        "spices": 5,
+        "millets": 8,
+        "oils": 11,
+        "snacks": 14,
+        "pickles": 17,
+        "flour": 20,
+        "others": 23
+    },
+    "category": {
+        "title": 1,
+        "products": 3,
+        "p0": 4,
+        "p1": 6,
+        "p2": 8,
+        "p3": 10,
+        "cta": 12
+    }
+}

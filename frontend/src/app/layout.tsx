@@ -1,0 +1,58 @@
+import type { Metadata } from "next";
+import { Inter, Cormorant_Garamond, Fredoka, Poetsen_One, Plus_Jakarta_Sans } from "next/font/google";
+import "./globals.css";
+import GlobalScrollReveal from "@/components/GlobalScrollReveal";
+import BackToTop from "@/components/BackToTop";
+import { AppProvider } from "@/lib/context/AppContext";
+import Script from "next/script";
+
+const inter = Inter({ 
+  subsets: ["latin"],
+  variable: "--font-body",
+});
+
+const cormorant = Cormorant_Garamond({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-display",
+});
+
+const fredoka = Fredoka({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-rounded",
+});
+
+const poetsen = Poetsen_One({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-poetsen",
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+});
+
+export const metadata: Metadata = {
+  title: "Village Made | Premium Organic Village Goods",
+  description: "An immersive cinematic e-commerce experience showcasing authentic village products.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" className={`${inter.variable} ${cormorant.variable} ${fredoka.variable} ${poetsen.variable} ${jakarta.variable}`} suppressHydrationWarning>
+      <body className="font-body antialiased" suppressHydrationWarning>
+        <AppProvider>
+          <GlobalScrollReveal />
+          <BackToTop />
+          {children}
+        </AppProvider>
+      </body>
+    </html>
+  );
+}

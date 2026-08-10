@@ -1,0 +1,513 @@
+@import "tailwindcss";
+
+/* ── Design Tokens ──────────────────────────────────────────────────────── */
+@theme {
+    /* Colors */
+    --color-terracotta: #C56C4F;
+    --color-warm-brown: #8B5A3C;
+    --color-muted-gold: #D4AF37;
+    --color-warm-cream: #FDFBF7;
+    --color-soft-clay: #E6D5C3;
+    --color-earth-brown: #3E2C1C;
+    --color-leaf-green: #6B8E23;
+    /* Fonts */
+    --font-display: var(--font-display), serif;
+    --font-body: var(--font-body), sans-serif;
+    --font-rounded: var(--font-rounded), sans-serif;
+    --font-poetsen: var(--font-poetsen), sans-serif;
+    --font-jakarta: var(--font-jakarta), sans-serif;
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────── */
+html,
+body {
+    min-height: 100%;
+    overflow-x: hidden;
+    background-color: #1a1008;
+    color: #FDFBF7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent Google Translate from pushing body offscreen and hiding scrollbar */
+    top: 0px !important;
+    position: static !important;
+}
+
+/* ── Google Translate overrides ─────────────────────────────────────────── */
+.skiptranslate,
+iframe.goog-te-banner-frame,
+.goog-te-banner-frame,
+.goog-logo-link,
+.goog-te-gadget,
+#goog-gt-tt,
+.goog-te-balloon-frame {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+.goog-text-highlight {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* ── Scrollbar hiding ───────────────────────────────────────────────────── */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Bypass preloader if already explored */
+.has-explored #preloader-overlay {
+    display: none !important;
+}
+
+/* ── Hero overlay z-index scale ────────────────────────────────────────── */
+:root {
+    --z-video: 0;
+    --z-gradient: 10;
+    --z-idle-vignette: 10;
+    --z-guide: 30;
+    --z-product: 40;
+    --z-buttons: 30;
+    --z-header: 30;
+    --z-progress: 50;
+}
+
+/* ── Glassmorphism base ─────────────────────────────────────────────────── */
+.glass {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.glass-light {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ── Category button glow variables ────────────────────────────────────── */
+.btn-glow-gold {
+    box-shadow: 0 0 20px 4px rgba(212, 175, 55, 0.5);
+}
+.btn-glow-active {
+    box-shadow: 0 0 24px 6px rgba(212, 175, 55, 0.4), 0 0 48px 12px rgba(212, 175, 55, 0.2);
+}
+
+/* ── Product card ───────────────────────────────────────────────────────── */
+.product-card {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.35) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ── Video transition ───────────────────────────────────────────────────── */
+.video-fade-enter {
+    opacity: 0;
+}
+.video-fade-enter-active {
+    opacity: 1;
+    transition: opacity 300ms ease-in;
+}
+
+/* ── Line clamp utilities ───────────────────────────────────────────────── */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ── Guide text shadow ──────────────────────────────────────────────────── */
+.guide-text {
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ── Mobile video aspect ratio preservation ─────────────────────────────── */
+@media (max-width: 768px) {
+    .hero-video-container {
+        aspect-ratio: 9 / 16;
+        width: 100%;
+        max-height: 100vh;
+    }
+}
+
+/* ── Custom scrollbar for any scrollable areas ──────────────────────────── */
+html {
+    scrollbar-color: rgba(212, 175, 55, 0.5) transparent;
+    scrollbar-width: auto;
+}
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.5);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.85);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Premium Wooden Parchment Button ────────────────────────────────────── */
+.wood-btn-frame {
+    display: flex;
+    align-items: center;
+    background: linear-gradient(180deg, #7C4F32 0%, #4D2D1B 100%);
+    border: 2.5px solid #2B160C;
+    border-radius: 9999px; /* Pill shape */
+    padding: 3px;
+    box-shadow: 
+        0 4px 10px rgba(0,0,0,0.5), 
+        inset 0 1px 2px rgba(255,255,255,0.25),
+        inset 0 -2px 4px rgba(0,0,0,0.4);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    user-select: none;
+    min-width: 220px;
+    width: 220px;
+    height: 48px;
+    cursor: pointer;
+}
+
+.wood-btn-frame:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 14px rgba(0,0,0,0.6), 
+        0 0 12px 2px rgba(212, 175, 55, 0.4);
+}
+
+.wood-btn-frame:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+}
+
+.wood-btn-icon-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: radial-gradient(circle, #FFFDF8 0%, #F5F1E6 100%);
+    border: 2px solid #3E2619;
+    border-radius: 50%;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.wood-btn-parchment {
+    letter-spacing: .02em;
+    color: #2f1b10;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    background-color: #eedeb8;
+    background-image: radial-gradient(#00000008 1px, #0000 0), radial-gradient(#00000008 1px, #0000 0);
+    background-position: 0 0, 4px 4px;
+    background-repeat: repeat;
+    background-size: 8px 8px;
+    background-attachment: scroll;
+    background-origin: padding-box;
+    background-clip: border-box;
+    border: 1px solid #c4a482;
+    border-radius: 12px;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+    height: 38px;
+    margin-left: 6px;
+    margin-right: 4px;
+    padding-left: 18px;
+    padding-right: 17px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    font-family: Cormorant Garamond, serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    transition: all .3s;
+    display: flex;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px #fff6, 0 1px 1px #00000026;
+}
+
+/* Highlight state (golden glow frame, lighter parchment) */
+.wood-btn-frame.is-highlighted {
+    background: linear-gradient(180deg, #9C6C42 0%, #6E4528 100%);
+    border-color: #D4AF37;
+    box-shadow: 
+        0 0 15px 3px rgba(212, 175, 55, 0.6),
+        0 4px 10px rgba(0,0,0,0.5);
+}
+
+.wood-btn-frame.is-highlighted .wood-btn-parchment {
+    background: #FFF5DD;
+    color: #4A1A02;
+    border-color: #D4AF37;
+    box-shadow: 
+        inset 0 1px 3px rgba(212, 175, 55, 0.2),
+        0 1px 1px rgba(0,0,0,0.15);
+}
+
+/* Active state (pulsing gold frame) */
+.wood-btn-frame.is-active {
+    background: linear-gradient(180deg, #B58455 0%, #7E512F 100%);
+    border-color: #E2C063;
+    animation: woodActiveGlow 1.6s infinite ease-in-out;
+}
+
+.wood-btn-frame.is-active .wood-btn-parchment {
+    background: #FFF9EB;
+    color: #612100;
+    border-color: #E2C063;
+}
+
+@keyframes woodActiveGlow {
+    0%, 100% {
+        box-shadow: 
+            0 0 20px 4px rgba(226, 192, 99, 0.7),
+            0 4px 10px rgba(0,0,0,0.5);
+        transform: scale(1.03);
+    }
+    50% {
+        box-shadow: 
+            0 0 10px 1px rgba(226, 192, 99, 0.3),
+            0 4px 10px rgba(0,0,0,0.5);
+        transform: scale(1.0);
+    }
+}
+
+/* ── Scroll Reveal Animations ───────────────────────────────────────────── */
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1.6s cubic-bezier(0.16, 1, 0.3, 1), transform 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: 50ms;
+}
+
+.reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Staggered delay helpers */
+.reveal-delay-100 { transition-delay: 150ms; }
+.reveal-delay-200 { transition-delay: 300ms; }
+.reveal-delay-300 { transition-delay: 450ms; }
+.reveal-delay-400 { transition-delay: 600ms; }
+.reveal-delay-500 { transition-delay: 750ms; }
+
+/* Horizontal reveal directions */
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 1.6s cubic-bezier(0.16, 1, 0.3, 1), transform 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: 50ms;
+}
+.reveal-left.revealed {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.reveal-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 1.6s cubic-bezier(0.16, 1, 0.3, 1), transform 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: 50ms;
+}
+.reveal-right.revealed {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Scaling reveal */
+.reveal-scale {
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 1.6s cubic-bezier(0.16, 1, 0.3, 1), transform 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: 50ms;
+}
+.reveal-scale.revealed {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* ── Gentle Swaying animations for leaf assets ─────────────────────────── */
+.animate-sway-1 {
+    animation: sway1 8s ease-in-out infinite alternate;
+    transform-origin: bottom center;
+}
+.animate-sway-2 {
+    animation: sway2 10s ease-in-out infinite alternate;
+    transform-origin: top right;
+}
+.animate-sway-3 {
+    animation: sway3 12s ease-in-out infinite alternate;
+    transform-origin: center center;
+}
+
+@keyframes sway1 {
+    0% {
+        transform: rotate(-2deg) translateY(0px);
+    }
+    100% {
+        transform: rotate(2deg) translateY(-6px);
+    }
+}
+
+@keyframes sway2 {
+    0% {
+        transform: rotate(1.5deg) translateX(0px);
+    }
+    100% {
+        transform: rotate(-1.5deg) translateX(4px) translateY(-4px);
+    }
+}
+
+@keyframes sway3 {
+    0% {
+        transform: rotate(-1deg) scale(0.99);
+    }
+    100% {
+        transform: rotate(1deg) scale(1.01) translateY(-3px);
+    }
+}
+
+/* ── Additional Perpetual Animations ──────────────────────────── */
+.animate-float {
+    animation: floatAnimation 5s ease-in-out infinite alternate;
+}
+.animate-pulse-glow {
+    animation: pulseGlowAnimation 4s ease-in-out infinite;
+}
+.animate-slow-spin {
+    animation: slowSpinAnimation 25s linear infinite;
+}
+
+@keyframes floatAnimation {
+    0% {
+        transform: translateY(0px);
+    }
+    100% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes pulseGlowAnimation {
+    0%, 100% {
+        transform: scale(0.97);
+        filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.15));
+    }
+    50% {
+        transform: scale(1.03);
+        filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.45));
+    }
+}
+
+@keyframes slowSpinAnimation {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-gentle-sway {
+    animation: gentleSway 6s ease-in-out infinite;
+}
+
+@keyframes gentleSway {
+    0%, 100% {
+        transform: translateY(0) rotate(-1.5deg);
+    }
+    50% {
+        transform: translateY(-4px) rotate(1.5deg);
+    }
+}
+
+/* ── Animating Dashed Line ─────────────────────────────────────── */
+.animate-dash-line {
+    background-image: linear-gradient(to right, #000 60%, transparent 40%);
+    background-size: 8px 2px;
+    background-repeat: repeat-x;
+    height: 2px;
+    width: 100%;
+    animation: dashMovement 0.6s linear infinite;
+}
+
+@keyframes dashMovement {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: 8px 0;
+    }
+}
+
+.animate-sway-top-left {
+    animation: swayTopLeft 8s ease-in-out infinite alternate;
+    transform-origin: top left;
+}
+
+@keyframes swayTopLeft {
+    0% {
+        transform: translateY(0px) scale(1);
+    }
+    100% {
+        transform: translateY(12px) scale(1.03);
+    }
+}
+
+.animate-btn-pulse {
+    animation: btnPulse 2s infinite;
+}
+
+@keyframes btnPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(43, 60, 12, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(43, 60, 12, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(43, 60, 12, 0);
+    }
+}

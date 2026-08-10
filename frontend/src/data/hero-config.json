@@ -1,0 +1,251 @@
+{
+    "intro": {
+        "video": "/videos/intro1_v2.mp4",
+        "fallbackVideo": "https://media.w3.org/2010/05/sintel/trailer.mp4",
+        "welcomeVideo": "/videos/welcome-video.mp4",
+        "explanationVideo": "/videos/category explanation-full- v2.mp4",
+        "categoryHighlights": [
+            { "categoryId": "malt", "at": 3 },
+            { "categoryId": "nutrition-health-mix", "at": 5 },
+            { "categoryId": "millet", "at": 7 },
+            { "categoryId": "millet-flour", "at": 8.5 },
+            { "categoryId": "millet-tiffin-mix", "at": 10.5 },
+            { "categoryId": "millet-noodles", "at": 12.5 },
+            { "categoryId": "rice", "at": 13.85 },
+            { "categoryId": "natural-sugar", "at": 14.75 },
+            { "categoryId": "millet-cookies", "at": 16.5 },
+            { "categoryId": "snacks", "at": 18.95 }
+        ]
+    },
+    "categories": [{
+            "id": "malt",
+            "label": "Malt",
+            "icon": "🌾",
+            "color": "#D4AF37",
+            "videos": {
+                "travel": "/videos/malt/welcome-to-malt-shop.mp4",
+                "explain": [
+                    "/videos/malt/malt-shop-inner-video.mp4"
+                ],
+                "return": "/videos/category explanation-full- v2.mp4",
+                "fallback": "https://media.w3.org/2010/05/sintel/trailer.mp4"
+            },
+            "products": [{
+                    "id": "banana-baby-malt",
+                    "name": "Banana Baby Malt",
+                    "description": "Naturally sweet, nourishing baby malt made from sun-dried bananas.",
+                    "price": 180,
+                    "image": "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?q=80&w=300&auto=format&fit=crop",
+                    "highlightAt": 3.5,
+                    "explainVideoIndex": 0
+                },
+                {
+                    "id": "sweet-potato-malt",
+                    "name": "Sweet Potato Malt",
+                    "description": "Rich in beta-carotene, a wholesome weaning food for infants.",
+                    "price": 200,
+                    "image": "https://images.unsplash.com/photo-1590779033100-9f60a05a013d?q=80&w=300&auto=format&fit=crop",
+                    "highlightAt": 5.75,
+                    "explainVideoIndex": 0
+                },
+                {
+                    "id": "ragi-malt",
+                    "name": "Ragi Malt",
+                    "description": "Finger millet malt with traditional spices — high calcium content.",
+                    "price": 160,
+                    "image": "https://images.unsplash.com/photo-1556909211-36987daf7b4d?q=80&w=300&auto=format&fit=crop",
+                    "highlightAt": 7.5,
+                    "explainVideoIndex": 0
+                },
+                {
+                    "id": "sprouted-ragi-malt",
+                    "name": "Sprouted Ragi Malt",
+                    "description": "Enzyme-rich sprouted finger millet for maximum digestibility.",
+                    "price": 170,
+                    "image": "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=300&auto=format&fit=crop",
+                    "highlightAt": 8.5,
+                    "explainVideoIndex": 0
+                }
+            ]
+        },
+        {
+            "id": "nutrition-health-mix",
+            "label": "Nutrition Health Mix",
+            "icon": "🥣",
+            "color": "#8B7355",
+            "videos": {
+                "travel": "https://media.w3.org/2010/05/sintel/trailer.mp4",
+                "explain": [
+                    "https://media.w3.org/2010/05/sintel/trailer.mp4"
+                ],
+                "return": "/videos/category explanation-full- v2.mp4",
+                "fallback": "https://media.w3.org/2010/05/sintel/trailer.mp4"
+            },
+            "products": [{
+                "id": "health-mix-classic",
+                "name": "Health Mix Classic",
+                "description": "Traditional multigrain health drink mix.",
+                "price": 250,
+                "image": "https://images.unsplash.com/photo-1556909211-36987daf7b4d?q=80&w=300&auto=format&fit=crop",
+                "highlightAt": 2.0,
+                "explainVideoIndex": 0
+            }]
+        },
+        {
+            "id": "natural-sugar",
+            "label": "Natural Sugar",
+            "icon": "🍯",
+            "color": "#F3A712",
+            "videos": {
+                "travel": "https://media.w3.org/2010/05/sintel/trailer.mp4",
+                "explain": [
+                    "https://media.w3.org/2010/05/sintel/trailer.mp4"
+                ],
+                "return": "/videos/category explanation-full- v2.mp4",
+                "fallback": "https://media.w3.org/2010/05/sintel/trailer.mp4"
+            },
+            "products": []
+        },
+        {
+            "id": "millet",
+            "label": "Millet",
+            "icon": "🌾",
+            "color": "#6B8E23",
+            "videos": {
+                "travel": "https://media.w3.org/2010/05/sintel/trailer.mp4",
+                "explain": [
+                    "https://media.w3.org/2010/05/sintel/trailer.mp4"
+                ],
+                "return": "/videos/category explanation-full- v2.mp4",
+                "fallback": "https://media.w3.org/2010/05/sintel/trailer.mp4"
+            },
+            "products": []
+        },
+        {
+            "id": "millet-flour",
+            "label": "Millet Flour",
+            "icon": "🌾",
+            "color": "#A8956E",
+            "videos": {
+                "travel": "https://media.w3.org/2010/05/sintel/trailer.mp4",
+                "explain": [
+                    "https://media.w3.org/2010/05/sintel/trailer.mp4"
+                ],
+                "return": "/videos/category explanation-full- v2.mp4",
+                "fallback": "https://media.w3.org/2010/05/sintel/trailer.mp4"
+            },
+            "products": []
+        },
+        {
+            "id": "rice",
+            "label": "Rice",
+            "icon": "🍚",
+            "color": "#C56C4F",
+            "videos": {
+                "travel": "https://media.w3.org/2010/05/sintel/trailer.mp4",
+                "explain": [
+                    "https://media.w3.org/2010/05/sintel/trailer.mp4"
+                ],
+                "return": "/videos/category explanation-full- v2.mp4",
+                "fallback": "https://media.w3.org/2010/05/sintel/trailer.mp4"
+            },
+            "products": []
+        },
+        {
+            "id": "millet-tiffin-mix",
+            "label": "Millet Tiffin Mix",
+            "icon": "🥣",
+            "color": "#8B5A3C",
+            "videos": {
+                "travel": "/videos/millet-tiffin-mix/courtyard-millet-tiffin-shop.mp4",
+                "explain": [
+                    "/videos/millet-tiffin-mix/millet-tiffin-mix-product-explanation.mp4"
+                ],
+                "return": "/videos/category explanation-full- v2.mp4",
+                "fallback": "https://media.w3.org/2010/05/sintel/trailer.mp4"
+            },
+            "products": [{
+                    "id": "multi-millet-dosa-mix",
+                    "name": "Multi Millet Dosa Mix",
+                    "description": "Crispy traditional dosa mix made with health-rich multi-millets.",
+                    "price": 130,
+                    "image": "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?q=80&w=300&auto=format&fit=crop",
+                    "highlightAt": 1.5,
+                    "explainVideoIndex": 0
+                },
+                {
+                    "id": "multi-millet-idly-mix",
+                    "name": "Multi Millet Idly Mix",
+                    "description": "Soft and fluffy idlis rich in nutrients and multi-millet goodness.",
+                    "price": 120,
+                    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=300&auto=format&fit=crop",
+                    "highlightAt": 8.75,
+                    "explainVideoIndex": 0
+                },
+                {
+                    "id": "multi-millet-pongal-mix",
+                    "name": "Multi Millet Pongal Mix",
+                    "description": "A wholesome traditional breakfast pongal mix.",
+                    "price": 140,
+                    "image": "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=300&auto=format&fit=crop",
+                    "highlightAt": 13,
+                    "explainVideoIndex": 0
+                },
+                {
+                    "id": "multi-millet-upma-mix",
+                    "name": "Multi Millet Upma Mix",
+                    "description": "Rich in fiber and aroma, instant breakfast mix.",
+                    "price": 110,
+                    "image": "https://images.unsplash.com/photo-1556909211-36987daf7b4d?q=80&w=300&auto=format&fit=crop",
+                    "highlightAt": 17.2,
+                    "explainVideoIndex": 0
+                }
+            ]
+        },
+        {
+            "id": "millet-noodles",
+            "label": "Millet Noodles",
+            "icon": "🍜",
+            "color": "#C56C4F",
+            "videos": {
+                "travel": "https://media.w3.org/2010/05/sintel/trailer.mp4",
+                "explain": [
+                    "https://media.w3.org/2010/05/sintel/trailer.mp4"
+                ],
+                "return": "/videos/category explanation-full- v2.mp4",
+                "fallback": "https://media.w3.org/2010/05/sintel/trailer.mp4"
+            },
+            "products": []
+        },
+        {
+            "id": "millet-cookies",
+            "label": "Millet Cookies",
+            "icon": "🍿",
+            "color": "#E9C46A",
+            "videos": {
+                "travel": "https://media.w3.org/2010/05/sintel/trailer.mp4",
+                "explain": [
+                    "https://media.w3.org/2010/05/sintel/trailer.mp4"
+                ],
+                "return": "/videos/category explanation-full- v2.mp4",
+                "fallback": "https://media.w3.org/2010/05/sintel/trailer.mp4"
+            },
+            "products": []
+        },
+        {
+            "id": "snacks",
+            "label": "Snacks",
+            "icon": "🍿",
+            "color": "#E76F51",
+            "videos": {
+                "travel": "https://media.w3.org/2010/05/sintel/trailer.mp4",
+                "explain": [
+                    "https://media.w3.org/2010/05/sintel/trailer.mp4"
+                ],
+                "return": "/videos/category explanation-full- v2.mp4",
+                "fallback": "https://media.w3.org/2010/05/sintel/trailer.mp4"
+            },
+            "products": []
+        }
+    ]
+}

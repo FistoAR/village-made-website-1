@@ -1,0 +1,9 @@
+[
+    { "code": "en", "name": "English" },
+    { "code": "ta", "name": "Tamil" },
+    { "code": "hi", "name": "Hindi" },
+    { "code": "ml", "name": "Malayalam" },
+    { "code": "te", "name": "Telugu" },
+    { "code": "kn", "name": "Kannada" },
+    { "code": "fr", "name": "French" }
+]

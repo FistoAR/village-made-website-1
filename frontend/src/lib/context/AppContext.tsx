@@ -2,6 +2,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { getDictionary } from '@/lib/translations';
 import Script from 'next/script';
+import { X, CheckCircle, AlertTriangle, AlertCircle, Info, Check } from 'lucide-react';
 
 export interface CartItem {
   id: string;
@@ -92,6 +93,9 @@ interface AppContextType {
   addNotification: (title: string, message: string) => void;
   addReview: (productId: string, productName: string, rating: number, comment: string) => void;
   addProductReview: (productId: string, author: string, rating: number, title: string, comment: string) => void;
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  showAlert: (title: string, message: string, type?: 'success' | 'error' | 'info') => void;
+  showConfirm: (title: string, message: string, onConfirm: () => void, onCancel?: () => void) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -451,6 +455,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; show: boolean }>({ message: '', type: 'info', show: false });
+    const [alertData, setAlertData] = useState<{ title: string; message: string; type: 'success' | 'error' | 'info'; show: boolean }>({ title: '', message: '', type: 'info', show: false });
+    const [confirmData, setConfirmData] = useState<{ title: string; message: string; show: boolean; onConfirm: () => void; onCancel?: () => void }>({ title: '', message: '', show: false, onConfirm: () => {} });
+
+    const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+      setToast({ message, type, show: true });
+    };
+
+    useEffect(() => {
+      if (toast.show) {
+        const timer = setTimeout(() => {
+          setToast(prev => ({ ...prev, show: false }));
+        }, 3500);
+        return () => clearTimeout(timer);
+      }
+    }, [toast.show]);
+
+    const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
+      setAlertData({ title, message, type, show: true });
+    };
+
+    const showConfirm = (title: string, message: string, onConfirm: () => void, onCancel?: () => void) => {
+      setConfirmData({ title, message, show: true, onConfirm, onCancel });
+    };
+
   return (
     <AppContext.Provider
       value={{
@@ -481,9 +510,88 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addNotification,
         addReview,
         addProductReview,
+        showToast,
+        showAlert,
+        showConfirm,
       }}
     >
       {children}
+
+      {/* Global Toast Notification */}
+      {toast.show && (
+        <div className="fixed top-24 right-4 z-[9999] max-w-sm w-full bg-white border border-[#eeddb9] rounded-2xl shadow-xl p-4 flex gap-3 items-center animate-scale-up border-l-4 border-l-[#C56C4F]">
+          <div className="shrink-0 flex items-center justify-center">
+            {toast.type === 'success' && <CheckCircle className="w-6 h-6 text-green-600 fill-green-100 animate-bounce" />}
+            {toast.type === 'error' && <AlertCircle className="w-6 h-6 text-red-600 fill-red-100 animate-pulse" />}
+            {toast.type === 'info' && <Info className="w-6 h-6 text-[#C56C4F] fill-amber-100 animate-pulse" />}
+          </div>
+          <div className="flex-grow text-xs font-jakarta font-extrabold text-stone-900 leading-normal">
+            {toast.message}
+          </div>
+          <button 
+            onClick={() => setToast(prev => ({ ...prev, show: false }))} 
+            className="p-1 hover:bg-stone-100 rounded-lg text-stone-400 hover:text-stone-700 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Global Alert Modal */}
+      {alertData.show && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md select-none animate-fade-in">
+          <div className="bg-white border border-[#eeddb9] rounded-[28px] max-w-md w-full p-6 text-center shadow-2xl animate-scale-up">
+            <div className="w-16 h-16 bg-[#FAF4E6] rounded-full flex items-center justify-center mx-auto mb-4 text-[#C56C4F]">
+              {alertData.type === 'success' && <CheckCircle className="w-8 h-8 text-green-600" />}
+              {alertData.type === 'error' && <AlertTriangle className="w-8 h-8 text-red-600" />}
+              {alertData.type === 'info' && <Info className="w-8 h-8 text-[#C56C4F]" />}
+            </div>
+            <h3 className="text-lg font-black font-jakarta text-stone-950 mb-2">{alertData.title}</h3>
+            <p className="text-sm font-semibold text-stone-700 leading-relaxed mb-6 font-jakarta">{alertData.message}</p>
+            <button
+              onClick={() => {
+                setAlertData(prev => ({ ...prev, show: false }));
+              }}
+              className="w-full py-3 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-black rounded-xl transition-all shadow-md uppercase tracking-wider font-jakarta cursor-pointer"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Global Confirmation Modal */}
+      {confirmData.show && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md select-none animate-fade-in">
+          <div className="bg-white border border-[#eeddb9] rounded-[28px] max-w-md w-full p-6 text-center shadow-2xl animate-scale-up">
+            <div className="w-16 h-16 bg-[#FAF4E6] rounded-full flex items-center justify-center mx-auto mb-4 text-[#C56C4F]">
+              <AlertCircle className="w-8 h-8 text-[#C56C4F]" />
+            </div>
+            <h3 className="text-lg font-black font-jakarta text-stone-950 mb-2">{confirmData.title}</h3>
+            <p className="text-sm font-semibold text-stone-700 leading-relaxed mb-6 font-jakarta">{confirmData.message}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => {
+                  setConfirmData(prev => ({ ...prev, show: false }));
+                  if (confirmData.onCancel) confirmData.onCancel();
+                }}
+                className="py-3 border border-stone-300 hover:border-stone-400 bg-white hover:bg-stone-50 text-stone-700 text-xs font-black rounded-xl transition-all font-jakarta cursor-pointer uppercase tracking-wider"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setConfirmData(prev => ({ ...prev, show: false }));
+                  confirmData.onConfirm();
+                }}
+                className="py-3 bg-[#C56C4F] hover:bg-[#a85237] text-white text-xs font-black rounded-xl transition-all shadow-md font-jakarta cursor-pointer uppercase tracking-wider"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {isHydrated && (
         <>

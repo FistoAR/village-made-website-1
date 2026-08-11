@@ -64,12 +64,17 @@ interface AddressData {
 
 export default function CartPage() {
   const router = useRouter();
-  const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, cartCount, user, addOrder } = useApp();
+  const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, cartCount, user, addOrder, showAlert, showConfirm, showToast } = useApp();
   const [mounted, setMounted] = useState(false);
   
   // Steps control
   const [checkoutStep, setCheckoutStep] = useState<CheckoutMainStep>('cart');
   const [activeSubStep, setActiveSubStep] = useState<number>(1); // 1 to 6
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  const handleClearError = (field: string) => {
+    setValidationErrors(prev => prev.filter(err => err !== field));
+  };
 
   // Form inputs
   const [customerDetails, setCustomerDetails] = useState({
@@ -173,31 +178,33 @@ export default function CartPage() {
 
   // Sub-step Validation
   const validateSubStep = (): boolean => {
+    const errors: string[] = [];
     if (activeSubStep === 1) {
-      if (!customerDetails.name.trim()) return false;
-      if (!customerDetails.phone.trim() || customerDetails.phone.length < 10) return false;
-      if (!customerDetails.email.trim() || !customerDetails.email.includes('@')) return false;
+      if (!customerDetails.name.trim()) errors.push('name');
+      if (!customerDetails.phone.trim() || customerDetails.phone.length < 10) errors.push('phone');
+      if (!customerDetails.email.trim() || !customerDetails.email.includes('@')) errors.push('email');
     }
     if (activeSubStep === 2) {
-      if (!shippingAddress.address.trim()) return false;
-      if (!shippingAddress.city.trim()) return false;
-      if (!shippingAddress.state.trim()) return false;
-      if (!shippingAddress.pincode.trim() || shippingAddress.pincode.length < 6) return false;
+      if (!shippingAddress.address.trim()) errors.push('shipping_address');
+      if (!shippingAddress.city.trim()) errors.push('shipping_city');
+      if (!shippingAddress.state.trim()) errors.push('shipping_state');
+      if (!shippingAddress.pincode.trim() || shippingAddress.pincode.length < 6) errors.push('shipping_pincode');
     }
     if (activeSubStep === 3 && !sameAsShipping) {
-      if (!billingAddress.address.trim()) return false;
-      if (!billingAddress.city.trim()) return false;
-      if (!billingAddress.state.trim()) return false;
-      if (!billingAddress.pincode.trim() || billingAddress.pincode.length < 6) return false;
+      if (!billingAddress.address.trim()) errors.push('billing_address');
+      if (!billingAddress.city.trim()) errors.push('billing_city');
+      if (!billingAddress.state.trim()) errors.push('billing_state');
+      if (!billingAddress.pincode.trim() || billingAddress.pincode.length < 6) errors.push('billing_pincode');
     }
-    return true;
+    setValidationErrors(errors);
+    return errors.length === 0;
   };
 
   const handleNextStep = () => {
     if (validateSubStep()) {
       setActiveSubStep(prev => prev + 1);
     } else {
-      alert('Please fill out all required fields correctly before moving forward.');
+      showToast('Please fill out all required fields correctly before moving forward.', 'error');
     }
   };
 
@@ -231,7 +238,7 @@ export default function CartPage() {
   // 2. PAYMENT -> PAYMENT VERIFICATION -> ORDER CONFIRMED -> ORDER SUCCESS pipeline
   const handleSimulatePayment = (success: boolean) => {
     if (!success) {
-      alert('Payment cancelled / failed. Please try again or select another payment option.');
+      showToast('The payment request was cancelled or declined. Please try again.', 'error');
       setCheckoutStep('checkout');
       setActiveSubStep(5); // Go back to payment step
       return;
@@ -320,10 +327,10 @@ export default function CartPage() {
           <div>
             {/* Title Section */}
             <div className="mb-8">
-              <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold text-stone-900 tracking-tight mb-2">
+              <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-black text-stone-950 tracking-tight mb-3">
                 Your Village Cart
               </h1>
-              <p className="text-stone-500 font-jakarta text-sm">
+              <p className="text-stone-700 font-semibold font-jakarta text-base">
                 Review your items prepared traditionally with care and hygiene.
               </p>
             </div>
@@ -334,15 +341,15 @@ export default function CartPage() {
                 <div className="w-20 h-20 bg-[#EFE6DB] rounded-full flex items-center justify-center mx-auto mb-6">
                   <ShoppingBag className="w-10 h-10 text-[#C56C4F]" />
                 </div>
-                <h2 className="text-2xl font-bold font-jakarta text-stone-950 mb-3">
+                <h2 className="text-2.5xl font-black font-jakarta text-stone-950 mb-3">
                   Your cart is empty
                 </h2>
-                <p className="text-stone-600 font-jakarta text-sm leading-relaxed mb-8 max-w-md mx-auto">
+                <p className="text-stone-850 font-jakarta text-base leading-relaxed mb-8 max-w-md mx-auto font-semibold">
                   Looks like you haven't added any premium, stone-milled goods or nutritional malts to your pantry yet. Let's explore our traditional products.
                 </p>
                 <Link
                   href="/products"
-                  className="inline-flex items-center gap-2 bg-[#384401] hover:bg-[#252d00] text-white font-bold py-3 px-8 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer"
+                  className="inline-flex items-center gap-2 bg-[#384401] hover:bg-[#252d00] text-white font-bold py-3.5 px-8 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer"
                 >
                   Explore Pantry <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -356,7 +363,7 @@ export default function CartPage() {
                   {cart.map((item) => (
                     <div
                       key={`${item.id}-${item.weight}`}
-                      className="bg-white border border-[#eeddb9]/50 hover:border-[#eeddb9] rounded-2xl p-4 md:p-5 flex gap-4 md:gap-6 items-center shadow-xs transition-all animate-fade-in"
+                      className="bg-white border border-[#eeddb9]/70 hover:border-[#eeddb9] rounded-2xl p-4 md:p-5 flex gap-4 md:gap-6 items-center shadow-sm transition-all animate-fade-in"
                     >
                       {/* Product Thumbnail Image */}
                       <div className="w-16 h-16 md:w-20 md:h-20 bg-white border border-[#eeddb9]/30 rounded-xl overflow-hidden shrink-0 relative">
@@ -369,16 +376,16 @@ export default function CartPage() {
 
                       {/* Item Details */}
                       <div className="flex-grow min-w-0">
-                        <span className="text-[#394308] text-[10px] md:text-xs font-bold tracking-wider uppercase block mb-0.5">
+                        <span className="text-[#394308] text-xs font-black tracking-wider uppercase block mb-0.5">
                           {item.category}
                         </span>
-                        <h3 className="text-stone-950 font-bold text-sm md:text-base font-jakarta truncate">
+                        <h3 className="text-stone-950 font-black text-base md:text-lg font-jakarta truncate">
                           {item.name}
                         </h3>
-                        <span className="text-stone-500 text-xs font-semibold font-jakarta block mt-0.5">
-                          Size: <span className="text-stone-800 font-bold">{item.weight}</span>
+                        <span className="text-stone-750 text-xs sm:text-sm font-bold font-jakarta block mt-0.5">
+                          Size: <span className="text-stone-900 font-extrabold">{item.weight}</span>
                         </span>
-                        <span className="text-stone-855 font-extrabold text-sm block mt-1.5 md:hidden">
+                        <span className="text-stone-950 font-black text-sm block mt-1.5 md:hidden">
                           ₹{item.price * item.quantity}
                         </span>
                       </div>
@@ -389,7 +396,7 @@ export default function CartPage() {
                         <div className="flex items-center bg-[#faf6eb] border border-[#d2c9b4] rounded-md h-8 px-1">
                           <button
                             onClick={() => updateQuantity(item.id, item.weight, Math.max(1, item.quantity - 1))}
-                            className="w-6 h-6 flex items-center justify-center text-[#3e2c1c] hover:bg-[#ebdcc1]/40 rounded cursor-pointer"
+                            className="w-6 h-6 flex items-center justify-center text-[#3e2c1c] hover:bg-[#ebdcc1]/40 rounded cursor-pointer font-bold"
                             aria-label="Decrease quantity"
                           >
                             <Minus className="w-3.5 h-3.5" />
@@ -397,7 +404,7 @@ export default function CartPage() {
                           <CartQtyInput item={item} updateQuantity={updateQuantity} />
                           <button
                             onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
-                            className="w-6 h-6 flex items-center justify-center text-[#3e2c1c] hover:bg-[#ebdcc1]/40 rounded cursor-pointer"
+                            className="w-6 h-6 flex items-center justify-center text-[#3e2c1c] hover:bg-[#ebdcc1]/40 rounded cursor-pointer font-bold"
                             aria-label="Increase quantity"
                           >
                             <Plus className="w-3.5 h-3.5" />
@@ -405,14 +412,14 @@ export default function CartPage() {
                         </div>
 
                         {/* Subtotal Desktop */}
-                        <span className="hidden md:block font-jakarta font-bold text-stone-900 min-w-[70px] text-right">
+                        <span className="hidden md:block font-jakarta font-black text-stone-950 min-w-[70px] text-right text-base">
                           ₹{item.price * item.quantity}
                         </span>
 
                         {/* Remove button */}
                         <button
                           onClick={() => removeFromCart(item.id, item.weight)}
-                          className="p-1.5 text-stone-400 hover:text-red-600 transition-colors cursor-pointer rounded-lg hover:bg-stone-50"
+                          className="p-1.5 text-stone-500 hover:text-red-700 transition-colors cursor-pointer rounded-lg hover:bg-stone-50"
                           aria-label="Remove item"
                         >
                           <Trash2 className="w-4.5 h-4.5" />
@@ -425,13 +432,13 @@ export default function CartPage() {
                   <div className="mt-2 flex justify-between items-center gap-4">
                     <Link
                       href="/products"
-                      className="inline-flex items-center gap-2 text-stone-600 hover:text-[#384401] font-bold text-sm transition-colors cursor-pointer group font-jakarta"
+                      className="inline-flex items-center gap-2 text-stone-700 hover:text-[#384401] font-extrabold text-sm transition-colors cursor-pointer group font-jakarta"
                     >
                       <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" /> Continue Shopping
                     </Link>
                     <button
                       onClick={clearCart}
-                      className="text-red-700 hover:text-red-900 font-bold text-sm transition-colors cursor-pointer font-jakarta hover:underline"
+                      className="text-red-700 hover:text-red-900 font-extrabold text-sm transition-colors cursor-pointer font-jakarta hover:underline"
                     >
                       Clear Cart
                     </button>
@@ -472,17 +479,17 @@ export default function CartPage() {
             <div className="flex flex-col lg:flex-row gap-8 items-start">
               
               {/* Form Input Columns */}
-              <div className="w-full lg:w-[65%] bg-white border border-[#eeddb9]/50 rounded-[32px] p-6 md:p-8 shadow-xs">
+              <div className="w-full lg:w-[65%] bg-white border border-[#eeddb9] rounded-[32px] p-6 md:p-8 shadow-sm">
                 
                 {/* BACK BUTTON AND HEADER */}
-                <div className="flex justify-between items-center mb-6 pb-3 border-b border-[#eeddb9]/45">
-                  <div className="flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-full bg-[#FAF4E6] flex items-center justify-center text-[#C56C4F]">
-                      {React.createElement(currentIcon, { className: "w-4 h-4" })}
+                <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#eeddb9]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#FAF4E6] flex items-center justify-center text-[#C56C4F] shadow-sm">
+                      {React.createElement(currentIcon, { className: "w-5 h-5" })}
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wide">Step {activeSubStep} of 6</span>
-                      <h2 className="text-lg font-bold font-jakarta text-stone-950">
+                      <span className="text-xs font-black text-stone-500 uppercase tracking-wide">Step {activeSubStep} of 6</span>
+                      <h2 className="text-xl md:text-2xl font-black font-jakarta text-stone-950 mt-0.5">
                         {activeSubStep === 1 && "Customer Details"}
                         {activeSubStep === 2 && "Shipping Destination"}
                         {activeSubStep === 3 && "Billing Settings"}
@@ -496,7 +503,7 @@ export default function CartPage() {
                   {activeSubStep > 1 && (
                     <button
                       onClick={handleBackStep}
-                      className="text-xs font-jakarta text-stone-500 hover:text-stone-900 border border-stone-200 px-3 py-1.5 rounded-lg hover:bg-stone-50 cursor-pointer"
+                      className="text-xs font-black font-jakarta text-stone-700 hover:text-stone-950 border border-stone-300 bg-white hover:bg-stone-50 px-3 py-2 rounded-xl shadow-xs cursor-pointer"
                     >
                       ← Back
                     </button>
@@ -504,7 +511,7 @@ export default function CartPage() {
                   {activeSubStep === 1 && (
                     <button
                       onClick={() => setCheckoutStep('cart')}
-                      className="text-xs font-jakarta text-stone-500 hover:text-stone-900 border border-stone-200 px-3 py-1.5 rounded-lg hover:bg-stone-50 cursor-pointer"
+                      className="text-xs font-black font-jakarta text-stone-700 hover:text-stone-950 border border-stone-300 bg-white hover:bg-stone-50 px-3 py-2 rounded-xl shadow-xs cursor-pointer"
                     >
                       ← Back to Cart
                     </button>
@@ -528,25 +535,27 @@ export default function CartPage() {
                   setPaymentMethod={setPaymentMethod}
                   baseShippingFee={baseShippingFee}
                   cart={cart}
+                  validationErrors={validationErrors}
+                  onClearError={handleClearError}
                 />
 
                 {/* NAVIGATION FOOTER */}
-                <div className="mt-8 pt-6 border-t border-[#eeddb9]/30 flex justify-between items-center">
-                  <div className="text-[11px] text-stone-400 font-semibold">
+                <div className="mt-8 pt-6 border-t border-[#eeddb9] flex justify-between items-center">
+                  <div className="text-xs font-bold text-stone-700">
                     Step {activeSubStep} of 6 Completed
                   </div>
                   
                   {activeSubStep < 6 ? (
                     <button
                       onClick={handleNextStep}
-                      className="px-6 py-3 bg-[#384401] hover:bg-[#252d00] text-white font-bold rounded-xl transition-all shadow-xs cursor-pointer text-xs uppercase tracking-wider flex items-center gap-1.5 font-jakarta"
+                      className="px-6 py-3.5 bg-[#384401] hover:bg-[#252d00] text-white font-black rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs uppercase tracking-wider flex items-center gap-2 font-jakarta"
                     >
                       Next Step <ChevronRight className="w-4 h-4" />
                     </button>
                   ) : (
                     <button
                       onClick={handlePlaceOrder}
-                      className="px-8 py-3.5 bg-[#C56C4F] hover:bg-[#a85237] text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs uppercase tracking-wider flex items-center gap-2 font-jakarta animate-pulse"
+                      className="px-8 py-4 bg-[#C56C4F] hover:bg-[#a85237] text-white font-black rounded-xl transition-all shadow-lg hover:shadow-xl cursor-pointer text-xs uppercase tracking-wider flex items-center gap-2 font-jakarta animate-pulse"
                     >
                       Place Order (₹{grandTotal}) <ArrowRight className="w-4.5 h-4.5" />
                     </button>

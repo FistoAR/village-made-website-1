@@ -217,6 +217,7 @@ export default function CartPage() {
 
   // 1. PLACE ORDER -> CREATE ORDER pipeline
   const handlePlaceOrder = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setCheckoutStep('create_order');
     setCreationStatus('Preparing order parameters...');
     
@@ -241,7 +242,8 @@ export default function CartPage() {
     if (!success) {
       showToast('The payment request was cancelled or declined. Please try again.', 'error');
       setCheckoutStep('checkout');
-      setActiveSubStep(5); // Go back to payment step
+      setActiveSubStep(3); // Go back to Review step (step 3 is the last valid step)
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -314,7 +316,7 @@ export default function CartPage() {
     { num: 3, label: 'Review', icon: Sparkles }
   ];
 
-  const currentIcon = checkoutSubSteps[activeSubStep - 1].icon;
+  const currentIcon = (checkoutSubSteps[activeSubStep - 1] ?? checkoutSubSteps[checkoutSubSteps.length - 1]).icon;
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#3E2C1C] flex flex-col justify-between">

@@ -68,82 +68,59 @@ export default function CheckoutSimulations({
 
     case 'payment_gateway':
       return (
-        <div className="min-h-[500px] flex flex-col justify-center items-center text-center max-w-lg mx-auto bg-[#1a1008] border border-stone-850 rounded-[32px] p-6 sm:p-10 shadow-2xl text-white select-none animate-scale-up">
+        <div className="min-h-[420px] flex flex-col justify-center items-center text-center max-w-lg mx-auto bg-[#1a1008] border border-stone-800 rounded-[32px] p-6 sm:p-10 shadow-2xl text-white select-none animate-scale-up">
           {/* Header */}
           <div className="w-full flex justify-between items-center pb-4 border-b border-stone-800/80 mb-6">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-green-500" />
+              <div className="w-3.5 h-3.5 rounded-full bg-green-500" />
               <span className="text-xs font-black text-stone-300 uppercase tracking-widest">VillagePay Gateway</span>
             </div>
-            <span className="text-stone-300 text-sm font-mono font-bold">{simulatedOrderId}</span>
+            <span className="text-stone-400 text-xs font-mono font-bold">{simulatedOrderId}</span>
           </div>
 
           {/* Price Box */}
           <div className="w-full bg-stone-900 border border-stone-800 rounded-2xl p-5 mb-6 flex justify-between items-center text-left">
             <div>
-              <span className="text-xs text-stone-400 block font-black uppercase tracking-wider">Payee Reference</span>
-              <span className="text-sm font-bold text-stone-100 mt-0.5 block">{customerDetails.name}</span>
+              <span className="text-[10px] text-stone-400 block font-black uppercase tracking-wider mb-0.5">Payee Reference</span>
+              <span className="text-sm font-bold text-stone-100 block">{customerDetails.name}</span>
             </div>
             <div className="text-right">
-              <span className="text-xs text-stone-400 block font-black uppercase tracking-wider">Amount Due</span>
-              <span className="text-2xl font-black text-amber-500">₹{finalTotal}</span>
+              <span className="text-[10px] text-stone-400 block font-black uppercase tracking-wider mb-0.5">Amount Due</span>
+              <span className="text-2xl font-black text-amber-400">₹{finalTotal}</span>
             </div>
           </div>
 
-          {/* Specific payment details display */}
-          <div className="w-full text-left bg-stone-950/60 rounded-xl p-5 mb-6 border border-stone-800/40 text-xs text-stone-300 flex flex-col gap-3">
-            <p className="font-black border-b border-stone-800 pb-2 text-stone-200 text-xs uppercase tracking-wider">
-              Payment Route Selected: {paymentMethod.toUpperCase()}
-            </p>
-            {paymentMethod === 'upi' && (
-              <div>
-                <p className="text-stone-300 font-semibold mb-1">Proceed with instant UPI authorization simulation.</p>
-                <input 
-                  type="text" 
-                  readOnly
-                  value={`${customerDetails.phone || '9876543210'}@okvillage`}
-                  className="w-full h-11 px-4 bg-stone-900 border border-stone-850 rounded-lg text-sm focus:outline-none text-stone-200 font-bold"
-                />
-              </div>
-            )}
-            {paymentMethod === 'card' && (
-              <div className="flex flex-col gap-2">
-                <p className="text-stone-300 font-semibold">Authorized card simulation details:</p>
-                <input 
-                  type="text" 
-                  readOnly
-                  value="4321 •••• •••• 9876"
-                  className="w-full h-11 px-4 bg-stone-900 border border-stone-850 rounded-lg text-sm focus:outline-none text-stone-200 font-mono font-bold"
-                />
-              </div>
-            )}
-            {paymentMethod === 'netbanking' && (
-              <p className="text-stone-350 font-semibold leading-relaxed">Secure banking tunnel will simulate direct authorization on confirmation.</p>
-            )}
-            {paymentMethod === 'cod' && (
-              <p className="text-stone-355 font-semibold leading-relaxed">No immediate transaction required. Place authorization check to confirm delivery schedule.</p>
-            )}
+          {/* Payment Method Badge — clean, no details */}
+          <div className="w-full bg-stone-900/60 border border-stone-800/50 rounded-xl px-5 py-4 mb-6 flex items-center gap-3 text-left">
+            <div className="w-9 h-9 rounded-full bg-stone-800 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4.5 h-4.5 text-green-400" />
+            </div>
+            <div>
+              <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest mb-0.5">Payment Method</p>
+              <p className="text-stone-100 font-extrabold text-sm uppercase tracking-wide">{paymentMethod === 'cod' ? 'Cash on Delivery' : paymentMethod.toUpperCase()}</p>
+              <p className="text-stone-400 font-semibold text-xs mt-0.5">Click Authorize & Pay to confirm your order</p>
+            </div>
           </div>
 
           {/* Actions */}
-          <div className="w-full grid grid-cols-2 gap-3 mt-4">
+          <div className="w-full grid grid-cols-2 gap-3">
             <button
               onClick={() => handleSimulatePayment(false)}
-              className="py-3 bg-stone-900 hover:bg-stone-800 text-stone-300 font-black rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer border border-stone-800"
+              className="py-3.5 bg-stone-900 hover:bg-stone-800 text-stone-300 font-black rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer border border-stone-800"
             >
               Cancel / Fail
             </button>
             <button
               onClick={() => handleSimulatePayment(true)}
-              className="py-3 bg-[#C56C4F] hover:bg-[#a85237] text-white font-black rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer shadow-lg hover:shadow-xl font-jakarta"
+              className="py-3.5 bg-[#C56C4F] hover:bg-[#a85237] text-white font-black rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg hover:shadow-xl font-jakarta"
             >
-              Authorize & Pay
+              Authorize &amp; Pay
             </button>
           </div>
 
-          {/* Foot note */}
-          <p className="text-xs text-stone-400 mt-6 leading-relaxed flex items-center gap-1.5 justify-center">
-            <ShieldCheck className="w-4 h-4 text-green-500" /> Secured encryption protocol in sandbox environment.
+          {/* Footer note */}
+          <p className="text-xs text-stone-500 mt-5 leading-relaxed flex items-center gap-1.5 justify-center">
+            <ShieldCheck className="w-3.5 h-3.5 text-green-500 shrink-0" /> Secured encryption protocol in sandbox environment.
           </p>
         </div>
       );

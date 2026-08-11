@@ -285,70 +285,102 @@ export default function CheckoutSteps({
 
     case 3:
       return (
-        <div className="flex flex-col gap-6 font-jakarta text-sm text-[#3E2C1C] animate-fade-in">
-          <p className="text-stone-600 font-semibold mb-2 leading-relaxed">
-            Please look over your checkout details and totals before confirming placement.
+        <div className="flex flex-col gap-3 font-jakarta text-sm text-[#3E2C1C] animate-fade-in">
+          <p className="text-[#8B6A4E] font-semibold leading-relaxed text-sm mb-1">
+            Please review your details carefully before placing your order.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Recipient details */}
-            <div className="bg-gradient-to-br from-[#fdfcf9] to-white border border-[#eeddb9]/50 p-4.5 rounded-2xl flex flex-col gap-3 shadow-xs hover:shadow-sm transition-all duration-300 min-w-0">
-              <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
-                <User className="w-4 h-4 text-[#C56C4F]" />
-                <span className="text-[10px] font-black text-[#C56C4F] uppercase tracking-wider">Recipient Details</span>
-              </div>
-              <div className="text-sm space-y-1 min-w-0">
-                <p className="font-black text-stone-950 text-base truncate">{customerDetails.name}</p>
-                <p className="text-stone-750 font-semibold flex flex-wrap items-center gap-x-1.5"><span className="text-stone-400">Phone:</span> <span className="break-all">{customerDetails.phone}</span></p>
-                <p className="text-stone-750 font-semibold flex flex-wrap items-center gap-x-1.5"><span className="text-stone-400">Email:</span> <span className="break-all">{customerDetails.email}</span></p>
-              </div>
+          {/* Recipient Details — Full Width */}
+          <div className="border border-[#eeddb9] rounded-xl overflow-hidden bg-white">
+            <div className="flex items-center gap-2 px-5 py-3 bg-[#FAF4E6] border-b border-[#eeddb9]">
+              <User className="w-4 h-4 text-[#C56C4F]" />
+              <span className="text-xs font-black text-[#C56C4F] uppercase tracking-widest">Recipient Details</span>
             </div>
-
-            {/* Shipping location */}
-            <div className="bg-gradient-to-br from-[#fdfcf9] to-white border border-[#eeddb9]/50 p-4.5 rounded-2xl flex flex-col gap-3 shadow-xs hover:shadow-sm transition-all duration-300 min-w-0">
-              <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
-                <MapPin className="w-4 h-4 text-[#C56C4F]" />
-                <span className="text-[10px] font-black text-[#C56C4F] uppercase tracking-wider">Shipping Location</span>
+            <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#eeddb9]/50">
+              <div className="pb-4 sm:pb-0 sm:pr-6">
+                <span className="text-xs font-black text-[#8B6A4E] uppercase tracking-wider block mb-1">Full Name</span>
+                <span className="font-extrabold text-[#3E2C1C] text-base block">{customerDetails.name}</span>
               </div>
-              <div className="text-sm min-w-0">
-                <p className="font-black text-stone-955 text-base truncate">{shippingAddress.city}, {shippingAddress.state}</p>
-                <p className="text-stone-750 font-semibold mt-1.5 leading-relaxed break-words">{shippingAddress.address}</p>
-                <p className="text-stone-900 font-black mt-2 bg-[#FAF4E6]/50 px-2.5 py-1 rounded-lg border border-[#eeddb9]/30 inline-block text-xs">Pincode: {shippingAddress.pincode}</p>
+              <div className="py-4 sm:py-0 sm:px-6">
+                <span className="text-xs font-black text-[#8B6A4E] uppercase tracking-wider block mb-1">Phone Number</span>
+                <span className="font-bold text-[#3E2C1C] text-base block">{customerDetails.phone}</span>
               </div>
-            </div>
-
-            {/* Billing location */}
-            <div className="bg-gradient-to-br from-[#fdfcf9] to-white border border-[#eeddb9]/50 p-4.5 rounded-2xl flex flex-col gap-3 shadow-xs hover:shadow-sm transition-all duration-300 min-w-0">
-              <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
-                <ClipboardCheck className="w-4 h-4 text-[#C56C4F]" />
-                <span className="text-[10px] font-black text-[#C56C4F] uppercase tracking-wider">Billing Location</span>
-              </div>
-              <div className="text-sm flex-grow flex flex-col justify-center min-w-0">
-                {sameAsShipping ? (
-                  <p className="text-[#384401] bg-green-50/50 border border-green-200/50 p-3 rounded-xl font-bold italic text-center text-xs leading-relaxed">
-                    Same as shipping destination.
-                  </p>
-                ) : (
-                  <div className="min-w-0">
-                    <p className="font-black text-stone-950 text-base truncate">{billingAddress.city}, {billingAddress.state}</p>
-                    <p className="text-stone-750 font-semibold mt-1.5 leading-relaxed break-words">{billingAddress.address}</p>
-                    <p className="text-stone-900 font-black mt-2 bg-[#FAF4E6]/50 px-2.5 py-1 rounded-lg border border-[#eeddb9]/30 inline-block text-xs">Pincode: {billingAddress.pincode}</p>
-                  </div>
-                )}
+              <div className="pt-4 sm:pt-0 sm:pl-6">
+                <span className="text-xs font-black text-[#8B6A4E] uppercase tracking-wider block mb-1">Email Address</span>
+                <span className="font-bold text-[#3E2C1C] text-base break-all block">{customerDetails.email}</span>
               </div>
             </div>
           </div>
 
-          {/* Brief Items Summary list inside Step 3 */}
-          <div className="border border-[#eeddb9]/45 rounded-2xl overflow-hidden mt-2 bg-white shadow-xs">
-            <div className="bg-[#FAF4E6]/50 px-4 py-3 border-b border-[#eeddb9]/30 flex items-center gap-2 font-black text-xs text-[#3E2C1C] uppercase tracking-wide">
-              <ShoppingBag className="w-4 h-4 text-[#C56C4F]" /> Items In Shipment
+          {/* Shipping Address — Full Width */}
+          <div className="border border-[#eeddb9] rounded-xl overflow-hidden bg-white">
+            <div className="flex items-center gap-2 px-5 py-3 bg-[#FAF4E6] border-b border-[#eeddb9]">
+              <MapPin className="w-4 h-4 text-[#C56C4F]" />
+              <span className="text-xs font-black text-[#C56C4F] uppercase tracking-widest">Shipping Address</span>
             </div>
-            <div className="divide-y divide-stone-100">
+            <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#eeddb9]/50">
+              <div className="pb-4 sm:pb-0 sm:pr-6">
+                <span className="text-xs font-black text-[#8B6A4E] uppercase tracking-wider block mb-1">City & State</span>
+                <span className="font-extrabold text-[#3E2C1C] text-base block">{shippingAddress.city}, {shippingAddress.state}</span>
+              </div>
+              <div className="py-4 sm:py-0 sm:px-6">
+                <span className="text-xs font-black text-[#8B6A4E] uppercase tracking-wider block mb-1">Street Address</span>
+                <span className="font-bold text-[#3E2C1C] text-base block leading-relaxed">{shippingAddress.address}</span>
+              </div>
+              <div className="pt-4 sm:pt-0 sm:pl-6">
+                <span className="text-xs font-black text-[#8B6A4E] uppercase tracking-wider block mb-1">Pincode</span>
+                <span className="font-bold text-[#3E2C1C] text-base block">{shippingAddress.pincode}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Billing Address — Full Width */}
+          <div className="border border-[#eeddb9] rounded-xl overflow-hidden bg-white">
+            <div className="flex items-center gap-2 px-5 py-3 bg-[#FAF4E6] border-b border-[#eeddb9]">
+              <ClipboardCheck className="w-4 h-4 text-[#C56C4F]" />
+              <span className="text-xs font-black text-[#C56C4F] uppercase tracking-widest">Billing Address</span>
+            </div>
+            <div className="px-5 py-4">
+              {sameAsShipping ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-green-50 border border-green-200 flex items-center justify-center shrink-0">
+                    <ClipboardCheck className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-[#384401] font-extrabold text-base leading-snug">Same as shipping address</p>
+                    <p className="text-[#8B6A4E] font-semibold text-sm mt-0.5">Billing statements go to your delivery address</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#eeddb9]/50">
+                  <div className="pb-4 sm:pb-0 sm:pr-6">
+                    <span className="text-xs font-black text-[#8B6A4E] uppercase tracking-wider block mb-1">City & State</span>
+                    <span className="font-extrabold text-[#3E2C1C] text-base block">{billingAddress.city}, {billingAddress.state}</span>
+                  </div>
+                  <div className="py-4 sm:py-0 sm:px-6">
+                    <span className="text-xs font-black text-[#8B6A4E] uppercase tracking-wider block mb-1">Street Address</span>
+                    <span className="font-bold text-[#3E2C1C] text-base block leading-relaxed">{billingAddress.address}</span>
+                  </div>
+                  <div className="pt-4 sm:pt-0 sm:pl-6">
+                    <span className="text-xs font-black text-[#8B6A4E] uppercase tracking-wider block mb-1">Pincode</span>
+                    <span className="font-bold text-[#3E2C1C] text-base block">{billingAddress.pincode}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Items In Shipment */}
+          <div className="border border-[#eeddb9] rounded-xl overflow-hidden bg-white">
+            <div className="bg-[#FAF4E6] px-5 py-3 border-b border-[#eeddb9] flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4 text-[#C56C4F]" />
+              <span className="font-black text-xs text-[#3E2C1C] uppercase tracking-widest">Items In Shipment</span>
+            </div>
+            <div className="divide-y divide-[#eeddb9]/40">
               {cart.map((item) => (
-                <div key={`${item.id}-${item.weight}`} className="p-4 flex items-center justify-between gap-4 text-sm font-semibold hover:bg-stone-50/50 transition-colors">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-[#eeddb9]/20 shrink-0 bg-stone-50">
+                <div key={`${item.id}-${item.weight}`} className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-[#FAF4E6]/20 transition-colors">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-11 h-11 rounded-lg overflow-hidden border border-[#eeddb9]/50 shrink-0 bg-stone-50">
                       <img 
                         src="https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=60&h=60" 
                         alt={item.name} 
@@ -356,11 +388,11 @@ export default function CheckoutSteps({
                       />
                     </div>
                     <div className="min-w-0">
-                      <span className="font-extrabold text-stone-900 block truncate">{item.name}</span>
-                      <span className="text-xs text-stone-500 font-medium block mt-0.5">Size: {item.weight} | Qty: {item.quantity}</span>
+                      <span className="font-extrabold text-[#3E2C1C] text-base block truncate">{item.name}</span>
+                      <span className="text-sm text-[#8B6A4E] font-semibold block mt-0.5">Size: {item.weight} &nbsp;|&nbsp; Qty: {item.quantity}</span>
                     </div>
                   </div>
-                  <span className="font-extrabold text-stone-950 shrink-0">₹{item.price * item.quantity}</span>
+                  <span className="font-extrabold text-[#3E2C1C] text-base shrink-0">₹{item.price * item.quantity}</span>
                 </div>
               ))}
             </div>

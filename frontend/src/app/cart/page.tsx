@@ -494,7 +494,7 @@ export default function CartPage() {
                       {React.createElement(currentIcon, { className: "w-4 h-4 sm:w-5 sm:h-5" })}
                     </div>
                     <div className="min-w-0 flex flex-col justify-center">
-                      <span className="text-[10px] sm:text-xs font-black text-stone-500 uppercase tracking-wide block leading-none mb-1">Step {activeSubStep} of 6</span>
+                      {/* <span className="text-[10px] sm:text-xs font-black text-stone-500 uppercase tracking-wide block leading-none mb-1">Step {activeSubStep} of 6</span> */}
                       <h2 className="text-base sm:text-lg md:text-xl font-black font-jakarta text-stone-950 leading-tight truncate sm:normal-case">
                         {activeSubStep === 1 && "Customer Details"}
                         {activeSubStep === 2 && "Shipping Destination"}
@@ -550,7 +550,7 @@ export default function CartPage() {
 
                 {/* NAVIGATION FOOTER */}
                 <div className="mt-8 pt-6 border-t border-[#eeddb9] flex justify-between items-center">
-                  <div className="text-xs font-bold text-stone-700">
+                  <div className="text-xs font-medium text-stone-900">
                     Step {activeSubStep} of 6 Completed
                   </div>
                   

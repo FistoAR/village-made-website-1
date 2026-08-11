@@ -376,13 +376,13 @@ export default function CartPage() {
 
                       {/* Item Details */}
                       <div className="flex-grow min-w-0">
-                        <span className="text-[#394308] text-xs font-black tracking-wider uppercase block mb-0.5">
+                        <span className="text-[#394308] text-[10px] sm:text-xs font-black tracking-wider uppercase block mb-0.5">
                           {item.category}
                         </span>
-                        <h3 className="text-stone-950 font-black text-base md:text-lg font-jakarta truncate">
+                        <h3 className="text-stone-950 font-extrabold text-xs sm:text-sm md:text-base font-jakarta leading-snug break-words">
                           {item.name}
                         </h3>
-                        <span className="text-stone-750 text-xs sm:text-sm font-bold font-jakarta block mt-0.5">
+                        <span className="text-stone-750 text-[11px] sm:text-xs font-bold font-jakarta block mt-0.5">
                           Size: <span className="text-stone-900 font-extrabold">{item.weight}</span>
                         </span>
                         <span className="text-stone-950 font-black text-sm block mt-1.5 md:hidden">

@@ -121,7 +121,6 @@ export default function Navbar({
             VILLAGE MADE
           </Link>
         )}
-        {isHero && !isScrolled && heroPhase && <PhaseIndicator phase={heroPhase} />}
       </div>
 
       {/* Center: Brand Navigation Items */}

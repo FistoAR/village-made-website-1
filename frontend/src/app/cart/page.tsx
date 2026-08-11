@@ -479,7 +479,7 @@ export default function CartPage() {
             <div className="flex flex-col lg:flex-row gap-8 items-start">
               
               {/* Form Input Columns */}
-              <div className="w-full lg:w-[65%] bg-white border border-[#eeddb9] rounded-[32px] p-6 md:p-8 shadow-sm">
+              <div className="w-full lg:w-[65%] bg-white border border-[#eeddb9] rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 md:p-8 shadow-sm">
                 
                 {/* BACK BUTTON AND HEADER */}
                 <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#eeddb9]">

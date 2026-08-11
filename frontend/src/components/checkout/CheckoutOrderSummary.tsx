@@ -44,7 +44,7 @@ export default function CheckoutOrderSummary({
   const finalTotal = grandTotal + codFee;
 
   return (
-    <div className="w-full lg:w-[35%] flex flex-col gap-6 sticky top-28 select-none">
+    <div className="w-full lg:w-[35%] flex flex-col gap-6 lg:sticky lg:top-28 select-none">
       {/* Summary Card */}
       <div className="bg-[#FAF4E6] border border-[#eeddb9] rounded-2xl p-6 shadow-sm">
         <h2 className="text-lg font-black font-jakarta text-[#3E2C1C] border-b border-[#eeddb9] pb-3.5 mb-4 flex items-center gap-2">

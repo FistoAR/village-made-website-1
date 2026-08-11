@@ -40,7 +40,7 @@ export default function CheckoutProgress({ steps, activeSubStep }: CheckoutProgr
               }`}>
                 {isCompleted ? <Check className="w-4.5 h-4.5 stroke-[3]" /> : s.num}
               </div>
-              <span className={`text-[11px] sm:text-xs font-jakarta font-bold transition-colors ${
+              <span className={`text-[11px] sm:text-xs font-jakarta font-bold transition-colors hidden sm:block ${
                 isActive 
                   ? 'text-[#384401] font-extrabold' 
                   : isCompleted 

@@ -163,7 +163,7 @@ export default function Footer() {
               <ul className="flex flex-col gap-4">
                 <li className="flex items-center gap-3">
                   <span className="flex items-center justify-center w-8 h-8 rounded-md bg-[#5a6a34]/10 text-[#5a6a34] shrink-0">
-                    <Mail className="w-4 h-4 fill-current text-[#384401]" />
+                    <Phone className="w-4 h-4 fill-current text-[#384401]" />
                   </span>
                   <span className="text-[#6d5e50] font-body text-sm font-semibold leading-normal">
                     +91 9875785646
@@ -171,7 +171,7 @@ export default function Footer() {
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="flex items-center justify-center w-8 h-8 rounded-md bg-[#5a6a34]/10 text-[#5a6a34] shrink-0">
-                    <Phone className="w-4 h-4 fill-current text-[#384401]" />
+                    <Mail className="w-4 h-4 fill-current text-[#384401]" />
                   </span>
                   <span className="text-[#6d5e50] font-body text-sm font-semibold leading-normal">
                     Support@gmail.com

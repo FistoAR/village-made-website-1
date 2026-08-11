@@ -1,3 +1,7 @@
+import dns from 'dns';
+// Prefer IPv4 DNS resolution over IPv6 to resolve connection issues on IPv4-only cloud networks (e.g. Render)
+dns.setDefaultResultOrder('ipv4first');
+
 import { app } from './app.js';
 import { env } from './config/env.js';
 import { initDb } from './config/initDb.js';

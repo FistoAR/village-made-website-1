@@ -6,7 +6,9 @@ const { Pool } = pg;
 // Use the database connection string to establish a Postgres pool connection.
 export const pool = new Pool({
   connectionString: env.DATABASE_URL,
-  ssl: env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: (env.NODE_ENV === 'production' || process.env.RENDER === 'true' || env.DATABASE_URL.includes('.supabase.co')) 
+    ? { rejectUnauthorized: false } 
+    : false
 });
 
 pool.on('error', (err) => {

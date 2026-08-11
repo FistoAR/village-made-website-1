@@ -75,7 +75,7 @@ export default function CheckoutSteps({
     case 1:
       return (
         <div className="flex flex-col gap-5 font-jakarta text-sm text-[#3E2C1C] animate-fade-in">
-          <p className="text-stone-700 font-semibold mb-2 leading-relaxed">
+          <p className="text-stone-600 font-semibold mb-2 leading-relaxed">
             Provide contact information so we can dispatch shipping confirmations and text message delivery updates.
           </p>
           <div>
@@ -137,7 +137,7 @@ export default function CheckoutSteps({
     case 2:
       return (
         <div className="flex flex-col gap-5 font-jakarta text-sm text-[#3E2C1C] animate-fade-in">
-          <p className="text-stone-700 font-semibold mb-2 leading-relaxed">
+          <p className="text-stone-600 font-semibold mb-2 leading-relaxed">
             Enter the address details where you'd like your traditionally crafted natural goods delivered.
           </p>
           <div>
@@ -204,7 +204,7 @@ export default function CheckoutSteps({
     case 3:
       return (
         <div className="flex flex-col gap-5 font-jakarta text-sm text-[#3E2C1C] animate-fade-in">
-          <p className="text-stone-700 font-semibold mb-2 leading-relaxed">
+          <p className="text-stone-600 font-semibold mb-2 leading-relaxed">
             Select whether your billing statements should be sent to the same shipping destination, or enter a separate billing address.
           </p>
           
@@ -291,7 +291,7 @@ export default function CheckoutSteps({
     case 4:
       return (
         <div className="flex flex-col gap-5 font-jakarta text-sm text-[#3E2C1C] animate-fade-in">
-          <p className="text-stone-700 font-semibold mb-2 leading-relaxed">
+          <p className="text-stone-600 font-semibold mb-2 leading-relaxed">
             Choose standard shipping methods or upgraded premium air freight delivery.
           </p>
 
@@ -371,7 +371,7 @@ export default function CheckoutSteps({
     case 5:
       return (
         <div className="flex flex-col gap-5 font-jakarta text-sm text-[#3E2C1C] animate-fade-in">
-          <p className="text-stone-700 font-semibold mb-2 leading-relaxed">
+          <p className="text-stone-600 font-semibold mb-2 leading-relaxed">
             Select your preferred payment channel. Transactions are securely routed with end-to-end 256-bit encryption.
           </p>
 
@@ -473,7 +473,7 @@ export default function CheckoutSteps({
     case 6:
       return (
         <div className="flex flex-col gap-5 font-jakarta text-xs text-[#3E2C1C] animate-fade-in">
-          <p className="text-stone-700 font-semibold mb-2 leading-relaxed">
+          <p className="text-stone-600 font-semibold mb-2 leading-relaxed">
             Please look over your checkout details and totals before confirming placement.
           </p>
 

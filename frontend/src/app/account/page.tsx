@@ -166,7 +166,7 @@ export default function AccountPage() {
           <div className="relative z-10">
             <span className="text-[#D4E47A] text-xs font-bold uppercase tracking-widest block mb-1">MEMBER ACCOUNT</span>
             <h1 className="font-display text-2xl md:text-3xl font-bold">
-              Namaskaram, {user.name || 'Village Member'}!
+              Welcome, {user.name || 'Village Member'}!
             </h1>
             <p className="text-stone-100 text-xs mt-1">Mobile: {user.mobile}</p>
           </div>

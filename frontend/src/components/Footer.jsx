@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Mail, Phone, MapPin } from 'lucide-react';
+
 
 export default function Footer() {
   const features = [
@@ -162,25 +162,31 @@ export default function Footer() {
               </h4>
               <ul className="flex flex-col gap-4">
                 <li className="flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-md bg-[#5a6a34]/10 text-[#5a6a34] shrink-0">
-                    <Phone className="w-4 h-4 fill-current text-[#384401]" />
-                  </span>
+                  <div className="w-7 flex justify-center shrink-0">
+                    <svg width="18" height="26" viewBox="0 0 18 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3.02683 0.562348L4.40704 0.121502C5.69882 -0.291151 7.08031 0.376526 7.63393 1.68112L8.73605 4.28007C9.21663 5.41166 8.95007 6.74317 8.07734 7.57104L5.6514 9.87523C5.80092 11.2542 6.26398 12.6113 7.04059 13.9467C7.77909 15.2383 8.76865 16.369 9.95094 17.2722L12.8677 16.2983C13.9724 15.9305 15.1757 16.3547 15.8537 17.3504L17.4325 19.67C18.2219 20.8285 18.0797 22.4253 17.1019 23.4069L16.0536 24.4591C15.0104 25.5061 13.5213 25.8867 12.1424 25.4561C8.88898 24.4411 5.89746 21.4282 3.1678 16.4174C0.434718 11.3981 -0.529848 7.14002 0.274099 3.64315C0.612424 2.17195 1.66072 0.99935 3.02939 0.562348" fill="#427024"/>
+                    </svg>
+                  </div>
                   <span className="text-[#6d5e50] font-body text-sm font-semibold leading-normal">
                     +91 9875785646
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-md bg-[#5a6a34]/10 text-[#5a6a34] shrink-0">
-                    <Mail className="w-4 h-4 fill-current text-[#384401]" />
-                  </span>
+                  <div className="w-7 flex justify-center shrink-0">
+                    <svg width="24" height="18" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M2.07095 17.9414C1.4806 17.9414 0.988061 17.7441 0.593349 17.3494C0.198637 16.9547 0.000854354 16.4617 0 15.8705V2.07095C0 1.4806 0.197783 0.98806 0.593349 0.593349C0.988915 0.198637 1.48102 0.000854354 2.06967 0H20.9979C21.5874 0 22.0795 0.197783 22.4742 0.593349C22.8689 0.988914 23.0667 1.48145 23.0676 2.07095V15.8718C23.0676 16.4613 22.8698 16.9538 22.4742 17.3494C22.0786 17.7449 21.5865 17.9423 20.9979 17.9414H2.07095ZM11.8337 8.87076C11.9259 8.83829 12.0173 8.79856 12.1079 8.75158L21.3721 2.68609C21.4934 2.61261 21.5724 2.51223 21.6092 2.38493C21.6459 2.25763 21.6391 2.13076 21.5887 2.00431C21.5562 1.83942 21.4486 1.71981 21.2657 1.64549C21.0837 1.57201 20.9073 1.58696 20.7365 1.69034L11.5338 7.68919L2.33239 1.69162C2.16152 1.58739 1.98894 1.56518 1.81465 1.62498C1.64036 1.68479 1.52844 1.80269 1.47889 1.97868C1.42933 2.11025 1.42293 2.24396 1.45966 2.3798C1.4964 2.51565 1.575 2.61817 1.69547 2.68737L10.9597 8.75158C11.0502 8.79856 11.1416 8.83829 11.2339 8.87076C11.327 8.90237 11.427 8.91817 11.5338 8.91817C11.6406 8.91817 11.7405 8.90237 11.8337 8.87076Z" fill="#427024"/>
+                    </svg>
+                  </div>
                   <span className="text-[#6d5e50] font-body text-sm font-semibold leading-normal">
                     Support@gmail.com
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-md bg-[#5a6a34]/10 text-[#5a6a34] shrink-0 mt-0.5">
-                    <MapPin className="w-4 h-4 text-[#384401]" />
-                  </span>
+                  <div className="w-7 flex justify-center shrink-0 mt-0.5">
+                    <svg width="21" height="26" viewBox="0 0 21 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M10.2524 0C4.60082 0 0.000120643 4.6007 0.000120643 10.2523C-0.0383253 18.5053 9.12462 25.118 9.50908 25.4C9.72694 25.5537 9.99606 25.6434 10.2524 25.6434C10.5087 25.6434 10.7778 25.5665 10.9957 25.4C11.3801 25.118 20.5431 18.5181 20.5046 10.2523C20.5046 4.6007 15.9039 0 10.2524 0ZM10.2524 15.3784C7.42019 15.3784 5.12624 13.0844 5.12624 10.2523C5.12624 7.42007 7.42019 5.12613 10.2524 5.12613C13.0846 5.12613 15.3785 7.42007 15.3785 10.2523C15.3785 13.0844 13.0846 15.3784 10.2524 15.3784Z" fill="#427024"/>
+                    </svg>
+                  </div>
                   <span className="text-[#6d5e50] font-body text-sm font-semibold leading-normal">
                     123, Organic Street, Tamil Nadu -641401
                   </span>

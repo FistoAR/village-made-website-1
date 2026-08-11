@@ -168,9 +168,7 @@ export default function CartPage() {
   
   // Base delivery fee
   const baseShippingFee = discountedSubtotal >= shippingThreshold || cartTotal === 0 ? 0 : 50;
-  // Extra for Express
-  const expressSurcharge = deliveryMethod === 'express' ? 100 : 0;
-  const shippingFee = baseShippingFee + expressSurcharge;
+  const shippingFee = baseShippingFee;
 
   const taxRate = 0.05; // 5% GST
   const estimatedTax = Math.round(discountedSubtotal * taxRate);
@@ -189,12 +187,13 @@ export default function CartPage() {
       if (!shippingAddress.city.trim()) errors.push('shipping_city');
       if (!shippingAddress.state.trim()) errors.push('shipping_state');
       if (!shippingAddress.pincode.trim() || shippingAddress.pincode.length < 6) errors.push('shipping_pincode');
-    }
-    if (activeSubStep === 3 && !sameAsShipping) {
-      if (!billingAddress.address.trim()) errors.push('billing_address');
-      if (!billingAddress.city.trim()) errors.push('billing_city');
-      if (!billingAddress.state.trim()) errors.push('billing_state');
-      if (!billingAddress.pincode.trim() || billingAddress.pincode.length < 6) errors.push('billing_pincode');
+      
+      if (!sameAsShipping) {
+        if (!billingAddress.address.trim()) errors.push('billing_address');
+        if (!billingAddress.city.trim()) errors.push('billing_city');
+        if (!billingAddress.state.trim()) errors.push('billing_state');
+        if (!billingAddress.pincode.trim() || billingAddress.pincode.length < 6) errors.push('billing_pincode');
+      }
     }
     setValidationErrors(errors);
     return errors.length === 0;
@@ -311,11 +310,8 @@ export default function CartPage() {
   // Define steps configurations
   const checkoutSubSteps = [
     { num: 1, label: 'Details', icon: User },
-    { num: 2, label: 'Shipping', icon: MapPin },
-    { num: 3, label: 'Billing', icon: ClipboardCheck },
-    { num: 4, label: 'Shipment', icon: Truck },
-    { num: 5, label: 'Payment', icon: CreditCard },
-    { num: 6, label: 'Review', icon: Sparkles }
+    { num: 2, label: 'Shipping & Delivery', icon: MapPin },
+    { num: 3, label: 'Review', icon: Sparkles }
   ];
 
   const currentIcon = checkoutSubSteps[activeSubStep - 1].icon;
@@ -494,14 +490,11 @@ export default function CartPage() {
                       {React.createElement(currentIcon, { className: "w-4 h-4 sm:w-5 sm:h-5" })}
                     </div>
                     <div className="min-w-0 flex flex-col justify-center">
-                      {/* <span className="text-[10px] sm:text-xs font-black text-stone-500 uppercase tracking-wide block leading-none mb-1">Step {activeSubStep} of 6</span> */}
+                      
                       <h2 className="text-base sm:text-lg md:text-xl font-black font-jakarta text-stone-950 leading-tight truncate sm:normal-case">
                         {activeSubStep === 1 && "Customer Details"}
-                        {activeSubStep === 2 && "Shipping Destination"}
-                        {activeSubStep === 3 && "Billing Settings"}
-                        {activeSubStep === 4 && "Choose Shipment Speed"}
-                        {activeSubStep === 5 && "Select Payment Method"}
-                        {activeSubStep === 6 && "Final Review & Confirms"}
+                        {activeSubStep === 2 && "Shipping & Delivery"}
+                        {activeSubStep === 3 && "Order Review"}
                       </h2>
                     </div>
                   </div>
@@ -551,20 +544,20 @@ export default function CartPage() {
                 {/* NAVIGATION FOOTER */}
                 <div className="mt-8 pt-6 border-t border-[#eeddb9] flex justify-between items-center">
                   <div className="text-xs font-medium text-stone-900">
-                    Step {activeSubStep} of 6 Completed
+                    Step {activeSubStep} of 3 Completed
                   </div>
                   
-                  {activeSubStep < 6 ? (
+                   {activeSubStep < 3 ? (
                     <button
                       onClick={handleNextStep}
-                      className="px-6 py-3.5 bg-[#384401] hover:bg-[#252d00] text-white font-black rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs uppercase tracking-wider flex items-center gap-2 font-jakarta"
+                      className="px-6 py-3 bg-gradient-to-r from-[#384401] to-[#485602] hover:shadow-lg hover:shadow-[#384401]/15 text-white font-black rounded-xl transition-all duration-300 active:scale-95 cursor-pointer text-xs uppercase tracking-wider flex items-center gap-2 font-jakarta"
                     >
                       Next Step <ChevronRight className="w-4 h-4" />
                     </button>
                   ) : (
                     <button
                       onClick={handlePlaceOrder}
-                      className="px-8 py-4 bg-[#C56C4F] hover:bg-[#a85237] text-white font-black rounded-xl transition-all shadow-lg hover:shadow-xl cursor-pointer text-xs uppercase tracking-wider flex items-center gap-2 font-jakarta animate-pulse"
+                      className="px-8 py-3.5 bg-gradient-to-r from-[#C56C4F] to-[#b0583c] hover:shadow-lg hover:shadow-[#C56C4F]/15 text-white font-black rounded-xl transition-all duration-300 active:scale-95 cursor-pointer text-xs uppercase tracking-wider flex items-center gap-2 font-jakarta animate-pulse"
                     >
                       Place Order (₹{grandTotal}) <ArrowRight className="w-4.5 h-4.5" />
                     </button>

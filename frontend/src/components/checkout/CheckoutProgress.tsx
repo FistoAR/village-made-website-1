@@ -16,13 +16,13 @@ interface CheckoutProgressProps {
 
 export default function CheckoutProgress({ steps, activeSubStep }: CheckoutProgressProps) {
   return (
-    <div className="mb-8 bg-white border border-[#eeddb9]/70 p-5 rounded-[24px] shadow-sm select-none relative">
+    <div className="mb-8 bg-white/95 backdrop-blur-md border border-[#eeddb9]/50 p-6 rounded-[28px] shadow-sm select-none relative">
       <div className="flex justify-between items-center max-w-4xl mx-auto relative">
-        {/* Background connector line aligned precisely from center of step 1 column to center of step 6 column */}
-        <div className="absolute top-[18px] left-[8.33%] right-[8.33%] h-[3px] bg-stone-100 hidden md:block z-0 rounded-full">
+        {/* Background connector line aligned precisely from center of step 1 column to center of step 3 column */}
+        <div className="absolute top-[18px] left-[16.66%] right-[16.66%] h-[3px] bg-stone-200/50 hidden md:block z-0 rounded-full">
           <div 
-            className="h-full bg-[#384401] rounded-full transition-all duration-500 ease-out" 
-            style={{ width: `${((Math.min(6, Math.max(1, activeSubStep)) - 1) / 5) * 100}%` }}
+            className="h-full bg-gradient-to-r from-[#384401] to-[#5a6c02] rounded-full transition-all duration-500 ease-out shadow-xs" 
+            style={{ width: `${((Math.min(3, Math.max(1, activeSubStep)) - 1) / 2) * 100}%` }}
           />
         </div>
 
@@ -30,22 +30,22 @@ export default function CheckoutProgress({ steps, activeSubStep }: CheckoutProgr
           const isActive = activeSubStep === s.num;
           const isCompleted = activeSubStep > s.num;
           return (
-            <div key={s.num} className="flex flex-col items-center gap-2 flex-1 relative z-10">
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all text-xs font-bold bg-white ${
+            <div key={s.num} className="flex flex-col items-center gap-2.5 flex-1 relative z-10">
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-300 text-xs font-bold ${
                 isActive 
-                  ? '!bg-[#384401] text-white border-[#384401] scale-110 shadow-md ring-4 ring-[#384401]/15' 
+                  ? 'bg-gradient-to-br from-[#384401] to-[#4b5902] text-white border-transparent scale-110 shadow-lg shadow-[#384401]/20 ring-4 ring-[#384401]/10' 
                   : isCompleted 
-                    ? '!bg-green-100 text-green-700 border-green-300' 
-                    : 'text-stone-500 border-stone-250'
+                    ? 'bg-green-50 text-green-700 border-green-500 shadow-xs' 
+                    : 'text-stone-605 border-stone-300 bg-stone-50/50'
               }`}>
-                {isCompleted ? <Check className="w-4.5 h-4.5 stroke-[3]" /> : s.num}
+                {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : s.num}
               </div>
-              <span className={`text-[11px] sm:text-xs font-jakarta font-bold transition-colors hidden sm:block ${
+              <span className={`text-[10px] sm:text-xs font-jakarta tracking-wide transition-colors hidden sm:block ${
                 isActive 
                   ? 'text-[#384401] font-extrabold' 
                   : isCompleted 
-                    ? 'text-green-800' 
-                    : 'text-stone-550'
+                    ? 'text-green-700 font-bold' 
+                    : 'text-stone-600 font-bold'
               }`}>
                 {s.label}
               </span>

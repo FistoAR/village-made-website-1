@@ -93,26 +93,26 @@ export default function CheckoutOrderSummary({
             </div>
           )}
 
-          <div className="border-t border-[#eeddb9] pt-4 mt-2 flex justify-between text-base font-black text-stone-950 bg-stone-50 p-3 rounded-xl shadow-xs">
-            <span>Grand Total</span>
-            <span className="text-lg text-[#C56C4F]">₹{finalTotal}</span>
+          <div className="border-t border-[#eeddb9]/50 pt-4 mt-2 flex justify-between items-center bg-white border border-[#eeddb9]/30 p-4 rounded-xl shadow-xs">
+            <span className="text-stone-600 font-extrabold text-sm uppercase tracking-wide">Grand Total</span>
+            <span className="text-xl text-[#384401] font-black font-jakarta">₹{finalTotal}</span>
           </div>
 
           {/* Coupon entry form */}
           {!isCheckoutScreen && (
-            <form onSubmit={handleApplyCoupon} className="border-t border-[#eeddb9] pt-4 mt-2 flex flex-col gap-2">
-              <label className="text-xs font-extrabold text-stone-800 uppercase tracking-wide">Have a Coupon?</label>
+            <form onSubmit={handleApplyCoupon} className="border-t border-[#eeddb9]/50 pt-4 mt-2 flex flex-col gap-2">
+              <label className="text-xs font-extrabold text-[#3E2C1C] uppercase tracking-wide">Have a Coupon?</label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   placeholder="e.g. VILLAGE10"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
-                  className="flex-grow h-10 px-3 bg-white border border-[#eeddb9] hover:border-[#d0b88c] rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:border-[#384401] focus:ring-2 focus:ring-[#384401]/10 transition-all placeholder:text-stone-400"
+                  className="flex-grow h-10 px-3 bg-white border border-[#eeddb9] hover:border-[#d0b88c] rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:border-[#384401] focus:ring-4 focus:ring-[#384401]/10 transition-all placeholder:text-stone-400 shadow-xs"
                 />
                 <button
                   type="submit"
-                  className="h-10 px-5 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-sm"
+                  className="h-10 px-5 bg-gradient-to-r from-[#384401] to-[#485602] hover:shadow-md hover:shadow-[#384401]/10 text-white text-xs font-black rounded-xl transition-all duration-300 cursor-pointer shadow-xs active:scale-95"
                 >
                   Apply
                 </button>
@@ -126,7 +126,7 @@ export default function CheckoutOrderSummary({
           {!isCheckoutScreen && onProceedToCheckout && (
             <button
               onClick={onProceedToCheckout}
-              className="w-full mt-4 py-3.5 bg-[#384401] hover:bg-[#252d00] text-white font-black rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs uppercase tracking-wider flex items-center justify-center gap-2 font-jakarta"
+              className="w-full mt-4 py-3.5 bg-gradient-to-r from-[#384401] to-[#485602] hover:shadow-lg hover:shadow-[#384401]/15 text-white font-black rounded-xl transition-all duration-300 active:scale-[0.98] cursor-pointer text-xs uppercase tracking-wider flex items-center justify-center gap-2 font-jakarta"
             >
               Proceed to Checkout <ArrowRight className="w-5 h-5" />
             </button>

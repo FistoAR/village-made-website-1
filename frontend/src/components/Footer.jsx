@@ -41,15 +41,15 @@ export default function Footer() {
           />
           
         <div className="max-w-screen-2xl relative z-10 mx-auto w-full mb-2 md:mb-5 px-4 sm:px-6 lg:px-8 py-4 md:py-12 mt-2 sm:mt-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6 lg:gap-0 items-center justify-items-center bg-white sm:bg-transparent border border-stone-200/50 sm:border-0 rounded-[24px] sm:rounded-none py-6 px-4 sm:p-0 shadow-sm sm:shadow-none">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4 lg:gap-0 items-center justify-items-center bg-white sm:bg-transparent border border-stone-200/50 sm:border-0 rounded-[20px] sm:rounded-none py-4 sm:py-6 px-3 sm:px-4 shadow-sm sm:shadow-none">
             {features.map((feat, index) => (
               <div 
                 key={index} 
-                className={`flex items-center gap-2 sm:gap-4 w-full px-2 sm:px-6 justify-start sm:justify-center ${
+                className={`flex items-center gap-1.5 sm:gap-4 w-full px-1 sm:px-6 justify-start sm:justify-center ${
                   index < 3 ? 'lg:border-r lg:border-[#2b3c0c]/20' : ''
                 }`}
               >
-                <div className="shrink-0 relative w-9 h-9">
+                <div className="shrink-0 relative w-7 h-7 sm:w-9 sm:h-9">
                   <Image 
                     src={feat.icon} 
                     alt={feat.title} 
@@ -58,10 +58,10 @@ export default function Footer() {
                   />
                 </div>
                 <div className="text-left">
-                  <h4 className="text-[#2b3c0c] font-body font-bold text-sm sm:text-base leading-tight">
+                  <h4 className="text-[#2b3c0c] font-body font-bold text-xs sm:text-sm md:text-base leading-tight">
                     {feat.title}
                   </h4>
-                  <p className="text-stone-500 font-body text-xs sm:text-sm mt-0.5 font-medium">
+                  <p className="text-stone-500 font-body text-[10px] sm:text-xs md:text-sm mt-0.5 font-medium">
                     {feat.desc}
                   </p>
                 </div>

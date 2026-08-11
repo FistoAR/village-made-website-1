@@ -203,6 +203,7 @@ export default function CartPage() {
   const handleNextStep = () => {
     if (validateSubStep()) {
       setActiveSubStep(prev => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       showToast('Please fill out all required fields correctly before moving forward.', 'error');
     }
@@ -211,6 +212,7 @@ export default function CartPage() {
   const handleBackStep = () => {
     if (activeSubStep > 1) {
       setActiveSubStep(prev => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -327,7 +329,7 @@ export default function CartPage() {
           <div>
             {/* Title Section */}
             <div className="mb-8">
-              <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-black text-stone-950 tracking-tight mb-3">
+              <h1 className="font-poetsen text-3xl sm:text-4xl md:text-5xl text-stone-950 tracking-tight mb-3">
                 Your Village Cart
               </h1>
               <p className="text-stone-700 font-semibold font-jakarta text-base">
@@ -363,35 +365,35 @@ export default function CartPage() {
                   {cart.map((item) => (
                     <div
                       key={`${item.id}-${item.weight}`}
-                      className="bg-white border border-[#eeddb9]/70 hover:border-[#eeddb9] rounded-2xl p-4 md:p-5 flex gap-4 md:gap-6 items-center shadow-sm transition-all animate-fade-in"
+                      className="bg-white border border-[#eeddb9]/70 hover:border-[#eeddb9] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-3 sm:gap-6 sm:items-center shadow-sm transition-all animate-fade-in"
                     >
-                      {/* Product Thumbnail Image */}
-                      <div className="w-16 h-16 md:w-20 md:h-20 bg-white border border-[#eeddb9]/30 rounded-xl overflow-hidden shrink-0 relative">
-                        <img 
-                          src="https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=120&h=120" 
-                          alt={item.name} 
-                          className="w-full h-full object-cover" 
-                        />
+                      {/* Top Row / Content part */}
+                      <div className="flex gap-4 items-center w-full min-w-0">
+                        {/* Product Thumbnail Image */}
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white border border-[#eeddb9]/30 rounded-xl overflow-hidden shrink-0 relative">
+                          <img 
+                            src="https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=120&h=120" 
+                            alt={item.name} 
+                            className="w-full h-full object-cover" 
+                          />
+                        </div>
+
+                        {/* Item Details */}
+                        <div className="flex-grow min-w-0">
+                          <span className="text-[#394308] text-[10px] sm:text-xs font-black tracking-wider uppercase block mb-0.5">
+                            {item.category}
+                          </span>
+                          <h3 className="text-stone-950 font-extrabold text-xs sm:text-sm md:text-base font-jakarta leading-snug break-words">
+                            {item.name}
+                          </h3>
+                          <span className="text-stone-750 text-[11px] sm:text-xs font-bold font-jakarta block mt-0.5">
+                            Size: <span className="text-stone-900 font-extrabold">{item.weight}</span>
+                          </span>
+                        </div>
                       </div>
 
-                      {/* Item Details */}
-                      <div className="flex-grow min-w-0">
-                        <span className="text-[#394308] text-[10px] sm:text-xs font-black tracking-wider uppercase block mb-0.5">
-                          {item.category}
-                        </span>
-                        <h3 className="text-stone-950 font-extrabold text-xs sm:text-sm md:text-base font-jakarta leading-snug break-words">
-                          {item.name}
-                        </h3>
-                        <span className="text-stone-750 text-[11px] sm:text-xs font-bold font-jakarta block mt-0.5">
-                          Size: <span className="text-stone-900 font-extrabold">{item.weight}</span>
-                        </span>
-                        <span className="text-stone-950 font-black text-sm block mt-1.5 md:hidden">
-                          ₹{item.price * item.quantity}
-                        </span>
-                      </div>
-
-                      {/* Quantity Controls & Prices */}
-                      <div className="flex items-center gap-4 md:gap-8 shrink-0">
+                      {/* Bottom Row / Controls part */}
+                      <div className="flex justify-between sm:justify-end items-center gap-4 sm:gap-8 w-full sm:w-auto mt-3 sm:mt-0 pt-3 sm:pt-0 border-t border-stone-100 sm:border-t-0 shrink-0">
                         {/* Quantity controls */}
                         <div className="flex items-center bg-[#faf6eb] border border-[#d2c9b4] rounded-md h-8 px-1">
                           <button
@@ -411,19 +413,22 @@ export default function CartPage() {
                           </button>
                         </div>
 
-                        {/* Subtotal Desktop */}
-                        <span className="hidden md:block font-jakarta font-black text-stone-950 min-w-[70px] text-right text-base">
-                          ₹{item.price * item.quantity}
-                        </span>
+                        {/* Price and Action items grouping */}
+                        <div className="flex items-center gap-4 sm:gap-6">
+                          {/* Price */}
+                          <span className="font-jakarta font-black text-stone-950 text-right text-sm sm:text-base min-w-[60px]">
+                            ₹{item.price * item.quantity}
+                          </span>
 
-                        {/* Remove button */}
-                        <button
-                          onClick={() => removeFromCart(item.id, item.weight)}
-                          className="p-1.5 text-stone-500 hover:text-red-700 transition-colors cursor-pointer rounded-lg hover:bg-stone-50"
-                          aria-label="Remove item"
-                        >
-                          <Trash2 className="w-4.5 h-4.5" />
-                        </button>
+                          {/* Remove button */}
+                          <button
+                            onClick={() => removeFromCart(item.id, item.weight)}
+                            className="p-1.5 text-stone-500 hover:text-red-700 transition-colors cursor-pointer rounded-lg hover:bg-stone-50"
+                            aria-label="Remove item"
+                          >
+                            <Trash2 className="w-4.5 h-4.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -464,6 +469,7 @@ export default function CartPage() {
                   onProceedToCheckout={() => {
                     setCheckoutStep('checkout');
                     setActiveSubStep(1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                 />
               </div>
@@ -482,14 +488,14 @@ export default function CartPage() {
               <div className="w-full lg:w-[65%] bg-white border border-[#eeddb9] rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 md:p-8 shadow-sm">
                 
                 {/* BACK BUTTON AND HEADER */}
-                <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#eeddb9]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#FAF4E6] flex items-center justify-center text-[#C56C4F] shadow-sm">
-                      {React.createElement(currentIcon, { className: "w-5 h-5" })}
+                <div className="flex justify-between items-center mb-5 pb-3.5 border-b border-[#eeddb9] gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#FAF4E6] flex items-center justify-center text-[#C56C4F] shadow-sm shrink-0">
+                      {React.createElement(currentIcon, { className: "w-4 h-4 sm:w-5 sm:h-5" })}
                     </div>
-                    <div>
-                      <span className="text-xs font-black text-stone-500 uppercase tracking-wide">Step {activeSubStep} of 6</span>
-                      <h2 className="text-xl md:text-2xl font-black font-jakarta text-stone-950 mt-0.5">
+                    <div className="min-w-0 flex flex-col justify-center">
+                      <span className="text-[10px] sm:text-xs font-black text-stone-500 uppercase tracking-wide block leading-none mb-1">Step {activeSubStep} of 6</span>
+                      <h2 className="text-base sm:text-lg md:text-xl font-black font-jakarta text-stone-950 leading-tight truncate sm:normal-case">
                         {activeSubStep === 1 && "Customer Details"}
                         {activeSubStep === 2 && "Shipping Destination"}
                         {activeSubStep === 3 && "Billing Settings"}
@@ -503,17 +509,20 @@ export default function CartPage() {
                   {activeSubStep > 1 && (
                     <button
                       onClick={handleBackStep}
-                      className="text-xs font-black font-jakarta text-stone-700 hover:text-stone-950 border border-stone-300 bg-white hover:bg-stone-50 px-3 py-2 rounded-xl shadow-xs cursor-pointer"
+                      className="w-8 h-8 sm:w-auto sm:px-3.5 sm:py-2 rounded-xl border border-stone-300 bg-white hover:bg-stone-50 flex items-center justify-center gap-1 shrink-0 shadow-xs cursor-pointer text-xs font-black font-jakarta text-stone-700 hover:text-stone-950"
                     >
-                      ← Back
+                      <ArrowLeft className="w-4 h-4" /> <span className="hidden sm:inline">Back</span>
                     </button>
                   )}
                   {activeSubStep === 1 && (
                     <button
-                      onClick={() => setCheckoutStep('cart')}
-                      className="text-xs font-black font-jakarta text-stone-700 hover:text-stone-950 border border-stone-300 bg-white hover:bg-stone-50 px-3 py-2 rounded-xl shadow-xs cursor-pointer"
+                      onClick={() => {
+                        setCheckoutStep('cart');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="w-8 h-8 sm:w-auto sm:px-3.5 sm:py-2 rounded-xl border border-stone-300 bg-white hover:bg-stone-50 flex items-center justify-center gap-1 shrink-0 shadow-xs cursor-pointer text-xs font-black font-jakarta text-stone-700 hover:text-stone-950"
                     >
-                      ← Back to Cart
+                      <ArrowLeft className="w-4 h-4" /> <span className="hidden sm:inline">Back to Cart</span>
                     </button>
                   )}
                 </div>

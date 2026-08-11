@@ -297,7 +297,7 @@ export default function CheckoutSteps({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Standard Option */}
-            <label className={`border rounded-[20px] p-5 cursor-pointer flex flex-col gap-3 transition-all relative ${
+            <label className={`border rounded-xl sm:rounded-[20px] p-4 sm:p-5 cursor-pointer flex flex-col gap-3 transition-all relative ${
               deliveryMethod === 'standard' 
                 ? 'border-[#384401] bg-[#fafbf2] shadow-md ring-2 ring-[#384401]/10' 
                 : 'border-[#eeddb9] bg-white hover:border-[#d0b88c] hover:shadow-xs'
@@ -307,7 +307,7 @@ export default function CheckoutSteps({
                 name="delivery_speed" 
                 checked={deliveryMethod === 'standard'}
                 onChange={() => setDeliveryMethod('standard')}
-                className="absolute top-5 right-5 w-5 h-5 text-[#384401] focus:ring-[#384401]" 
+                className="absolute top-4 sm:top-5 right-4 sm:right-5 w-5 h-5 text-[#384401] focus:ring-[#384401]" 
               />
               <div className="flex items-center gap-2 text-[#384401]">
                 <Truck className="w-6 h-6" />
@@ -330,7 +330,7 @@ export default function CheckoutSteps({
             </label>
 
             {/* Express Option */}
-            <label className={`border rounded-[20px] p-5 cursor-pointer flex flex-col gap-3 transition-all relative ${
+            <label className={`border rounded-xl sm:rounded-[20px] p-4 sm:p-5 cursor-pointer flex flex-col gap-3 transition-all relative ${
               deliveryMethod === 'express' 
                 ? 'border-[#384401] bg-[#fafbf2] shadow-md ring-2 ring-[#384401]/10' 
                 : 'border-[#eeddb9] bg-white hover:border-[#d0b88c] hover:shadow-xs'
@@ -340,7 +340,7 @@ export default function CheckoutSteps({
                 name="delivery_speed" 
                 checked={deliveryMethod === 'express'}
                 onChange={() => setDeliveryMethod('express')}
-                className="absolute top-5 right-5 w-5 h-5 text-[#384401] focus:ring-[#384401]" 
+                className="absolute top-4 sm:top-5 right-4 sm:right-5 w-5 h-5 text-[#384401] focus:ring-[#384401]" 
               />
               <div className="flex items-center gap-2 text-[#384401]">
                 <div className="flex items-center gap-1">

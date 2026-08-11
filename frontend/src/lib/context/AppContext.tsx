@@ -519,7 +519,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       {/* Global Toast Notification */}
       {toast.show && (
-        <div className="fixed top-24 right-4 z-[9999] max-w-sm w-full bg-white border border-[#eeddb9] rounded-2xl shadow-xl p-4 flex gap-3 items-center animate-scale-up border-l-4 border-l-[#C56C4F]">
+        <div className="fixed top-24 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-sm z-[9999] bg-white border border-[#eeddb9] rounded-2xl shadow-xl p-4 flex gap-3 items-center animate-scale-up border-l-4 border-l-[#C56C4F]">
           <div className="shrink-0 flex items-center justify-center">
             {toast.type === 'success' && <CheckCircle className="w-6 h-6 text-green-600 fill-green-100 animate-bounce" />}
             {toast.type === 'error' && <AlertCircle className="w-6 h-6 text-red-600 fill-red-100 animate-pulse" />}

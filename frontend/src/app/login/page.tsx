@@ -126,7 +126,13 @@ export default function LoginPage() {
       setLoading(false);
       if (res.success) {
         setSuccess('Access granted! Logging you in...');
-        router.push(redirectTo);
+        if (res.user?.role === 'admin') {
+          // Pre-authenticate the admin session tab as well!
+          sessionStorage.setItem('is_admin_auth', 'true');
+          router.push('/admin');
+        } else {
+          router.push(redirectTo);
+        }
       } else {
         setError(res.error || 'Invalid credentials. Please try again.');
       }

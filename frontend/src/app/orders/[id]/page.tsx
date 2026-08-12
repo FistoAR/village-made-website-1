@@ -11,6 +11,7 @@ import {
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useApp } from '@/lib/context/AppContext';
+import { PRODUCTS } from '@/data/products-list';
 
 export default function OrderTrackingPage() {
   const { id } = useParams() as { id: string };
@@ -197,26 +198,33 @@ export default function OrderTrackingPage() {
               </h2>
 
               <div className="flex flex-col gap-1">
-                {order.items.map((item) => (
-                  <div 
-                    key={`${item.id}-${item.weight}`} 
-                    className="flex items-center justify-between gap-4 py-4 border-b border-stone-150/45 last:border-0"
-                  >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-16 h-16 bg-[#FAF4E6] rounded-xl overflow-hidden shrink-0 border border-[#eeddb9]/20 flex items-center justify-center">
-                        <ShoppingBag className="w-7 h-7 text-[#C56C4F]" />
+                {order.items.map((item) => {
+                  const productObj = PRODUCTS.find(p => p.id === item.id || p.name.toLowerCase() === item.name.toLowerCase());
+                  return (
+                    <div 
+                      key={`${item.id}-${item.weight}`} 
+                      className="flex items-center justify-between gap-4 py-4 border-b border-stone-150/45 last:border-0"
+                    >
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="w-16 h-16 bg-[#FAF4E6] rounded-xl overflow-hidden shrink-0 border border-[#eeddb9]/20 flex items-center justify-center relative">
+                          <img 
+                            src={productObj?.image || "/images/product-section/product-placeholder-rimage.webp"} 
+                            alt={item.name} 
+                            className="object-cover w-full h-full"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="font-black text-stone-955 block text-xs sm:text-sm leading-tight hover:underline cursor-pointer">{item.name}</span>
+                          <span className="text-stone-600 text-xs font-bold block mt-1">Weight: {item.weight} • Qty: {item.quantity}</span>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <span className="font-black text-stone-950 block text-xs sm:text-sm leading-tight hover:underline cursor-pointer">{item.name}</span>
-                        <span className="text-stone-600 text-xs font-bold block mt-1">Weight: {item.weight} • Qty: {item.quantity}</span>
+                      <div className="text-right shrink-0">
+                        <span className="font-extrabold text-stone-900 block text-xs sm:text-sm">₹{item.price * item.quantity}</span>
+                        <span className="text-stone-500 text-[10px] font-semibold block mt-0.5">₹{item.price} each</span>
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <span className="font-extrabold text-stone-900 block text-xs sm:text-sm">₹{item.price * item.quantity}</span>
-                      <span className="text-stone-500 text-[10px] font-semibold block mt-0.5">₹{item.price} each</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -232,12 +240,12 @@ export default function OrderTrackingPage() {
               </h3>
 
               <div className="grid grid-cols-1 gap-2 text-xs sm:text-sm font-jakarta text-stone-955">
-                <p><span className="font-extrabold text-stone-500 min-w-[85px] inline-block select-none">Name:</span> <span className="font-semibold text-black">{order.address.name}</span></p>
-                <p><span className="font-extrabold text-stone-500 min-w-[85px] inline-block select-none">Address:</span> <span className="font-semibold text-black">{order.address.address}</span></p>
-                <p><span className="font-extrabold text-stone-500 min-w-[85px] inline-block select-none">City:</span> <span className="font-semibold text-black">{order.address.city}</span></p>
-                <p><span className="font-extrabold text-stone-500 min-w-[85px] inline-block select-none">State:</span> <span className="font-semibold text-black">{order.address.state || 'Karnataka'}</span></p>
-                <p><span className="font-extrabold text-stone-500 min-w-[85px] inline-block select-none">Pincode:</span> <span className="font-semibold text-black">{order.address.pincode}</span></p>
-                <p className="mt-1"><span className="font-extrabold text-stone-500 min-w-[85px] inline-block select-none">Phone:</span> <span className="font-bold text-black">{order.address.phone}</span></p>
+                <div className="flex items-start"><span className="font-extrabold text-stone-500 w-[85px] shrink-0 select-none">Name:</span> <span className="font-semibold text-black">{order.address.name}</span></div>
+                <div className="flex items-start"><span className="font-extrabold text-stone-500 w-[85px] shrink-0 select-none">Address:</span> <span className="font-semibold text-black break-all">{order.address.address}</span></div>
+                <div className="flex items-start"><span className="font-extrabold text-stone-500 w-[85px] shrink-0 select-none">City:</span> <span className="font-semibold text-black">{order.address.city}</span></div>
+                <div className="flex items-start"><span className="font-extrabold text-stone-500 w-[85px] shrink-0 select-none">State:</span> <span className="font-semibold text-black">{order.address.state || 'Karnataka'}</span></div>
+                <div className="flex items-start"><span className="font-extrabold text-stone-500 w-[85px] shrink-0 select-none">Pincode:</span> <span className="font-semibold text-black">{order.address.pincode}</span></div>
+                <div className="flex items-start mt-0.5"><span className="font-extrabold text-stone-500 w-[85px] shrink-0 select-none">Phone:</span> <span className="font-bold text-black">{order.address.phone}</span></div>
               </div>
             </div>
 

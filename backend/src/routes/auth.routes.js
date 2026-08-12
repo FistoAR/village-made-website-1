@@ -4,9 +4,62 @@ import { query } from '../config/db.js';
 
 export const authRouter = Router();
 
+// Helper function to fetch a complete user object from relational tables
+const fetchUserData = async (dbUser) => {
+  const userId = dbUser.id;
+  const addressesRes = await query('SELECT * FROM addresses WHERE user_id = $1', [userId]);
+  const reviewsRes = await query('SELECT * FROM reviews WHERE user_id = $1', [userId]);
+  const notificationsRes = await query('SELECT * FROM notifications WHERE user_id = $1 ORDER BY date DESC', [userId]);
+  const ordersRes = await query('SELECT * FROM orders WHERE user_id = $1', [userId]);
+
+  return {
+    mobile: dbUser.mobile,
+    name: dbUser.name || '',
+    email: dbUser.email || '',
+    phone: dbUser.phone || dbUser.mobile,
+    role: dbUser.role || 'customer',
+    addresses: addressesRes.rows.map(a => ({
+      id: a.id,
+      name: a.name,
+      phone: a.phone,
+      address: a.address,
+      city: a.city,
+      state: a.state,
+      pincode: a.pincode,
+      isDefault: a.is_default
+    })),
+    orders: ordersRes.rows.map(o => ({
+      id: o.id,
+      date: o.date,
+      subtotal: Number(o.subtotal),
+      shipping: Number(o.shipping),
+      tax: Number(o.tax),
+      total: Number(o.total),
+      status: o.status,
+      address: typeof o.address === 'string' ? JSON.parse(o.address) : o.address,
+      items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items
+    })),
+    wishlist: [],
+    reviews: reviewsRes.rows.map(r => ({
+      id: r.id,
+      productId: r.product_id,
+      productName: r.product_name,
+      rating: Number(r.rating),
+      comment: r.comment,
+      date: r.date
+    })),
+    notifications: notificationsRes.rows.map(n => ({
+      id: n.id,
+      title: n.title,
+      message: n.message,
+      date: n.date,
+      read: n.read
+    }))
+  };
+};
+
 /**
  * POST /api/auth/register
- * Register a user with mobile number, password, name, email, and phone.
  */
 authRouter.post('/register', async (req, res, next) => {
   const { mobile, password, name, email, phone } = req.body;
@@ -22,21 +75,18 @@ authRouter.post('/register', async (req, res, next) => {
   const cleanMobile = mobile.trim();
 
   try {
-    // Check if user already exists
     const checkUser = await query('SELECT * FROM users WHERE mobile = $1', [cleanMobile]);
     if (checkUser.rows.length > 0) {
       return res.status(400).json({ success: false, error: 'Mobile number already registered.' });
     }
 
-    // Hash the password securely
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password.trim(), salt);
 
-    // Insert user into Postgres
     const insertQuery = `
       INSERT INTO users (mobile, password, name, email, phone, created_at)
       VALUES ($1, $2, $3, $4, $5, NOW())
-      RETURNING id, mobile, name, email, phone, addresses, orders, wishlist, reviews, notifications, created_at
+      RETURNING id, mobile, name, email, phone, created_at
     `;
     const result = await query(insertQuery, [
       cleanMobile,
@@ -46,24 +96,24 @@ authRouter.post('/register', async (req, res, next) => {
       phone || cleanMobile,
     ]);
 
-    const newUser = {
-      ...result.rows[0],
-      addresses: [],
-      orders: [],
-      wishlist: [],
-      reviews: [],
-      notifications: [
-        {
-          id: Math.random().toString(36).substring(2, 11),
-          title: 'Welcome to Village Made!',
-          message: 'Thank you for registering. Explore our organic village-crafted malts, millets, and cookies.',
-          date: new Date().toLocaleDateString('en-IN'),
-          read: false
-        }
-      ]
-    };
+    const newUser = result.rows[0];
 
-    return res.status(201).json({ success: true, user: newUser });
+    // Seed welcoming notification in notifications table
+    const notifId = Math.random().toString(36).substring(2, 11);
+    await query(
+      `INSERT INTO notifications (id, user_id, title, message, date, read)
+       VALUES ($1, $2, $3, $4, $5, false)`,
+      [
+        notifId,
+        newUser.id,
+        'Welcome to Village Made!',
+        'Thank you for registering. Explore our organic village-crafted malts, millets, and cookies.',
+        new Date().toLocaleDateString('en-IN')
+      ]
+    );
+
+    const userPayload = await fetchUserData(newUser);
+    return res.status(201).json({ success: true, user: userPayload });
   } catch (error) {
     next(error);
   }
@@ -71,7 +121,6 @@ authRouter.post('/register', async (req, res, next) => {
 
 /**
  * POST /api/auth/login
- * Log in a user with mobile number and password.
  */
 authRouter.post('/login', async (req, res, next) => {
   const { mobile, password } = req.body;
@@ -91,38 +140,16 @@ authRouter.post('/login', async (req, res, next) => {
 
     const dbUser = userResult.rows[0];
 
-    // Check if the user has a password set (legacy users might not have had one)
     if (!dbUser.password) {
       return res.status(400).json({ success: false, error: 'No password set for this account. Please use account recovery.' });
     }
 
-    // Verify password matching using bcrypt
     const isMatch = await bcrypt.compare(password.trim(), dbUser.password);
     if (!isMatch) {
       return res.status(401).json({ success: false, error: 'Incorrect password.' });
     }
 
-    // Build the mock relations for the frontend (or fetch if you expand the schema later)
-    const user = {
-      mobile: dbUser.mobile,
-      name: dbUser.name || '',
-      email: dbUser.email || '',
-      phone: dbUser.phone || dbUser.mobile,
-      addresses: dbUser.addresses || [],
-      orders: dbUser.orders || [],
-      wishlist: dbUser.wishlist || [],
-      reviews: dbUser.reviews || [],
-      notifications: dbUser.notifications || [
-        {
-          id: Math.random().toString(36).substring(2, 11),
-          title: 'Welcome Back!',
-          message: 'Explore our latest village-crafted provisions.',
-          date: new Date().toLocaleDateString('en-IN'),
-          read: false
-        }
-      ]
-    };
-
+    const user = await fetchUserData(dbUser);
     return res.status(200).json({ success: true, user });
   } catch (error) {
     next(error);
@@ -131,7 +158,6 @@ authRouter.post('/login', async (req, res, next) => {
 
 /**
  * POST /api/auth/reset-password
- * Reset password using OTP verification (OTP is hardcoded to 112233).
  */
 authRouter.post('/reset-password', async (req, res, next) => {
   const { mobile, otp, newPassword } = req.body;
@@ -168,7 +194,6 @@ authRouter.post('/reset-password', async (req, res, next) => {
 
 /**
  * PUT /api/auth/profile
- * Synchronize user profile values (JSONB arrays & text fields).
  */
 authRouter.put('/profile', async (req, res, next) => {
   const { mobile, name, email, phone, addresses, wishlist, reviews, notifications, orders } = req.body;
@@ -179,6 +204,14 @@ authRouter.put('/profile', async (req, res, next) => {
 
   try {
     const cleanMobile = mobile.trim();
+    const userResult = await query('SELECT * FROM users WHERE mobile = $1', [cleanMobile]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User profile not found.' });
+    }
+    const dbUser = userResult.rows[0];
+    const userId = dbUser.id;
+
+    // Update main user profile info
     const fieldsToUpdate = [];
     const params = [];
     let paramIdx = 1;
@@ -195,45 +228,81 @@ authRouter.put('/profile', async (req, res, next) => {
       fieldsToUpdate.push(`phone = $${paramIdx++}`);
       params.push(phone);
     }
+    if (req.body.password !== undefined && req.body.password.trim() !== '') {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(req.body.password.trim(), salt);
+      fieldsToUpdate.push(`password = $${paramIdx++}`);
+      params.push(hashedPassword);
+    }
+
+    if (fieldsToUpdate.length > 0) {
+      params.push(userId);
+      const updateQuery = `
+        UPDATE users 
+        SET ${fieldsToUpdate.join(', ')} 
+        WHERE id = $${paramIdx}
+      `;
+      await query(updateQuery, params);
+    }
+
+    // Sync Addresses
     if (addresses !== undefined) {
-      fieldsToUpdate.push(`addresses = $${paramIdx++}`);
-      params.push(JSON.stringify(addresses));
+      await query('DELETE FROM addresses WHERE user_id = $1', [userId]);
+      for (const addr of addresses) {
+        await query(
+          `INSERT INTO addresses (id, user_id, name, phone, address, city, state, pincode, is_default)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           ON CONFLICT (id) DO NOTHING`,
+          [addr.id, userId, addr.name, addr.phone, addr.address, addr.city, addr.state || '', addr.pincode, addr.isDefault || false]
+        );
+      }
     }
-    if (wishlist !== undefined) {
-      fieldsToUpdate.push(`wishlist = $${paramIdx++}`);
-      params.push(JSON.stringify(wishlist));
-    }
+
+
+    // Sync Reviews
     if (reviews !== undefined) {
-      fieldsToUpdate.push(`reviews = $${paramIdx++}`);
-      params.push(JSON.stringify(reviews));
+      await query('DELETE FROM reviews WHERE user_id = $1', [userId]);
+      for (const rev of reviews) {
+        await query(
+          `INSERT INTO reviews (id, user_id, product_id, product_name, rating, comment, date)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (id) DO NOTHING`,
+          [rev.id, userId, rev.productId, rev.productName, rev.rating, rev.comment, rev.date]
+        );
+      }
     }
+
+    // Sync Notifications
     if (notifications !== undefined) {
-      fieldsToUpdate.push(`notifications = $${paramIdx++}`);
-      params.push(JSON.stringify(notifications));
+      await query('DELETE FROM notifications WHERE user_id = $1', [userId]);
+      for (const notif of notifications) {
+        await query(
+          `INSERT INTO notifications (id, user_id, title, message, date, read)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (id) DO NOTHING`,
+          [notif.id, userId, notif.title, notif.message, notif.date, notif.read || false]
+        );
+      }
     }
+
+    // Sync Orders
     if (orders !== undefined) {
-      fieldsToUpdate.push(`orders = $${paramIdx++}`);
-      params.push(JSON.stringify(orders));
+      await query('DELETE FROM orders WHERE user_id = $1', [userId]);
+      for (const ord of orders) {
+        await query(
+          `INSERT INTO orders (id, user_id, date, subtotal, shipping, tax, total, status, address, items)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           ON CONFLICT (id) DO NOTHING`,
+          [ord.id, userId, ord.date, ord.subtotal, ord.shipping, ord.tax, ord.total, ord.status, JSON.stringify(ord.address), JSON.stringify(ord.items)]
+        );
+      }
     }
 
-    if (fieldsToUpdate.length === 0) {
-      return res.status(400).json({ success: false, error: 'No update data provided.' });
-    }
+    // Get the updated fresh record
+    const freshUserResult = await query('SELECT * FROM users WHERE id = $1', [userId]);
+    const updatedUser = await fetchUserData(freshUserResult.rows[0]);
 
-    params.push(cleanMobile);
-    const updateQuery = `
-      UPDATE users 
-      SET ${fieldsToUpdate.join(', ')} 
-      WHERE mobile = $${paramIdx}
-      RETURNING id, mobile, name, email, phone, addresses, orders, wishlist, reviews, notifications, created_at
-    `;
-
-    const result = await query(updateQuery, params);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'User profile not found.' });
-    }
-
-    return res.status(200).json({ success: true, user: result.rows[0] });
+    return res.status(200).json({ success: true, user: updatedUser });
   } catch (error) {
     next(error);
   }

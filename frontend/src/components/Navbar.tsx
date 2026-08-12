@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
-import { Menu, X, ShoppingCart, User as UserIcon, Bell } from 'lucide-react';
+import { Menu, X, ShoppingCart, User as UserIcon, Bell, ShieldCheck } from 'lucide-react';
 import { useApp } from '@/lib/context/AppContext';
 import LanguageSelector from '@/components/Language/LanguageSelector';
 import gsap from 'gsap';
@@ -65,6 +65,7 @@ export default function Navbar({
   const [mounted, setMounted] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const { cartCount, user, soundOn, toggleSound } = useApp();
+  const isAdminAuth = mounted && typeof window !== 'undefined' && sessionStorage.getItem('is_admin_auth') === 'true';
 
   useEffect(() => {
     setMounted(true);
@@ -200,18 +201,36 @@ export default function Navbar({
             </button>
           )}
 
-          {/* User Account Button (Desktop) */}
-          <Link
-            href={mounted && user ? "/account" : "/login"}
-            className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${
-              isTransparent
-                ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
-                : 'border-[#eeddb9] bg-[#fcf9f2] text-[#3d2b1f] hover:bg-[#ebdcc1]'
-            }`}
-            aria-label="User Account"
-          >
-            <UserIcon className="w-4.5 h-4.5" />
-          </Link>
+          {/* Admin Control Button if user is admin */}
+          {mounted && user?.role === 'admin' && isAdminAuth && (
+            <Link
+              href="/admin"
+              className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${
+                isTransparent
+                  ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
+                  : 'border-[#eeddb9] bg-[#FAF4E6] text-[#384401] hover:bg-[#384401] hover:text-white'
+              }`}
+              aria-label="Admin Control panel"
+              title="Admin Control Panel"
+            >
+              <ShieldCheck className="w-4.5 h-4.5" />
+            </Link>
+          )}
+
+          {/* User Account Button (Desktop) - ONLY RENDER IF NOT ADMIN */}
+          {mounted && (!user || user.role !== 'admin' || !isAdminAuth) && (
+            <Link
+              href={mounted && user ? "/account" : "/login"}
+              className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${
+                isTransparent
+                  ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
+                  : 'border-[#eeddb9] bg-[#fcf9f2] text-[#3d2b1f] hover:bg-[#ebdcc1]'
+              }`}
+              aria-label="User Account"
+            >
+              <UserIcon className="w-4.5 h-4.5" />
+            </Link>
+          )}
         </div>
 
         {/* Notifications Bell Dropdown */}
@@ -299,18 +318,20 @@ export default function Navbar({
           )}
         </Link>
 
-        {/* User Account Button (Mobile) */}
-        <Link
-          href={mounted && user ? "/account" : "/login"}
-          className={`lg:hidden w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${
-            isTransparent
-              ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
-              : 'p-2 hover:bg-stone-200/50 text-[#3d2b1f]'
-          }`}
-          aria-label="User Account"
-        >
-          <UserIcon className="w-4.5 h-4.5" />
-        </Link>
+        {/* User Account Button (Mobile) - ONLY RENDER IF NOT ADMIN */}
+        {mounted && (!user || user.role !== 'admin' || !isAdminAuth) && (
+          <Link
+            href={mounted && user ? "/account" : "/login"}
+            className={`lg:hidden w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${
+              isTransparent
+                ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
+                : 'p-2 hover:bg-stone-200/50 text-[#3d2b1f]'
+            }`}
+            aria-label="User Account"
+          >
+            <UserIcon className="w-4.5 h-4.5" />
+          </Link>
+        )}
 
         {/* Mobile menu toggle */}
         <div className="lg:hidden flex items-center">
@@ -342,14 +363,25 @@ export default function Navbar({
             </Link>
           ))}
           {/* Mobile Profile/Login Link */}
-          <Link
-            href={mounted && user ? "/account" : "/login"}
-            onClick={() => setIsOpen(false)}
-            className="text-[#C56C4F] font-body text-sm font-bold tracking-wider uppercase hover:text-[#4f5a30] py-2 border-b border-stone-200/50 flex items-center gap-2"
-          >
-            <UserIcon className="w-4 h-4" />
-            {mounted && user ? "My Account" : "Login / Register"}
-          </Link>
+          {mounted && user?.role === 'admin' && isAdminAuth ? (
+            <Link
+              href="/admin"
+              onClick={() => setIsOpen(false)}
+              className="text-[#384401] font-body text-sm font-bold tracking-wider uppercase py-2 border-b border-stone-200/50 flex items-center gap-2"
+            >
+              <ShieldCheck className="w-4.5 h-4.5" />
+              Admin Panel
+            </Link>
+          ) : (
+            <Link
+              href={mounted && user ? "/account" : "/login"}
+              onClick={() => setIsOpen(false)}
+              className="text-[#C56C4F] font-body text-sm font-bold tracking-wider uppercase hover:text-[#4f5a30] py-2 border-b border-stone-200/50 flex items-center gap-2"
+            >
+              <UserIcon className="w-4.5 h-4.5" />
+              {mounted && user ? "My Account" : "Login / Register"}
+            </Link>
+          )}
         </div>
       )}
     </header>

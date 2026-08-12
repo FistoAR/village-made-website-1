@@ -59,6 +59,7 @@ export interface User {
   name?: string;
   email?: string;
   phone?: string;
+  role?: string;
   addresses: UserAddress[];
   orders: UserOrder[];
   wishlist: string[];
@@ -83,8 +84,8 @@ interface AppContextType {
   
   // User Authentication & Profile States
   user: User | null;
-  registerUser: (mobile: string, password?: string, optionalData?: { name?: string; phone?: string; email?: string }) => Promise<{ success: boolean; error?: string }>;
-  loginUser: (mobile: string, password?: string) => Promise<{ success: boolean; error?: string }>;
+  registerUser: (mobile: string, password?: string, optionalData?: { name?: string; phone?: string; email?: string }) => Promise<{ success: boolean; user?: User; error?: string }>;
+  loginUser: (mobile: string, password?: string) => Promise<{ success: boolean; user?: User; error?: string }>;
   resetPassword: (mobile: string, otp: string, newPassword?: string) => Promise<{ success: boolean; error?: string }>;
   logoutUser: () => void;
   updateUserProfile: (data: Partial<User>) => void;
@@ -202,7 +203,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 email: user.email,
                 phone: user.phone,
                 addresses: user.addresses,
-                wishlist: user.wishlist,
                 reviews: user.reviews,
                 notifications: user.notifications,
                 orders: user.orders
@@ -292,7 +292,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       setUser(data.user);
-      return { success: true };
+      return { success: true, user: data.user };
     } catch (err) {
       return { success: false, error: 'Network error connecting to auth server.' };
     }
@@ -325,7 +325,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       setUser(data.user);
-      return { success: true };
+      return { success: true, user: data.user };
     } catch (err) {
       return { success: false, error: 'Network error connecting to auth server.' };
     }

@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  User as UserIcon, ShoppingBag, MapPin, Heart, MessageSquare, 
+import {
+  User as UserIcon, ShoppingBag, MapPin, Heart, MessageSquare,
   Bell, LogOut, ChevronRight, CheckCircle2, AlertCircle, Plus, Trash2, Home, Edit
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -16,10 +16,10 @@ type AccountTab = 'dashboard' | 'profile' | 'addresses' | 'orders' | 'wishlist' 
 
 export default function AccountPage() {
   const router = useRouter();
-  const { 
+  const {
     user, logoutUser, updateUserProfile, addAddress, deleteAddress, addReview, showConfirm
   } = useApp();
-  
+
   const [activeTab, setActiveTab] = useState<AccountTab>('dashboard');
   const [mounted, setMounted] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -109,11 +109,11 @@ export default function AccountPage() {
       triggerNotification('Please fill out all address fields.', true);
       return;
     }
-    
+
     if (editingAddressId) {
-      const updatedAddresses = user.addresses.map(addr => 
-        addr.id === editingAddressId 
-          ? { ...addr, name: addrName, phone: addrPhone, address: addrAddress, city: addrCity, state: addrState, pincode: addrPincode, isDefault: addrDefault } 
+      const updatedAddresses = user.addresses.map(addr =>
+        addr.id === editingAddressId
+          ? { ...addr, name: addrName, phone: addrPhone, address: addrAddress, city: addrCity, state: addrState, pincode: addrPincode, isDefault: addrDefault }
           : addr
       );
       updateUserProfile({ addresses: updatedAddresses });
@@ -131,7 +131,7 @@ export default function AccountPage() {
       });
       triggerNotification('Address added to book!');
     }
-    
+
     // Reset form
     setAddrName('');
     setAddrPhone('');
@@ -149,11 +149,11 @@ export default function AccountPage() {
       triggerNotification('Please select a product and write a review.', true);
       return;
     }
-    
+
     if (editingReviewId) {
-      const updatedReviews = user.reviews.map(r => 
-        r.id === editingReviewId 
-          ? { ...r, rating: reviewRating, comment: reviewComment } 
+      const updatedReviews = user.reviews.map(r =>
+        r.id === editingReviewId
+          ? { ...r, rating: reviewRating, comment: reviewComment }
           : r
       );
       updateUserProfile({ reviews: updatedReviews });
@@ -165,7 +165,7 @@ export default function AccountPage() {
       addReview(reviewProdId, product.name, reviewRating, reviewComment);
       triggerNotification('Review submitted successfully!');
     }
-    
+
     setReviewCategory('');
     setReviewProdId('');
     setReviewComment('');
@@ -203,7 +203,7 @@ export default function AccountPage() {
       <Navbar />
 
       <main className="flex-grow pt-32 pb-24 px-4 md:px-8 mx-auto w-full max-w-[1400px]">
-        
+
         {/* Banner Card */}
         <div className="bg-[#462617] rounded-[24px] p-6 md:p-8 text-white mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-md relative overflow-hidden">
           <div className="absolute inset-0 opacity-10 bg-cover" style={{ backgroundImage: "url('/images/product-section/bottom-paper-texture.webp')" }}></div>
@@ -214,7 +214,7 @@ export default function AccountPage() {
             </h1>
             <p className="text-stone-200 text-xs mt-1 font-medium">Registered Mobile: {user.mobile}</p>
           </div>
-          <button 
+          <button
             onClick={handleLogout}
             className="relative z-10 flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-xs font-bold font-jakarta transition-colors border border-white/25 cursor-pointer"
           >
@@ -245,11 +245,10 @@ export default function AccountPage() {
                 <button
                   key={item.id}
                   onClick={() => { setActiveTab(item.id as AccountTab); setSuccessMsg(''); setErrorMsg(''); }}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold font-jakarta transition-colors cursor-pointer ${
-                    activeTab === item.id
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold font-jakarta transition-colors cursor-pointer ${activeTab === item.id
                       ? 'bg-[#384401] text-white font-bold'
                       : 'text-stone-700 hover:bg-stone-50 hover:text-stone-950'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon className="w-4.5 h-4.5" />
@@ -263,7 +262,7 @@ export default function AccountPage() {
 
           {/* Details Area / Right Column Content */}
           <section className="w-full lg:w-[72%] bg-white border border-[#eeddb9]/50 rounded-[24px] p-6 md:p-8 shadow-xs flex flex-col min-h-[480px]">
-            
+
             {/* TAB: DASHBOARD */}
             {activeTab === 'dashboard' && (
               <div className="flex flex-col gap-6">
@@ -279,7 +278,7 @@ export default function AccountPage() {
                       <ShoppingBag className="w-4 h-4 text-[#384401]" /> Orders Log
                     </h3>
                     <p className="text-stone-700 text-xs mb-3.5">You have placed {user.orders.length} order(s) traditionally prepared.</p>
-                    <button 
+                    <button
                       onClick={() => setActiveTab('orders')}
                       className="text-xs font-bold text-[#384401] hover:underline cursor-pointer flex items-center gap-0.5"
                     >
@@ -296,11 +295,11 @@ export default function AccountPage() {
                       <p className="text-stone-700 text-xs mb-3.5">No shipping addresses saved in your address book yet.</p>
                     ) : (
                       <div className="text-xs text-stone-700 leading-relaxed mb-3.5 truncate">
-                        <strong className="text-stone-900">{user.addresses.find(a => a.isDefault)?.name || user.addresses[0].name}</strong><br/>
+                        <strong className="text-stone-900">{user.addresses.find(a => a.isDefault)?.name || user.addresses[0].name}</strong><br />
                         {user.addresses.find(a => a.isDefault)?.address || user.addresses[0].address}
                       </div>
                     )}
-                    <button 
+                    <button
                       onClick={() => setActiveTab('addresses')}
                       className="text-xs font-bold text-[#384401] hover:underline cursor-pointer flex items-center gap-0.5"
                     >
@@ -413,7 +412,7 @@ export default function AccountPage() {
                     <h3 className="font-jakarta font-black text-base md:text-lg text-[#6a1010] border-b border-stone-250/20 pb-2.5 mb-4 uppercase">
                       {editingAddressId ? 'Edit Delivery Address' : 'New Delivery Address'}
                     </h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs sm:text-sm font-extrabold text-[#3E2C1C] uppercase tracking-wider block mb-2 font-jakarta">Recipient Name <span className="text-red-500">*</span></label>
@@ -544,13 +543,13 @@ export default function AccountPage() {
                               </span>
                             )}
                           </div>
-                          <div className="grid grid-cols-1 gap-1">
-                            <p className='text-black'><span className="font-bold text-stone-900 min-w-[75px] inline-block">Name:</span> {addr.name}</p>
-                            <p className='text-black'><span className="font-bold text-stone-900 min-w-[75px] inline-block">Address:</span> {addr.address}</p>
-                            <p className='text-black'><span className="font-bold text-stone-900 min-w-[75px] inline-block">City:</span> {addr.city}</p>
-                            <p className='text-black'><span className="font-bold text-stone-900 min-w-[75px] inline-block">State:</span> {addr.state || 'Karnataka'}</p>
-                            <p className='text-black'><span className="font-bold text-stone-900 min-w-[75px] inline-block">Pincode:</span> {addr.pincode}</p>
-                            <p className="mt-1 text-black"><span className="font-bold text-stone-900 min-w-[75px] inline-block">Phone:</span> {addr.phone}</p>
+                          <div className="grid grid-cols-1 gap-1 text-black">
+                            <div className="flex items-start"><span className="font-bold text-stone-900 w-[75px] shrink-0">Name:</span> <span>{addr.name}</span></div>
+                            <div className="flex items-start"><span className="font-bold text-stone-900 w-[75px] shrink-0">Address:</span> <span className="break-all">{addr.address}</span></div>
+                            <div className="flex items-start"><span className="font-bold text-stone-900 w-[75px] shrink-0">City:</span> <span>{addr.city}</span></div>
+                            <div className="flex items-start"><span className="font-bold text-stone-900 w-[75px] shrink-0">State:</span> <span>{addr.state || 'Karnataka'}</span></div>
+                            <div className="flex items-start"><span className="font-bold text-stone-900 w-[75px] shrink-0">Pincode:</span> <span>{addr.pincode}</span></div>
+                            <div className="flex items-start mt-0.5"><span className="font-bold text-stone-900 w-[75px] shrink-0">Phone:</span> <span>{addr.phone}</span></div>
                           </div>
                         </div>
 
@@ -610,7 +609,7 @@ export default function AccountPage() {
                           className="border border-[#eeddb9] rounded-2xl overflow-hidden shadow-xs"
                         >
                           {/* Order Header Summary Row */}
-                          <div 
+                          <div
                             onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
                             className="bg-[#FAF4E6]/50 hover:bg-[#FAF4E6] p-4 md:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 cursor-pointer border-b border-[#eeddb9]/50 select-none transition-colors"
                           >
@@ -624,15 +623,14 @@ export default function AccountPage() {
                                 <span className="text-stone-600 block mb-0.5 font-medium">Total Amount</span>
                                 <span className="font-extrabold text-stone-950 text-sm sm:text-base">₹{order.total}</span>
                               </div>
-                              
+
                               <div className="flex items-center gap-3">
-                                <span className={`text-[9px] sm:text-[10px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider ${
-                                  order.status === 'Delivered' 
+                                <span className={`text-[9px] sm:text-[10px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider ${order.status === 'Delivered'
                                     ? 'bg-[#e2edd3] text-[#384401]'
                                     : order.status === 'Cancelled'
                                       ? 'bg-red-50 text-red-650'
                                       : 'bg-[#FFECCB] text-[#5C4018]'
-                                }`}>
+                                  }`}>
                                   {order.status}
                                 </span>
                                 <ChevronRight className={`w-4 h-4 text-stone-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
@@ -640,10 +638,10 @@ export default function AccountPage() {
                             </div>
                           </div>
 
-                           {/* Expanded Order Items and Address Details */}
+                          {/* Expanded Order Items and Address Details */}
                           {isExpanded && (
                             <div className="p-5 bg-white flex flex-col gap-5 border-t border-[#eeddb9]/30">
-                              
+
                               {/* Product items list */}
                               <div className="flex flex-col gap-3">
                                 <h4 className="text-xs sm:text-sm font-extrabold text-[#3E2C1C] uppercase tracking-wider block mb-2">Items Purchased</h4>
@@ -684,18 +682,18 @@ export default function AccountPage() {
                               <div className="text-xs sm:text-sm text-stone-950 leading-relaxed font-jakarta">
                                 <h4 className="text-xs sm:text-sm font-extrabold text-[#3E2C1C] uppercase tracking-wider block mb-3">Delivered Address</h4>
                                 <div className="grid grid-cols-1 gap-1 text-black">
-                                  <p><span className="font-bold text-stone-900 min-w-[85px] inline-block">Name:</span> {order.address.name}</p>
-                                  <p><span className="font-bold text-stone-900 min-w-[85px] inline-block">Address:</span> {order.address.address}</p>
-                                  <p><span className="font-bold text-stone-900 min-w-[85px] inline-block">City:</span> {order.address.city}</p>
-                                  <p><span className="font-bold text-stone-900 min-w-[85px] inline-block">State:</span> {order.address.state || 'Karnataka'}</p>
-                                  <p><span className="font-bold text-stone-900 min-w-[85px] inline-block">Pincode:</span> {order.address.pincode}</p>
-                                  <p className="mt-1"><span className="font-bold text-stone-900 min-w-[85px] inline-block">Phone:</span> {order.address.phone}</p>
+                                  <div className="flex items-start"><span className="font-bold text-stone-900 w-[85px] shrink-0">Name:</span> <span>{order.address.name}</span></div>
+                                  <div className="flex items-start"><span className="font-bold text-stone-900 w-[85px] shrink-0">Address:</span> <span className="break-all">{order.address.address}</span></div>
+                                  <div className="flex items-start"><span className="font-bold text-stone-900 w-[85px] shrink-0">City:</span> <span>{order.address.city}</span></div>
+                                  <div className="flex items-start"><span className="font-bold text-stone-900 w-[85px] shrink-0">State:</span> <span>{order.address.state || 'Karnataka'}</span></div>
+                                  <div className="flex items-start"><span className="font-bold text-stone-900 w-[85px] shrink-0">Pincode:</span> <span>{order.address.pincode}</span></div>
+                                  <div className="flex items-start mt-0.5"><span className="font-bold text-stone-900 w-[85px] shrink-0">Phone:</span> <span>{order.address.phone}</span></div>
                                 </div>
                               </div>
 
                               {/* Track & Manage order navigation button */}
                               <div className="flex justify-end pt-3 mt-1.5 border-t border-[#eeddb9]/30">
-                                <Link 
+                                <Link
                                   href={`/orders/${order.id}`}
                                   className="px-5 py-2.5 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-medium rounded-xl transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
                                 >
@@ -726,7 +724,7 @@ export default function AccountPage() {
                   <h3 className="text-xs sm:text-sm font-extrabold text-[#3E2C1C] uppercase tracking-wider block mb-2">
                     {editingReviewId ? 'Edit Review' : 'Write a Review'}
                   </h3>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_1fr] items-end gap-4">
                     {/* Category Selector */}
                     <div className="flex flex-col gap-1.5 w-full">
@@ -766,7 +764,7 @@ export default function AccountPage() {
                         ))}
                       </select>
                     </div>
-                    
+
                     <div className="flex flex-col gap-1.5 justify-end w-full">
                       <span className="text-[10px] sm:text-xs font-extrabold text-[#3E2C1C] uppercase tracking-wider block">Rating Star</span>
                       <div className="flex items-center gap-3">
@@ -805,8 +803,8 @@ export default function AccountPage() {
                             return (
                               <div key={i} className="relative inline-block text-xl text-stone-200">
                                 <span>★</span>
-                                <div 
-                                  className="absolute top-0 left-0 overflow-hidden h-full text-amber-500" 
+                                <div
+                                  className="absolute top-0 left-0 overflow-hidden h-full text-amber-500"
                                   style={{ width: fillWidth }}
                                 >
                                   <span>★</span>
@@ -868,7 +866,7 @@ export default function AccountPage() {
                             <span className="font-bold text-stone-955 text-sm sm:text-base font-jakarta">{rev.productName}</span>
                             <span className="text-[10px] text-stone-500 font-jakarta block mt-0.5">{rev.date}</span>
                           </div>
-                          
+
                           <div className="flex gap-1.5 shrink-0">
                             <button
                               onClick={() => {
@@ -907,8 +905,8 @@ export default function AccountPage() {
                             return (
                               <div key={i} className="relative inline-block text-sm sm:text-base text-stone-200">
                                 <span>★</span>
-                                <div 
-                                  className="absolute top-0 left-0 overflow-hidden h-full text-amber-500" 
+                                <div
+                                  className="absolute top-0 left-0 overflow-hidden h-full text-amber-500"
                                   style={{ width: fillWidth }}
                                 >
                                   <span>★</span>

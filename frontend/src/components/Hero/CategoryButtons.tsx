@@ -47,6 +47,17 @@ function CategoryButton({
   const btnRef = useRef<HTMLButtonElement>(null);
   const { isHighlighted, isActive, isQueued, isDisabled } = buttonState;
 
+  // Auto-scroll highlighted buttons into view (especially useful for horizontal mobile ribbon)
+  useEffect(() => {
+    if (isHighlighted && btnRef.current) {
+      btnRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+    }
+  }, [isHighlighted]);
+
   const handleClick = useCallback(() => {
     if (isDisabled) return;
     // Click feedback scaling

@@ -606,6 +606,7 @@ export default function HeroSection() {
         products={activeCategory?.products ?? []}
         activeProductId={state.activeProductId}
         categoryColor={categoryColor}
+        categoryLabel={activeCategory?.label}
         visible={state.phase === 'TRAVEL' || state.phase === 'EXPLAIN'}
         onReturnClick={actions.returnClick}
         onProductClick={actions.productHighlight}

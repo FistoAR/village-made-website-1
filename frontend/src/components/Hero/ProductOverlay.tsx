@@ -1,12 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import { HeroProductConfig } from '@/types';
+import { useApp } from '@/lib/context/AppContext';
 
 interface ProductOverlayProps {
   products: HeroProductConfig[];
   activeProductId: string | null;
   categoryColor: string;
+  categoryLabel?: string;
   visible: boolean;
   onReturnClick: () => void;
   onProductClick: (productId: string | null) => void;
@@ -16,15 +19,31 @@ function ProductCard({
   product,
   isHighlighted,
   categoryColor,
+  categoryLabel,
   onClick,
 }: {
   product: HeroProductConfig;
   isHighlighted: boolean;
   categoryColor: string;
+  categoryLabel?: string;
   onClick: () => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
+  const { addToCart } = useApp();
+  const router = useRouter();
+  const [added, setAdded] = useState(false);
+
+  // Auto-scroll highlighted product cards into view
+  useEffect(() => {
+    if (isHighlighted && cardRef.current) {
+      cardRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+    }
+  }, [isHighlighted]);
 
   useEffect(() => {
     const el = cardRef.current;
@@ -68,12 +87,40 @@ function ProductCard({
     }
   }, [isHighlighted, categoryColor]);
 
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      weight: '500 g',
+      category: categoryLabel || 'Malt',
+      image: product.image,
+    }, 1);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      weight: '500 g',
+      category: categoryLabel || 'Malt',
+      image: product.image,
+    }, 1);
+    router.push('/cart');
+  };
+
   return (
     <div
       ref={cardRef}
       onClick={onClick}
       className={[
-        'w-full rounded-2xl border overflow-hidden transition-all duration-300 cursor-pointer select-none',
+        'w-full lg:w-full rounded-2xl border overflow-hidden transition-all duration-300 cursor-pointer select-none',
+        'max-lg:w-[280px] max-lg:shrink-0',
         isHighlighted 
           ? 'bg-gradient-to-b from-[#2b170c]/95 to-[#1c0e07]/95' 
           : 'bg-[#150a04]/80 hover:bg-[#1a0e06]/90 backdrop-blur-md',
@@ -97,7 +144,7 @@ function ProductCard({
 
         {/* Header Info */}
         <div className="flex flex-col justify-center flex-1 min-w-0">
-          <h3 className="font-display text-white text-sm md:text-[15px] font-bold leading-snug tracking-wide group-hover:text-[#eeddb9]">
+          <h3 className="font-display text-white text-sm md:text-[15px] font-bold leading-snug tracking-wide group-hover:text-[#eeddb9] truncate">
             {product.name}
           </h3>
           <span
@@ -111,17 +158,19 @@ function ProductCard({
 
       {/* Expanded details */}
       <div ref={detailsRef} className="overflow-hidden h-0 opacity-0 px-4 pb-4">
-        <p className="font-body text-white/70 text-xs md:text-sm leading-relaxed border-t border-[#eeddb9]/10 pt-3 mb-4 font-normal">
+        <p className="font-body text-white/70 text-[11px] leading-relaxed border-t border-[#eeddb9]/10 pt-3 mb-3 font-normal max-lg:line-clamp-2">
           {product.description}
         </p>
         <div className="flex gap-2.5">
           <button
-            className="flex-1 py-2.5 rounded-xl border border-[#eeddb9]/30 bg-transparent hover:bg-white/5 text-[#eeddb9] text-xs font-body font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer active:scale-[0.97]"
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
+            className={`flex-1 py-2.5 rounded-xl border text-xs font-body font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer active:scale-[0.97] ${
+              added 
+                ? 'bg-[#384401]/30 border-[#eeddb9]/50 text-white' 
+                : 'border-[#eeddb9]/30 bg-transparent hover:bg-white/5 text-[#eeddb9]'
+            }`}
+            onClick={handleAddToCart}
           >
-            Add to Cart
+            {added ? 'Added ✓' : 'Add to Cart'}
           </button>
           <button
             className="flex-1 py-2.5 rounded-xl text-xs font-body font-bold text-white tracking-widest uppercase transition-all duration-200 hover:brightness-110 active:scale-[0.97] cursor-pointer shadow-md"
@@ -129,9 +178,7 @@ function ProductCard({
               background: `linear-gradient(135deg, ${categoryColor} 0%, ${categoryColor}dd 100%)`,
               boxShadow: `0 4px 12px ${categoryColor}25`
             }}
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
+            onClick={handleBuyNow}
           >
             Buy Now
           </button>
@@ -145,6 +192,7 @@ export default function ProductOverlay({
   products,
   activeProductId,
   categoryColor,
+  categoryLabel,
   visible,
   onReturnClick,
   onProductClick,
@@ -175,27 +223,49 @@ export default function ProductOverlay({
         'absolute right-6 top-1/2 -translate-y-1/2 z-40',
         'flex flex-col gap-3.5 w-72 md:w-80 max-h-[85vh]',
         'overflow-y-auto pr-2 pl-2 hide-scrollbar py-2 items-center',
+        // Responsive mobile/tablet adjustments: horizontally scrollable strip at the bottom above category buttons
+        'max-lg:fixed max-lg:bottom-[76px] max-lg:left-0 max-lg:right-0 max-lg:top-auto max-lg:-translate-y-0',
+        'max-lg:w-full max-lg:max-h-[300px] max-lg:flex-row max-lg:overflow-x-auto max-lg:px-4 max-lg:py-3',
       ].join(' ')}
     >
+      {/* Return to Categories Button */}
       <button
         onClick={onReturnClick}
-        className="wood-btn-frame mb-3 cursor-pointer active:scale-95 transition-transform flex-shrink-0"
+        className={[
+          'cursor-pointer active:scale-95 transition-all flex-shrink-0 flex items-center justify-center',
+          // Desktop: premium wooden button
+          'lg:wood-btn-frame lg:mb-3',
+          // Mobile/Tablet: compact wooden card matching the product ribbon height
+          'max-lg:w-24 max-lg:h-[96px] max-lg:flex-col max-lg:gap-1.5 max-lg:rounded-2xl max-lg:border max-lg:border-[#eeddb9]/20 max-lg:bg-gradient-to-b max-lg:from-[#2e190e] max-lg:to-[#170c07] max-lg:shadow-lg'
+        ].join(' ')}
       >
-        <span className="wood-btn-icon-circle">🏠</span>
-        <span className="wood-btn-parchment">Return to Categories</span>
+        <span className={[
+          'flex-shrink-0',
+          'lg:wood-btn-icon-circle',
+          'max-lg:w-10 max-lg:h-10 max-lg:rounded-full max-lg:bg-gradient-to-b max-lg:from-[#eedeb8] max-lg:to-[#dcbfa0] max-lg:border max-lg:border-[#4d2d1b] max-lg:flex max-lg:items-center max-lg:justify-center max-lg:text-base max-lg:shadow-inner'
+        ].join(' ')}>🏠</span>
+        
+        <span className={[
+          'font-body font-bold tracking-wider',
+          'lg:wood-btn-parchment',
+          'max-lg:text-[10px] max-lg:text-[#eeddb9]/90'
+        ].join(' ')}>
+          Return
+        </span>
       </button>
 
-      <div className="w-full text-left text-xs md:text-sm font-semibold font-body text-[#eeddb9]/60 tracking-[0.15em] uppercase mb-1 pl-1">
+      <div className="w-full text-left text-xs md:text-sm font-semibold font-body text-[#eeddb9]/60 tracking-[0.15em] uppercase mb-1 pl-1 max-lg:hidden">
         Featured Products
       </div>
+
       {products.map((p) => (
         <ProductCard
           key={p.id}
           product={p}
+          categoryLabel={categoryLabel}
           isHighlighted={activeProductId === p.id}
           categoryColor={categoryColor}
           onClick={() => {
-            // Toggle highlight on click
             if (activeProductId === p.id) {
               onProductClick(null);
             } else {
@@ -207,3 +277,4 @@ export default function ProductOverlay({
     </div>
   );
 }
+

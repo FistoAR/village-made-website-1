@@ -11,29 +11,34 @@ import { Suspense } from "react";
 const inter = Inter({ 
   subsets: ["latin"],
   variable: "--font-body",
+  display: "swap",
 });
 
 const cormorant = Cormorant_Garamond({
   weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
   variable: "--font-display",
+  display: "swap",
 });
 
 const fredoka = Fredoka({
   weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
   variable: "--font-rounded",
+  display: "swap",
 });
 
 const poetsen = Poetsen_One({
   weight: "400",
   subsets: ["latin"],
   variable: "--font-poetsen",
+  display: "swap",
 });
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-jakarta",
+  display: "swap",
 });
 
 export const metadata: Metadata = {

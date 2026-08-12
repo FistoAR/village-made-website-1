@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useMemo, useEffect } from 'react';
+import { use, useState, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -73,6 +73,34 @@ export default function ProductDetailPage({
   const { addToCart, addProductReview, user, cart } = useApp();
   const router = useRouter();
   const [added, setAdded] = useState(false);
+
+  // Lazy-load the hero video — only fetch + play when panel is visible
+  const detailVideoRef = useRef<HTMLVideoElement>(null);
+  const detailVideoWrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const video = detailVideoRef.current;
+    const wrap = detailVideoWrapRef.current;
+    if (!video || !wrap) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (!video.src) {
+            video.src = '/videos/products/product-sample-video.webm';
+          }
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(wrap);
+    return () => observer.disconnect();
+  }, []);
+
 
   const isItemInCart = useMemo(() => {
     if (!product) return false;
@@ -228,15 +256,15 @@ export default function ProductDetailPage({
         {/* Main Details Panel */}
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-[5%] mb-8 md:mb-12 items-stretch justify-between">
 
-          {/* Left Column: Video or Image Showcase */}
+          {/* Left Column: Video Showcase — lazy-loaded */}
           <div className="w-full lg:w-[47.5%] flex flex-col">
-            <div className="relative w-full h-full aspect-square sm:aspect-[4/3] lg:aspect-auto min-h-[350px] lg:min-h-0 bg-white rounded-[32px] overflow-hidden border border-[#eeddb9]/40 shadow-xs flex-grow">
+            <div className="relative w-full h-full aspect-square sm:aspect-[4/3] lg:aspect-auto min-h-[350px] lg:min-h-0 bg-white rounded-[32px] overflow-hidden border border-[#eeddb9]/40 shadow-xs flex-grow" ref={detailVideoWrapRef}>
               <video
-                src="/videos/products/product-sample-video.webm"
-                autoPlay
-                loop
+                ref={detailVideoRef}
                 muted
+                loop
                 playsInline
+                preload="none"
                 className="absolute inset-0 w-full h-full object-cover"
               />
             </div>
@@ -495,6 +523,7 @@ export default function ProductDetailPage({
                     src="/images/products/details-page/description-image-1.webp"
                     alt="Porridge Bowl Showcase"
                     fill
+                    sizes="(max-width: 1024px) 100vw, 28vw"
                     className="object-cover"
                   />
                 </div>

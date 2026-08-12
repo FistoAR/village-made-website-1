@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/Product/ProductCard';
+import { useApp } from '@/lib/context/AppContext';
 
 interface Product {
   id: string;
@@ -34,7 +35,7 @@ const CATEGORIES = [
   { id: 'snacks', name: 'Snacks', count: 7 },
 ];
 
-const PRODUCTS: Product[] = [
+const STATIC_PRODUCTS: Product[] = [
   // MALT (6)
   { id: 'm-1', category: 'Malt', name: 'BANANA BABY MALT', description: 'Traditionally prepared nutritional energy mix for infants and kids.', price: 250, badge: 'BEST SELLER' },
   { id: 'm-2', category: 'Malt', name: 'SWEET POTATO MALT', description: 'Rich in fiber and vitamins, naturally sweet energy booster.', price: 280, badge: 'BEST SELLER' },
@@ -450,19 +451,24 @@ function CategoryDropdown({
 }
 
 export default function ProductsPage() {
+  const { products: dbProducts } = useApp();
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const totalCount = PRODUCTS.length;
+  const productsList = useMemo(() => {
+    return dbProducts && dbProducts.length > 0 ? dbProducts : STATIC_PRODUCTS;
+  }, [dbProducts]);
+
+  const totalCount = productsList.length;
 
   // When a category is selected, scope search suggestions to that category's products
   const searchScopeProducts = selectedCategoryId
-    ? PRODUCTS.filter((p) => matchesCategory(p, selectedCategoryId))
-    : PRODUCTS;
+    ? productsList.filter((p) => matchesCategory(p, selectedCategoryId))
+    : productsList;
 
   // Derive filtered + searched product list — memoized so only recalculates
   // when search/category changes, not on every render
-  const filteredProducts = useMemo(() => PRODUCTS.filter((p) => {
+  const filteredProducts = useMemo(() => productsList.filter((p) => {
     const matchesCat = selectedCategoryId === '' || matchesCategory(p, selectedCategoryId);
     const q = searchQuery.trim().toLowerCase();
     const matchesSearch =
@@ -471,7 +477,7 @@ export default function ProductsPage() {
       p.description.toLowerCase().includes(q) ||
       p.category.toLowerCase().includes(q);
     return matchesCat && matchesSearch;
-  }), [selectedCategoryId, searchQuery]);
+  }), [selectedCategoryId, searchQuery, productsList]);
 
   // Group filtered products by category for display
   const categoriesToRender = useMemo(() =>
@@ -571,7 +577,7 @@ export default function ProductsPage() {
       </section>
 
       {/* Catalog Grouped Grid */}
-      <main className="py-8 px-6 md:px-12 lg:px-18 mx-auto min-h-[60vh]">
+      <main className="py-8 px-6 md:px-12 lg:px-18 mx-auto min-h-[60vh] pb-20">
         {categoriesToRender.length === 0 ? (
           /* Empty state */
           <div className="flex flex-col items-center justify-center py-28 text-center">

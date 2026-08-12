@@ -99,6 +99,10 @@ interface AppContextType {
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   showAlert: (title: string, message: string, type?: 'success' | 'error' | 'info') => void;
   showConfirm: (title: string, message: string, onConfirm: () => void, onCancel?: () => void) => void;
+  products: any[];
+  categories: any[];
+  fetchProducts: () => Promise<void>;
+  fetchCategories: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -111,6 +115,53 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // User auth state
   const [user, setUser] = useState<User | null>(null);
+
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+
+  const fetchProducts = async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+        setProducts(data.products);
+      } else {
+        const localData = await import('@/data/products-list');
+        setProducts(localData.PRODUCTS);
+      }
+    } catch (err) {
+      console.warn('⚠️ Failed to load products from API, falling back to local catalog:', err);
+      try {
+        const localData = await import('@/data/products-list');
+        setProducts(localData.PRODUCTS);
+      } catch (fallbackErr) {
+        console.error('❌ Failed to load local catalog fallback:', fallbackErr);
+      }
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products/categories`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.categories) && data.categories.length > 0) {
+        setCategories(data.categories);
+      } else {
+        const localCats = await import('@/data/categories.json');
+        setCategories(localCats.default || localCats);
+      }
+    } catch (err) {
+      console.warn('⚠️ Failed to load categories from API, falling back to local configuration:', err);
+      try {
+        const localCats = await import('@/data/categories.json');
+        setCategories(localCats.default || localCats);
+      } catch (fallbackErr) {
+        console.error('❌ Failed to load local categories fallback:', fallbackErr);
+      }
+    }
+  };
 
   const toggleSound = () => setSoundOn(prev => !prev);
   
@@ -138,6 +189,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }
     
+    fetchProducts();
+    fetchCategories();
     setIsHydrated(true);
   }, []);
 
@@ -565,6 +618,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         showToast,
         showAlert,
         showConfirm,
+        products,
+        categories,
+        fetchProducts,
+        fetchCategories,
       }}
     >
       {children}

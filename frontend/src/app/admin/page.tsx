@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, Users, ShoppingBag, DollarSign, Package, Activity, 
-  Search, Edit3, Check, X, AlertCircle, RefreshCw, ChevronRight, 
+  Search, Edit3, Edit, Trash2, Check, X, AlertCircle, RefreshCw, ChevronRight, 
   TrendingUp, Star, Truck, Clipboard, Plus, ShieldCheck, Key, 
   Eye, EyeOff, Image as ImageIcon, Sparkles, FolderOpen, ArrowRight,
   TrendingDown, Layers, FileSpreadsheet, Settings, User
@@ -78,10 +78,15 @@ interface OfferBanner {
 interface ExtendedProduct extends Product {
   stock: number;
   purchasePrice?: number;
+  image?: string;
+  video?: string;
+  benefits?: string[];
+  ingredients?: string[];
+  features?: any;
 }
 
 export default function AdminPage() {
-  const { loginUser, showConfirm, user, updateUserProfile, logoutUser } = useApp();
+  const { loginUser, showConfirm, user, updateUserProfile, logoutUser, products, fetchProducts } = useApp();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -137,6 +142,12 @@ export default function AdminPage() {
   const [newProdDesc, setNewProdDesc] = useState('');
   const [newProdBadge, setNewProdBadge] = useState('');
   const [newProdStock, setNewProdStock] = useState(25);
+  const [newProdImage, setNewProdImage] = useState('');
+  const [newProdVideo, setNewProdVideo] = useState('');
+  const [newProdBenefits, setNewProdBenefits] = useState('');
+  const [newProdIngredients, setNewProdIngredients] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   // Purchase Entry Form
   const [purchaseProdId, setPurchaseProdId] = useState('');
@@ -236,15 +247,6 @@ export default function AdminPage() {
 
   useEffect(() => {
     setMounted(true);
-    // Initialize products with simulated stock values
-    const extended = PRODUCTS.map((p, index) => ({
-      ...p,
-      // Simulate low stock on some specific index values (e.g. index 0, 5, 12) to trigger Low Stock alerts
-      stock: index === 0 ? 4 : index === 5 ? 8 : index === 12 ? 3 : Math.floor(15 + Math.random() * 45),
-      purchasePrice: Math.floor(p.price * 0.6)
-    }));
-    setLocalProducts(extended);
-    
     // Check if admin is authenticated from session
     const isAuth = sessionStorage.getItem('is_admin_auth') === 'true';
     if (isAuth) {
@@ -252,6 +254,17 @@ export default function AdminPage() {
       fetchAdminData();
     }
   }, []);
+
+  useEffect(() => {
+    if (products && products.length > 0) {
+      const extended = products.map((p, index) => ({
+        ...p,
+        stock: p.stock !== undefined ? p.stock : (index === 0 ? 4 : index === 5 ? 8 : index === 12 ? 3 : Math.floor(15 + Math.random() * 45)),
+        purchasePrice: p.purchasePrice !== undefined ? p.purchasePrice : Math.floor(p.price * 0.6)
+      }));
+      setLocalProducts(extended);
+    }
+  }, [products]);
 
   // Pre-fill profile state when context user is loaded
   useEffect(() => {
@@ -429,41 +442,182 @@ export default function AdminPage() {
     triggerAlert('Purchase inventory log recorded successfully!');
   };
 
+  const handleFileUpload = async (file: File, bucket: 'product-images' | 'product-videos'): Promise<string | null> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', bucket);
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        return data.url;
+      } else {
+        triggerAlert(data.error || 'Failed to upload file to storage.', true);
+        return null;
+      }
+    } catch (err) {
+      console.error(err);
+      triggerAlert('Failed to connect to file upload server.', true);
+      return null;
+    }
+  };
+
   // Add Product Submit
-  const handleAddProductSubmit = (e: React.FormEvent) => {
+  const handleAddProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProdName || newProdPrice <= 0) {
       triggerAlert('Please enter valid product details', true);
       return;
     }
-    const newProduct: ExtendedProduct = {
-      id: `p-new-${Math.floor(Math.random() * 1000)}`,
-      name: newProdName,
-      price: newProdPrice,
-      category: newProdCat,
-      description: newProdDesc,
-      badge: newProdBadge || undefined,
-      stock: newProdStock,
-      purchasePrice: Math.floor(newProdPrice * 0.65)
-    };
 
-    setLocalProducts(prev => [newProduct, ...prev]);
-    setShowAddProduct(false);
-    setNewProdName('');
-    setNewProdPrice(100);
-    setNewProdDesc('');
-    setNewProdBadge('');
-    setNewProdStock(25);
-    triggerAlert('Product added to control sheet!');
+    const catMap: Record<string, string> = {
+      'Malt': 'malt',
+      'Natural Health Mix': 'natural-health-mix',
+      'Millets': 'millets',
+      'Millet Flours': 'millet-flours',
+      'Millet Tiffin mix': 'millet-tiffin-mix',
+      'Millet Noodles': 'millet-noodles'
+    };
+    const categoryId = catMap[newProdCat] || 'malt';
+    const newId = `p-new-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: newId,
+          categoryId,
+          name: newProdName,
+          price: newProdPrice,
+          description: newProdDesc,
+          badge: newProdBadge || undefined,
+          stock: newProdStock,
+          purchasePrice: Math.floor(newProdPrice * 0.65),
+          weights: ['250 g', '500 g', '1 kg'],
+          imageUrl: newProdImage || null,
+          videoUrl: newProdVideo || null,
+          benefits: newProdBenefits ? newProdBenefits.split(',').map(s => s.trim()) : ['Traditional Nutrition', 'Easy to Digest', 'Natural Goodness'],
+          ingredients: newProdIngredients ? newProdIngredients.split(',').map(s => s.trim()) : ['Natural ingredients'],
+          features: { shelf_life: '6 Months', suitable_for: 'All age groups' }
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerAlert('Product added to database catalog!');
+        await fetchProducts();
+        setShowAddProduct(false);
+        setNewProdName('');
+        setNewProdPrice(100);
+        setNewProdDesc('');
+        setNewProdBadge('');
+        setNewProdStock(25);
+        setNewProdImage('');
+        setNewProdVideo('');
+        setNewProdBenefits('');
+        setNewProdIngredients('');
+      } else {
+        triggerAlert(data.error || 'Failed to save product to database.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      triggerAlert('Failed to connect to catalog API, saving locally.', true);
+      const newProduct: ExtendedProduct = {
+        id: newId,
+        name: newProdName,
+        price: newProdPrice,
+        category: newProdCat,
+        description: newProdDesc,
+        badge: newProdBadge || undefined,
+        stock: newProdStock,
+        purchasePrice: Math.floor(newProdPrice * 0.65)
+      };
+      setLocalProducts(prev => [newProduct, ...prev]);
+      setShowAddProduct(false);
+    }
   };
 
-  const handleUpdateProduct = (e: React.FormEvent) => {
+  const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
 
-    setLocalProducts(prev => prev.map(p => p.id === editingProduct.id ? editingProduct : p));
-    setEditingProduct(null);
-    triggerAlert('Product details updated successfully!');
+    const catMap: Record<string, string> = {
+      'Malt': 'malt',
+      'Natural Health Mix': 'natural-health-mix',
+      'Millets': 'millets',
+      'Millet Flours': 'millet-flours',
+      'Millet Tiffin mix': 'millet-tiffin-mix',
+      'Millet Noodles': 'millet-noodles'
+    };
+    const categoryId = catMap[editingProduct.category] || 'malt';
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products/${editingProduct.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          categoryId,
+          name: editingProduct.name,
+          price: editingProduct.price,
+          description: editingProduct.description,
+          badge: editingProduct.badge || null,
+          stock: editingProduct.stock,
+          purchasePrice: editingProduct.purchasePrice || Math.floor(editingProduct.price * 0.65),
+          weights: editingProduct.weights || ['250 g', '500 g', '1 kg'],
+          imageUrl: editingProduct.image || null,
+          videoUrl: editingProduct.video || null,
+          benefits: editingProduct.benefits || ['Traditional Nutrition', 'Easy to Digest', 'Natural Goodness'],
+          ingredients: editingProduct.ingredients || ['Natural ingredients'],
+          features: editingProduct.features || { shelf_life: '6 Months' }
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerAlert('Product details updated successfully!');
+        await fetchProducts();
+        setEditingProduct(null);
+      } else {
+        triggerAlert(data.error || 'Failed to update product details.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      triggerAlert('Failed to update catalog API, saving locally.', true);
+      setLocalProducts(prev => prev.map(p => p.id === editingProduct.id ? editingProduct : p));
+      setEditingProduct(null);
+    }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    showConfirm(
+      'Remove Product',
+      'Are you sure you want to permanently delete this product from the inventory catalog?',
+      async () => {
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+          const res = await fetch(`${baseUrl}/products/${productId}`, {
+            method: 'DELETE'
+          });
+          const data = await res.json();
+          if (data.success) {
+            triggerAlert('Product removed from database catalog!');
+            await fetchProducts();
+          } else {
+            triggerAlert(data.error || 'Failed to delete product.', true);
+          }
+        } catch (err) {
+          console.error(err);
+          triggerAlert('Failed to delete catalog API product, removing locally.', true);
+          setLocalProducts(prev => prev.filter(p => p.id !== productId));
+        }
+      }
+    );
   };
 
   // Add Offer Banner
@@ -1125,7 +1279,22 @@ export default function AdminPage() {
                 {showAddProduct && (
                   <form onSubmit={handleAddProductSubmit} className="border border-[#eeddb9] rounded-2xl p-5 bg-[#FAF4E6]/20 space-y-4">
                     <h4 className="text-xs font-black uppercase tracking-wider text-[#384401] font-jakarta">Add New Provision Product</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1.5fr] gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_1fr] gap-4">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Category</label>
+                        <select
+                          value={newProdCat}
+                          onChange={(e) => setNewProdCat(e.target.value)}
+                          className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                        >
+                          <option value="Malt">Malt</option>
+                          <option value="Natural Health Mix">Natural Health Mix</option>
+                          <option value="Millets">Millets</option>
+                          <option value="Millet Flours">Millet Flours</option>
+                          <option value="Millet Tiffin mix">Millet Tiffin mix</option>
+                          <option value="Millet Noodles">Millet Noodles</option>
+                        </select>
+                      </div>
                       <div className="flex flex-col gap-1">
                         <label className="text-[10px] font-bold text-stone-600">Product Name</label>
                         <input
@@ -1146,21 +1315,6 @@ export default function AdminPage() {
                           onChange={(e) => setNewProdPrice(Number(e.target.value))}
                           className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
                         />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-stone-600">Category</label>
-                        <select
-                          value={newProdCat}
-                          onChange={(e) => setNewProdCat(e.target.value)}
-                          className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
-                        >
-                          <option value="Malt">Malt</option>
-                          <option value="Natural Health Mix">Natural Health Mix</option>
-                          <option value="Millets">Millets</option>
-                          <option value="Millet Flours">Millet Flours</option>
-                          <option value="Millet Tiffin mix">Millet Tiffin mix</option>
-                          <option value="Millet Noodles">Millet Noodles</option>
-                        </select>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-jakarta">
@@ -1194,6 +1348,76 @@ export default function AdminPage() {
                         />
                       </div>
                     </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Product Image (Upload directly to Supabase storage)</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setUploadingImage(true);
+                                const url = await handleFileUpload(file, 'product-images');
+                                if (url) setNewProdImage(url);
+                                setUploadingImage(false);
+                              }
+                            }}
+                            className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border file:border-[#eeddb9] file:text-xs file:font-bold file:bg-white file:text-[#384401] hover:file:bg-[#FAF4E6] cursor-pointer"
+                          />
+                          {uploadingImage && <span className="text-[10px] text-[#C56C4F] font-bold animate-pulse">Uploading...</span>}
+                        </div>
+                        {newProdImage && (
+                          <span className="text-[9px] text-[#384401] font-bold block truncate max-w-xs mt-1">Uploaded: {newProdImage}</span>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Product Video (Upload directly to Supabase storage)</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="file"
+                            accept="video/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setUploadingVideo(true);
+                                const url = await handleFileUpload(file, 'product-videos');
+                                if (url) setNewProdVideo(url);
+                                setUploadingVideo(false);
+                              }
+                            }}
+                            className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border file:border-[#eeddb9] file:text-xs file:font-bold file:bg-white file:text-[#384401] hover:file:bg-[#FAF4E6] cursor-pointer"
+                          />
+                          {uploadingVideo && <span className="text-[10px] text-[#C56C4F] font-bold animate-pulse">Uploading...</span>}
+                        </div>
+                        {newProdVideo && (
+                          <span className="text-[9px] text-[#384401] font-bold block truncate max-w-xs mt-1">Uploaded: {newProdVideo}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Benefits (Comma separated)</label>
+                        <input
+                          type="text"
+                          value={newProdBenefits}
+                          onChange={(e) => setNewProdBenefits(e.target.value)}
+                          placeholder="e.g. Traditional Nutrition, Easy to Digest"
+                          className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Ingredients (Comma separated)</label>
+                        <input
+                          type="text"
+                          value={newProdIngredients}
+                          onChange={(e) => setNewProdIngredients(e.target.value)}
+                          placeholder="e.g. Sprouted grains, Almonds"
+                          className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                        />
+                      </div>
+                    </div>
                     <div className="flex gap-2">
                       <button type="submit" className="bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-2 px-4 rounded-lg cursor-pointer">
                         Save Product
@@ -1209,7 +1433,22 @@ export default function AdminPage() {
                 {editingProduct && (
                   <form onSubmit={handleUpdateProduct} className="border border-amber-200 rounded-2xl p-5 bg-amber-50/10 space-y-4 font-jakarta">
                     <h4 className="text-xs font-black uppercase tracking-wider text-amber-800 font-jakarta">Edit Provision Product Details</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1.5fr] gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_1fr] gap-4">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Category</label>
+                        <select
+                          value={editingProduct.category}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
+                          className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                        >
+                          <option value="Malt">Malt</option>
+                          <option value="Natural Health Mix">Natural Health Mix</option>
+                          <option value="Millets">Millets</option>
+                          <option value="Millet Flours">Millet Flours</option>
+                          <option value="Millet Tiffin mix">Millet Tiffin mix</option>
+                          <option value="Millet Noodles">Millet Noodles</option>
+                        </select>
+                      </div>
                       <div className="flex flex-col gap-1">
                         <label className="text-[10px] font-bold text-stone-600">Product Name</label>
                         <input
@@ -1230,8 +1469,19 @@ export default function AdminPage() {
                           className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
                         />
                       </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-jakarta">
                       <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-stone-600">Badge</label>
+                        <label className="text-[10px] font-bold text-stone-600">Description</label>
+                        <input
+                          type="text"
+                          value={editingProduct.description}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                          className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Ribbon Badge (Optional)</label>
                         <input
                           type="text"
                           value={editingProduct.badge || ''}
@@ -1240,15 +1490,83 @@ export default function AdminPage() {
                           className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
                         />
                       </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Stock</label>
+                        <input
+                          type="number"
+                          value={editingProduct.stock}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, stock: parseInt(e.target.value) || 0 })}
+                          className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
+                        />
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-stone-600">Description</label>
-                      <input
-                        type="text"
-                        value={editingProduct.description}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
-                        className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Product Image (Change file)</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setUploadingImage(true);
+                                const url = await handleFileUpload(file, 'product-images');
+                                if (url) setEditingProduct({ ...editingProduct, image: url });
+                                setUploadingImage(false);
+                              }
+                            }}
+                            className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border file:border-[#eeddb9] file:text-xs file:font-bold file:bg-white file:text-[#384401] hover:file:bg-[#FAF4E6] cursor-pointer"
+                          />
+                          {uploadingImage && <span className="text-[10px] text-[#C56C4F] font-bold animate-pulse">Uploading...</span>}
+                        </div>
+                        {editingProduct.image && (
+                          <span className="text-[9px] text-[#384401] font-bold block truncate max-w-xs mt-1">URL: {editingProduct.image}</span>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Product Video (Change file)</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="file"
+                            accept="video/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setUploadingVideo(true);
+                                const url = await handleFileUpload(file, 'product-videos');
+                                if (url) setEditingProduct({ ...editingProduct, video: url });
+                                setUploadingVideo(false);
+                              }
+                            }}
+                            className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border file:border-[#eeddb9] file:text-xs file:font-bold file:bg-white file:text-[#384401] hover:file:bg-[#FAF4E6] cursor-pointer"
+                          />
+                          {uploadingVideo && <span className="text-[10px] text-[#C56C4F] font-bold animate-pulse">Uploading...</span>}
+                        </div>
+                        {editingProduct.video && (
+                          <span className="text-[9px] text-[#384401] font-bold block truncate max-w-xs mt-1">URL: {editingProduct.video}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Benefits (Comma separated)</label>
+                        <input
+                          type="text"
+                          value={editingProduct.benefits ? editingProduct.benefits.join(', ') : ''}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, benefits: e.target.value.split(',').map(s => s.trim()) })}
+                          className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Ingredients (Comma separated)</label>
+                        <input
+                          type="text"
+                          value={editingProduct.ingredients ? editingProduct.ingredients.join(', ') : ''}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, ingredients: e.target.value.split(',').map(s => s.trim()) })}
+                          className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
+                        />
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <button type="submit" className="bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-2 px-4 rounded-lg cursor-pointer">
@@ -1280,16 +1598,25 @@ export default function AdminPage() {
                           <span className="font-bold text-stone-955">₹{p.price}</span>
                           <span className="text-[10px] text-stone-455 font-jakarta">Stock: {p.stock}</span>
                         </div>
-                        <button
-                          onClick={() => {
-                            setShowAddProduct(false);
-                            setEditingProduct(p);
-                          }}
-                          className="flex items-center gap-1 text-stone-600 hover:text-[#384401] text-xs font-bold cursor-pointer"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                          Modify
-                        </button>
+                        <div className="flex gap-3 items-center">
+                          <button
+                            onClick={() => {
+                              setShowAddProduct(false);
+                              setEditingProduct(p);
+                            }}
+                            className="flex items-center gap-1 text-stone-600 hover:text-[#384401] text-xs font-bold cursor-pointer"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            Modify
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProduct(p.id)}
+                            className="flex items-center gap-1 text-red-650 hover:text-red-800 text-xs font-bold cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}

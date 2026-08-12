@@ -85,6 +85,7 @@ interface AppContextType {
   user: User | null;
   registerUser: (mobile: string, password?: string, optionalData?: { name?: string; phone?: string; email?: string }) => Promise<{ success: boolean; error?: string }>;
   loginUser: (mobile: string, password?: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (mobile: string, otp: string, newPassword?: string) => Promise<{ success: boolean; error?: string }>;
   logoutUser: () => void;
   updateUserProfile: (data: Partial<User>) => void;
   toggleWishlist: (productId: string) => void;
@@ -177,7 +178,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [cart, isHydrated]);
 
-  // Sync user state to localStorage when it changes
+  // Sync user state to localStorage & backend Postgres database when it changes
   useEffect(() => {
     if (isHydrated) {
       if (user) {
@@ -187,6 +188,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const usersDb = JSON.parse(localStorage.getItem('village_made_users_db') || '[]');
         const updatedDb = usersDb.map((u: User) => u.mobile === user.mobile ? user : u);
         localStorage.setItem('village_made_users_db', JSON.stringify(updatedDb));
+
+        // Asynchronously sync the profile changes to the Postgres backend
+        const syncProfile = async () => {
+          try {
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+            await fetch(`${baseUrl}/auth/profile`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                mobile: user.mobile,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                addresses: user.addresses,
+                wishlist: user.wishlist,
+                reviews: user.reviews,
+                notifications: user.notifications,
+                orders: user.orders
+              })
+            });
+          } catch (e) {
+            console.error('Failed to sync user profile with backend database', e);
+          }
+        };
+        syncProfile();
       } else {
         localStorage.removeItem('village_made_user');
       }
@@ -304,7 +330,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { success: false, error: 'Network error connecting to auth server.' };
     }
   };
-
+  const resetPassword = async (mobile: string, otp: string, newPassword?: string) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mobile: mobile.trim(),
+          otp: otp.trim(),
+          newPassword: newPassword?.trim()
+        })
+      });
+      const data = await res.json();
+      return { success: res.ok && data.success, error: data.error };
+    } catch (err) {
+      return { success: false, error: 'Network error connecting to auth server.' };
+    }
+  };
   const logoutUser = () => {
     setUser(null);
   };
@@ -509,6 +552,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         user,
         registerUser,
         loginUser,
+        resetPassword,
         logoutUser,
         updateUserProfile,
         toggleWishlist,

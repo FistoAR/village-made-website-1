@@ -14,7 +14,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('login');
-  const { user, loginUser, registerUser } = useApp();
+  const { user, loginUser, registerUser, resetPassword } = useApp();
   const [mounted, setMounted] = useState(false);
 
   // Form states
@@ -32,6 +32,8 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
   // UI status states
   const [error, setError] = useState('');
@@ -109,6 +111,8 @@ export default function LoginPage() {
     setConfirmPassword('');
     setShowNewPassword(false);
     setShowConfirmPassword(false);
+    setShowLoginPassword(false);
+    setShowRegisterPassword(false);
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -188,16 +192,24 @@ export default function LoginPage() {
       }
 
       setLoading(true);
-      setTimeout(() => {
+      try {
+        const res = await resetPassword(forgotMobile, recoveryOtp, newPassword);
         setLoading(false);
-        setSuccess('Password updated successfully! Please log in with your new credentials.');
-        setActiveTab('login');
-        setMobile(forgotMobile);
-        setRecoveryStep('mobile');
-        setRecoveryOtp('');
-        setNewPassword('');
-        setConfirmPassword('');
-      }, 1000);
+        if (res.success) {
+          setSuccess('Password updated successfully! Please log in with your new credentials.');
+          setActiveTab('login');
+          setMobile(forgotMobile);
+          setRecoveryStep('mobile');
+          setRecoveryOtp('');
+          setNewPassword('');
+          setConfirmPassword('');
+        } else {
+          setError(res.error || 'Failed to reset password. Please check your inputs and try again.');
+        }
+      } catch (err) {
+        setLoading(false);
+        setError('An unexpected network error occurred. Please try again.');
+      }
     }
   };
 
@@ -313,14 +325,24 @@ export default function LoginPage() {
 
                 <div>
                   <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Password <span className="text-red-500">*</span></label>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your account password"
-                    className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showLoginPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your account password"
+                      className="w-full h-11 pl-4 pr-10 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-850 cursor-pointer"
+                      aria-label="Toggle password visibility"
+                    >
+                      {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 <button
@@ -351,14 +373,24 @@ export default function LoginPage() {
 
                 <div>
                   <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Password (min 6 characters) <span className="text-red-500">*</span></label>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Choose a secure account password"
-                    className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showRegisterPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Choose a secure account password"
+                      className="w-full h-11 pl-4 pr-10 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-850 cursor-pointer"
+                      aria-label="Toggle password visibility"
+                    >
+                      {showRegisterPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>

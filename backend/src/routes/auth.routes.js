@@ -128,3 +128,113 @@ authRouter.post('/login', async (req, res, next) => {
     next(error);
   }
 });
+
+/**
+ * POST /api/auth/reset-password
+ * Reset password using OTP verification (OTP is hardcoded to 112233).
+ */
+authRouter.post('/reset-password', async (req, res, next) => {
+  const { mobile, otp, newPassword } = req.body;
+
+  if (!mobile || !otp || !newPassword) {
+    return res.status(400).json({ success: false, error: 'Mobile, OTP, and new password are required.' });
+  }
+
+  if (otp !== '112233') {
+    return res.status(400).json({ success: false, error: 'Invalid verification OTP.' });
+  }
+
+  if (newPassword.trim().length < 6) {
+    return res.status(400).json({ success: false, error: 'Password must be at least 6 characters long.' });
+  }
+
+  try {
+    const cleanMobile = mobile.trim();
+    const userResult = await query('SELECT * FROM users WHERE mobile = $1', [cleanMobile]);
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User mobile number not found.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword.trim(), salt);
+
+    await query('UPDATE users SET password = $1 WHERE mobile = $2', [hashedPassword, cleanMobile]);
+    return res.status(200).json({ success: true, message: 'Password reset successful.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * PUT /api/auth/profile
+ * Synchronize user profile values (JSONB arrays & text fields).
+ */
+authRouter.put('/profile', async (req, res, next) => {
+  const { mobile, name, email, phone, addresses, wishlist, reviews, notifications, orders } = req.body;
+
+  if (!mobile) {
+    return res.status(400).json({ success: false, error: 'User mobile is required.' });
+  }
+
+  try {
+    const cleanMobile = mobile.trim();
+    const fieldsToUpdate = [];
+    const params = [];
+    let paramIdx = 1;
+
+    if (name !== undefined) {
+      fieldsToUpdate.push(`name = $${paramIdx++}`);
+      params.push(name);
+    }
+    if (email !== undefined) {
+      fieldsToUpdate.push(`email = $${paramIdx++}`);
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      fieldsToUpdate.push(`phone = $${paramIdx++}`);
+      params.push(phone);
+    }
+    if (addresses !== undefined) {
+      fieldsToUpdate.push(`addresses = $${paramIdx++}`);
+      params.push(JSON.stringify(addresses));
+    }
+    if (wishlist !== undefined) {
+      fieldsToUpdate.push(`wishlist = $${paramIdx++}`);
+      params.push(JSON.stringify(wishlist));
+    }
+    if (reviews !== undefined) {
+      fieldsToUpdate.push(`reviews = $${paramIdx++}`);
+      params.push(JSON.stringify(reviews));
+    }
+    if (notifications !== undefined) {
+      fieldsToUpdate.push(`notifications = $${paramIdx++}`);
+      params.push(JSON.stringify(notifications));
+    }
+    if (orders !== undefined) {
+      fieldsToUpdate.push(`orders = $${paramIdx++}`);
+      params.push(JSON.stringify(orders));
+    }
+
+    if (fieldsToUpdate.length === 0) {
+      return res.status(400).json({ success: false, error: 'No update data provided.' });
+    }
+
+    params.push(cleanMobile);
+    const updateQuery = `
+      UPDATE users 
+      SET ${fieldsToUpdate.join(', ')} 
+      WHERE mobile = $${paramIdx}
+      RETURNING id, mobile, name, email, phone, addresses, orders, wishlist, reviews, notifications, created_at
+    `;
+
+    const result = await query(updateQuery, params);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User profile not found.' });
+    }
+
+    return res.status(200).json({ success: true, user: result.rows[0] });
+  } catch (error) {
+    next(error);
+  }
+});

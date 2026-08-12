@@ -212,22 +212,24 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
         {/* Action Buttons */}
         <div className="flex gap-2 mt-auto">
           <button 
-            onClick={isItemInCart ? (e) => { e.stopPropagation(); router.push('/cart'); } : handleBuyNow}
-            className={`flex-1 text-xs font-jakarta font-bold py-2 rounded-lg transition-all cursor-pointer text-center shadow-xs ${
-              isItemInCart 
-                ? 'bg-white border border-[#56701b] text-[#56701b] hover:bg-[#56701b]/5' 
-                : 'bg-[#462617] hover:bg-[#321a0f] text-white'
-            }`}
-          >
-            {isItemInCart ? 'View in Cart ✓' : 'Buy Now'}
-          </button>
-          <button 
             onClick={handleAddToCart}
-            className={`flex-1 text-white text-xs font-jakarta font-bold py-2 rounded-lg transition-all duration-300 cursor-pointer text-center shadow-xs ${
-              added ? 'bg-[#56701b] scale-[0.98]' : 'bg-[#384401] hover:bg-[#252d00]'
+            className={`flex-1 text-xs font-jakarta font-bold py-2.5 rounded-lg transition-all duration-300 cursor-pointer text-center text-white shadow-xs ${
+              added 
+                ? 'bg-[#C56C4F] scale-[0.98]' 
+                : 'bg-[#704632] hover:bg-[#5b3827]'
             }`}
           >
             {added ? 'Added! ✓' : 'Add to Cart'}
+          </button>
+          <button 
+            onClick={isItemInCart ? (e) => { e.stopPropagation(); router.push('/cart'); } : handleBuyNow}
+            className={`flex-1 text-xs font-jakarta font-bold py-2.5 rounded-lg transition-all cursor-pointer text-center text-white shadow-xs ${
+              isItemInCart 
+                ? 'bg-[#56701b] hover:bg-[#435714]' 
+                : 'bg-[#384401] hover:bg-[#252d00]'
+            }`}
+          >
+            {isItemInCart ? 'View in Cart ✓' : 'Buy Now'}
           </button>
         </div>
       </div>

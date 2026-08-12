@@ -163,9 +163,9 @@ function ProductCard({
         </p>
         <div className="flex gap-2.5">
           <button
-            className={`flex-1 py-2.5 rounded-xl border text-xs font-body font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer active:scale-[0.97] ${
+            className={`flex-1 py-2.5 rounded-xl text-xs font-body font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer active:scale-[0.97] border ${
               added 
-                ? 'bg-[#384401]/30 border-[#eeddb9]/50 text-white' 
+                ? 'bg-[#C56C4F] border-[#C56C4F] text-white' 
                 : 'border-[#eeddb9]/30 bg-transparent hover:bg-white/5 text-[#eeddb9]'
             }`}
             onClick={handleAddToCart}

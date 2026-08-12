@@ -183,7 +183,7 @@ export default function LoginPage() {
             </div>
 
             {/* Clean sliding-line tab selector */}
-            <div className="flex gap-6 mb-8 border-b border-stone-250/60 pb-2 select-none font-jakarta text-xs font-bold uppercase tracking-wider">
+            <div className="flex gap-6 mb-8 pb-1 select-none font-jakarta text-xs font-bold uppercase tracking-wider">
               {[
                 { id: 'login', label: 'Login' },
                 { id: 'register', label: 'Register' },
@@ -227,7 +227,7 @@ export default function LoginPage() {
             {activeTab === 'login' && (
               <form onSubmit={handleLoginSubmit} className="space-y-5">
                 <div>
-                  <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Mobile Number *</label>
+                  <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Mobile Number <span className="text-red-500">*</span></label>
                   <input
                     type="tel"
                     required
@@ -240,7 +240,7 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Password *</label>
+                  <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Password <span className="text-red-500">*</span></label>
                   <input
                     type="password"
                     required
@@ -265,7 +265,7 @@ export default function LoginPage() {
             {activeTab === 'register' && (
               <form onSubmit={handleRegisterSubmit} className="space-y-4">
                 <div>
-                  <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Mobile Number *</label>
+                  <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Mobile Number <span className="text-red-500">*</span></label>
                   <input
                     type="tel"
                     required
@@ -278,7 +278,7 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Password (min 6 characters) *</label>
+                  <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Password (min 6 characters) <span className="text-red-500">*</span></label>
                   <input
                     type="password"
                     required

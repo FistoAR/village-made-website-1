@@ -162,6 +162,13 @@ export default function CartPage() {
     }
   };
 
+  const handleRemoveCoupon = () => {
+    setDiscountValue(0);
+    setCouponCode('');
+    setCouponSuccess('');
+    setCouponError('');
+  };
+
   // Cost calculations
   const shippingThreshold = 499;
   const discountedSubtotal = Math.max(0, cartTotal - discountValue);
@@ -180,7 +187,7 @@ export default function CartPage() {
     if (activeSubStep === 1) {
       if (!customerDetails.name.trim()) errors.push('name');
       if (!customerDetails.phone.trim() || customerDetails.phone.length < 10) errors.push('phone');
-      if (!customerDetails.email.trim() || !customerDetails.email.includes('@')) errors.push('email');
+      if (customerDetails.email.trim() && !customerDetails.email.includes('@')) errors.push('email');
     }
     if (activeSubStep === 2) {
       if (!shippingAddress.address.trim()) errors.push('shipping_address');
@@ -461,6 +468,7 @@ export default function CartPage() {
                   couponCode={couponCode}
                   setCouponCode={setCouponCode}
                   handleApplyCoupon={handleApplyCoupon}
+                  handleRemoveCoupon={handleRemoveCoupon}
                   couponError={couponError}
                   couponSuccess={couponSuccess}
                   isCheckoutScreen={false}
@@ -541,6 +549,7 @@ export default function CartPage() {
                   cart={cart}
                   validationErrors={validationErrors}
                   onClearError={handleClearError}
+                  savedAddresses={user?.addresses || []}
                 />
 
                 {/* NAVIGATION FOOTER */}
@@ -582,6 +591,7 @@ export default function CartPage() {
                 couponCode={couponCode}
                 setCouponCode={setCouponCode}
                 handleApplyCoupon={handleApplyCoupon}
+                handleRemoveCoupon={handleRemoveCoupon}
                 couponError={couponError}
                 couponSuccess={couponSuccess}
                 isCheckoutScreen={true}

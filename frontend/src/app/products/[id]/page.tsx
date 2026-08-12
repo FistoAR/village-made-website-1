@@ -384,18 +384,20 @@ export default function ProductDetailPage({
               <div className="flex flex-row gap-4 mb-8">
                 <button 
                   onClick={handleAddToCart}
-                  className={`flex-1 h-12 text-white text-sm font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs ${
-                    added ? 'bg-[#56701b] scale-[0.98]' : 'bg-[#384401] hover:bg-[#252d00]'
+                  className={`flex-1 h-12 text-sm font-bold rounded-xl transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 text-white shadow-xs ${
+                    added 
+                      ? 'bg-[#C56C4F] scale-[0.98]' 
+                      : 'bg-[#704632] hover:bg-[#5b3827]'
                   }`}
                 >
                   {added ? 'Added to Cart! ✓' : 'Add to Cart'}
                 </button>
                 <button 
                   onClick={isItemInCart ? () => router.push('/cart') : handleBuyNow}
-                  className={`flex-1 h-12 text-sm font-bold rounded-xl transition-all cursor-pointer shadow-xs ${
+                  className={`flex-1 h-12 text-sm font-bold rounded-xl transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2 text-white ${
                     isItemInCart 
-                      ? 'bg-white border-2 border-[#56701b] text-[#56701b] hover:bg-[#56701b]/5' 
-                      : 'bg-white border border-[#384401] hover:bg-[#384401]/5 text-[#384401]'
+                      ? 'bg-[#56701b] hover:bg-[#435714]' 
+                      : 'bg-[#384401] hover:bg-[#252d00]'
                   }`}
                 >
                   {isItemInCart ? 'View in Cart ✓' : 'Buy Now'}

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { User, Phone, Mail, MapPin, Truck, Sparkles, CreditCard, ClipboardCheck, Wallet, Landmark, ShoppingBag } from 'lucide-react';
-import { CartItem } from '@/lib/context/AppContext';
+import { CartItem, UserAddress } from '@/lib/context/AppContext';
 
 interface AddressData {
   address: string;
@@ -29,6 +29,7 @@ interface CheckoutStepsProps {
   cart: CartItem[];
   validationErrors: string[];
   onClearError: (field: string) => void;
+  savedAddresses?: UserAddress[];
 }
 
 export default function CheckoutSteps({
@@ -48,7 +49,8 @@ export default function CheckoutSteps({
   baseShippingFee,
   cart,
   validationErrors,
-  onClearError
+  onClearError,
+  savedAddresses = []
 }: CheckoutStepsProps) {
 
   const getInputStyles = (field: string, hasIcon: boolean) => {
@@ -114,12 +116,11 @@ export default function CheckoutSteps({
               </div>
             </div>
             <div>
-              <label className={labelStyles}>Recipient Email Address <span className="text-red-500">*</span></label>
+              <label className={labelStyles}>Recipient Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-3.5 w-5 h-5 text-stone-600" />
                 <input
                   type="email"
-                  required
                   value={customerDetails.email}
                   onChange={(e) => {
                     setCustomerDetails({ ...customerDetails, email: e.target.value });
@@ -140,6 +141,69 @@ export default function CheckoutSteps({
           {/* Shipping section */}
           <div className="flex flex-col gap-4">
             <h3 className="font-extrabold text-[#3E2C1C] text-sm sm:text-base border-b border-[#eeddb9]/50 pb-2">1. Shipping Address</h3>
+            
+            {savedAddresses && savedAddresses.length > 0 && (
+              <div className="mb-2">
+                <span className="text-xs font-bold text-stone-600 uppercase tracking-wider block mb-2">Use Saved Address</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {savedAddresses.map((addr) => {
+                    const isSelected = shippingAddress.address === addr.address && shippingAddress.pincode === addr.pincode;
+                    return (
+                      <div
+                        key={addr.id}
+                        onClick={() => {
+                          setShippingAddress({
+                            address: addr.address,
+                            city: addr.city,
+                            state: addr.state || 'Karnataka',
+                            pincode: addr.pincode
+                          });
+                          setCustomerDetails({
+                            ...customerDetails,
+                            name: addr.name,
+                            phone: addr.phone
+                          });
+                          onClearError('shipping_address');
+                          onClearError('shipping_city');
+                          onClearError('shipping_state');
+                          onClearError('shipping_pincode');
+                          onClearError('name');
+                          onClearError('phone');
+                        }}
+                        className={`p-4 border rounded-xl cursor-pointer font-jakarta transition-all duration-200 relative ${
+                          isSelected 
+                            ? 'border-[#384401] bg-[#384401]/5 ring-2 ring-[#384401]/10 shadow-xs' 
+                            : 'border-[#eeddb9]/60 hover:border-[#384401] bg-white hover:shadow-xs'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center mb-2.5">
+                          {addr.isDefault ? (
+                            <span className="inline-flex items-center gap-1 bg-[#384401]/10 text-[#384401] text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider select-none">
+                              Primary Address
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider select-none">Saved Address</span>
+                          )}
+                          {isSelected && (
+                            <span className="bg-[#384401] text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider select-none">Selected</span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 gap-1 text-xs sm:text-sm leading-relaxed">
+                          <p><span className="font-extrabold text-stone-700 min-w-[65px] inline-block select-none">Name:</span> <span className="ml-1 font-normal text-black">{addr.name}</span></p>
+                          <p><span className="font-extrabold text-stone-700 min-w-[65px] inline-block select-none">Address:</span> <span className="ml-1 font-normal text-black">{addr.address}</span></p>
+                          <p><span className="font-extrabold text-stone-700 min-w-[65px] inline-block select-none">City:</span> <span className="ml-1 font-normal text-black">{addr.city}</span></p>
+                          <p><span className="font-extrabold text-stone-700 min-w-[65px] inline-block select-none">State:</span> <span className="ml-1 font-normal text-black">{addr.state || 'Karnataka'}</span></p>
+                          <p><span className="font-extrabold text-stone-700 min-w-[65px] inline-block select-none">Pincode:</span> <span className="ml-1 font-normal text-black">{addr.pincode}</span></p>
+                          <p className="mt-0.5"><span className="font-extrabold text-stone-700 min-w-[65px] inline-block select-none">Phone:</span> <span className="ml-1 font-normal text-black">{addr.phone}</span></p>
+                        </div>
+
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div>
               <label className={labelStyles}>Delivery Street Address <span className="text-red-500">*</span></label>
               <textarea

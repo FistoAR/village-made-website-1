@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo } from 'react';
 import { getDictionary } from '@/lib/translations';
 import Script from 'next/script';
 import { X, CheckCircle, AlertTriangle, AlertCircle, Info, Check } from 'lucide-react';
@@ -111,8 +111,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const toggleSound = () => setSoundOn(prev => !prev);
   
-  // Get the dictionary based on current language
-  const dict = getDictionary(language);
+  // Get the dictionary based on current language - memoized so it only
+  // recalculates when language changes, not on every cart/user update
+  const dict = useMemo(() => getDictionary(language), [language]);
 
   // Load cart and user sessions from localStorage on mount
   useEffect(() => {
@@ -224,8 +225,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCart([]);
   };
 
-  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
-  const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  const cartCount = useMemo(
+    () => cart.reduce((total, item) => total + item.quantity, 0),
+    [cart]
+  );
+  const cartTotal = useMemo(
+    () => cart.reduce((total, item) => total + item.price * item.quantity, 0),
+    [cart]
+  );
 
   // Authentication Database Actions
   const registerUser = async (mobile: string, password?: string, optionalData?: { name?: string; phone?: string; email?: string }) => {

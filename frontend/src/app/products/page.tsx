@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
@@ -111,21 +111,22 @@ const PRODUCTS: Product[] = [
   { id: 'sk-7', category: 'Snacks', name: 'MULTIGRAIN BALL', description: 'Healthy roasted balls packed with traditional grains and nuts.', price: 100 },
 ];
 
-/** Map category id to the corresponding product category string */
+/** Map category id to the corresponding product category string (module-level, created once) */
+const CATEGORY_MAP: Record<string, string> = {
+  malt: 'Malt',
+  'health-mix': 'Natural Health Mix',
+  millets: 'Millets',
+  flours: 'Millet Flours',
+  'tiffin-mix': 'Millet Tiffin mix',
+  noodles: 'Millet Noodles',
+  rice: 'Rice',
+  sugar: 'Natural Sugar',
+  cookies: 'Millet Cookies',
+  snacks: 'Snacks',
+};
+
 function matchesCategory(product: Product, catId: string): boolean {
-  const map: Record<string, string> = {
-    malt: 'Malt',
-    'health-mix': 'Natural Health Mix',
-    millets: 'Millets',
-    flours: 'Millet Flours',
-    'tiffin-mix': 'Millet Tiffin mix',
-    noodles: 'Millet Noodles',
-    rice: 'Rice',
-    sugar: 'Natural Sugar',
-    cookies: 'Millet Cookies',
-    snacks: 'Snacks',
-  };
-  return product.category === map[catId];
+  return product.category === CATEGORY_MAP[catId];
 }
 
 /** Highlight matching substring in a string */
@@ -459,8 +460,9 @@ export default function ProductsPage() {
     ? PRODUCTS.filter((p) => matchesCategory(p, selectedCategoryId))
     : PRODUCTS;
 
-  // Derive filtered + searched product list
-  const filteredProducts = PRODUCTS.filter((p) => {
+  // Derive filtered + searched product list — memoized so only recalculates
+  // when search/category changes, not on every render
+  const filteredProducts = useMemo(() => PRODUCTS.filter((p) => {
     const matchesCat = selectedCategoryId === '' || matchesCategory(p, selectedCategoryId);
     const q = searchQuery.trim().toLowerCase();
     const matchesSearch =
@@ -469,13 +471,13 @@ export default function ProductsPage() {
       p.description.toLowerCase().includes(q) ||
       p.category.toLowerCase().includes(q);
     return matchesCat && matchesSearch;
-  });
+  }), [selectedCategoryId, searchQuery]);
 
   // Group filtered products by category for display
-  const categoriesToRender = CATEGORIES.filter((cat) => {
-    const products = filteredProducts.filter((p) => matchesCategory(p, cat.id));
-    return products.length > 0;
-  });
+  const categoriesToRender = useMemo(() =>
+    CATEGORIES.filter((cat) => filteredProducts.some((p) => matchesCategory(p, cat.id))),
+    [filteredProducts]
+  );
 
   const isAllView = selectedCategoryId === '';
 

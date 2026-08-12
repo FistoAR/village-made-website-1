@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   images: {
     remotePatterns: [
       {
@@ -10,8 +10,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Faster server-side compilation
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'gsap'],
+  },
+  // Tell Turbopack the correct workspace root (silences the "multiple lockfiles" warning)
   turbopack: {
-    root: __dirname,
+    root: path.resolve(__dirname),
   },
 };
 

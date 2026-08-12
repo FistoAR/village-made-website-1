@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Star, Minus, Plus } from 'lucide-react';
 import { useApp } from '@/lib/context/AppContext';
@@ -29,6 +29,34 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
   const [selectedWeight, setSelectedWeight] = useState(weights[0]);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+
+  // Lazy-load video: only autoplay when the card is visible in viewport
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoWrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    const wrap = videoWrapRef.current;
+    if (!video || !wrap) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          // Only load + play when visible
+          if (!video.src) {
+            video.src = '/videos/products/product-sample-video.webm';
+          }
+          video.play().catch(() => {/* autoplay policy: silently ignore */});
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(wrap);
+    return () => observer.disconnect();
+  }, []);
 
   const isItemInCart = React.useMemo(() => {
     return cart.some(item => 
@@ -79,14 +107,14 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
         highlighted ? 'scale-[1.02] border-[#C56C4F]' : ''
       }`}
     >
-      {/* Product Video Area */}
-      <div className="w-full aspect-square relative overflow-hidden bg-black">
+      {/* Product Video Area — lazy-load: only play when visible */}
+      <div className="w-full aspect-square relative overflow-hidden bg-black" ref={videoWrapRef}>
         <video 
-          src="/videos/products/product-sample-video.webm" 
-          autoPlay 
+          ref={videoRef}
           muted 
           loop 
           playsInline 
+          preload="none"
           className="object-cover w-full h-full"
         />
         

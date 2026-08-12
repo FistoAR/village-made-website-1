@@ -4,7 +4,9 @@ import "./globals.css";
 import GlobalScrollReveal from "@/components/GlobalScrollReveal";
 import BackToTop from "@/components/BackToTop";
 import { AppProvider } from "@/lib/context/AppContext";
+import NavigationProgress from "@/components/NavigationProgress";
 import Script from "next/script";
+import { Suspense } from "react";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -48,6 +50,9 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${cormorant.variable} ${fredoka.variable} ${poetsen.variable} ${jakarta.variable}`} suppressHydrationWarning>
       <body className="font-body antialiased" suppressHydrationWarning>
         <AppProvider>
+          <Suspense fallback={null}>
+            <NavigationProgress />
+          </Suspense>
           <GlobalScrollReveal />
           <BackToTop />
           {children}

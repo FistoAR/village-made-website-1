@@ -50,7 +50,12 @@ export default function ProductDetailPage({
   // Unwrap the params promise
   const { id } = use(params);
 
-  const products = PRODUCTS as unknown as Product[];
+  const { addToCart, addProductReview, user, cart, products: dbProducts } = useApp();
+
+  const products = useMemo(() => {
+    return dbProducts && dbProducts.length > 0 ? dbProducts : (PRODUCTS as unknown as Product[]);
+  }, [dbProducts]);
+
   const categories = categoriesData as Category[];
 
   // Find the current product
@@ -70,7 +75,6 @@ export default function ProductDetailPage({
   const [activeTab, setActiveTab] = useState('description');
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(0);
   
-  const { addToCart, addProductReview, user, cart } = useApp();
   const router = useRouter();
   const [added, setAdded] = useState(false);
 
@@ -87,7 +91,7 @@ export default function ProductDetailPage({
       ([entry]) => {
         if (entry.isIntersecting) {
           if (!video.src) {
-            video.src = '/videos/products/product-sample-video.webm';
+            video.src = product?.video || '/videos/products/product-sample-video.webm';
           }
           video.play().catch(() => {});
         } else {
@@ -99,7 +103,7 @@ export default function ProductDetailPage({
 
     observer.observe(wrap);
     return () => observer.disconnect();
-  }, []);
+  }, [product]);
 
 
   const isItemInCart = useMemo(() => {
@@ -256,17 +260,25 @@ export default function ProductDetailPage({
         {/* Main Details Panel */}
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-[5%] mb-8 md:mb-12 items-stretch justify-between">
 
-          {/* Left Column: Video Showcase — lazy-loaded */}
+          {/* Left Column: Video or Image Showcase */}
           <div className="w-full lg:w-[47.5%] flex flex-col">
-            <div className="relative w-full h-full aspect-square sm:aspect-[4/3] lg:aspect-auto min-h-[350px] lg:min-h-0 bg-white rounded-[32px] overflow-hidden border border-[#eeddb9]/40 shadow-xs flex-grow" ref={detailVideoWrapRef}>
-              <video
-                ref={detailVideoRef}
-                muted
-                loop
-                playsInline
-                preload="none"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
+            <div className="relative w-full h-full aspect-square sm:aspect-[4/3] lg:aspect-auto min-h-[350px] lg:min-h-0 bg-[#FAF4E6]/20 rounded-[32px] overflow-hidden border border-[#eeddb9]/40 shadow-xs flex-grow flex items-center justify-center" ref={detailVideoWrapRef}>
+              {product?.video || (!product?.image) ? (
+                <video
+                  ref={detailVideoRef}
+                  muted
+                  loop
+                  playsInline
+                  preload="none"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : (
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              )}
             </div>
           </div>
 
@@ -317,25 +329,22 @@ export default function ProductDetailPage({
               </div>
 
               {/* Key Quality Indicators Bar */}
-              <div className="flex flex-col sm:flex-row items-start lg:items-center justify-between bg-[#FDF6E9] rounded-xl p-3 gap-3 sm:gap-2 mb-6 w-full">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-[#EFE6DB] flex items-center justify-center shrink-0">
-                    <img src="/images/products/details-page/icon-images/rich-in-calcium.svg" alt="" className="w-5 h-5 object-contain" />
-                  </div>
-                  <span className="text-stone-950 font-bold text-xs font-jakarta">Rich in Calcium</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-[#EFE6DB] flex items-center justify-center shrink-0">
-                    <img src="/images/products/details-page/icon-images/no-added-sugar.svg" alt="" className="w-5 h-5 object-contain" />
-                  </div>
-                  <span className="text-stone-950 font-bold text-xs font-jakarta">No Added Sugar</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-[#EFE6DB] flex items-center justify-center shrink-0">
-                    <img src="/images/products/details-page/icon-images/made-with-banana.svg" alt="" className="w-5 h-5 object-contain" />
-                  </div>
-                  <span className="text-stone-950 font-bold text-xs font-jakarta">Made with Real Bananas</span>
-                </div>
+              <div className="flex flex-wrap items-center justify-between bg-[#FDF6E9] rounded-xl p-3 gap-3 mb-6 w-full">
+                {(product.benefits || ['Rich in Calcium', 'No Added Sugar', 'Made with Real Bananas']).map((benefit: string, idx: number) => {
+                  let iconSrc = "/images/products/details-page/icon-images/no-added-sugar.svg";
+                  if (benefit.toLowerCase().includes('calcium')) iconSrc = "/images/products/details-page/icon-images/rich-in-calcium.svg";
+                  else if (benefit.toLowerCase().includes('banana')) iconSrc = "/images/products/details-page/icon-images/made-with-banana.svg";
+                  else if (benefit.toLowerCase().includes('digest')) iconSrc = "/images/products/details-page/icon-images/easy-returns.svg";
+                  
+                  return (
+                    <div key={idx} className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-full bg-[#EFE6DB] flex items-center justify-center shrink-0">
+                        <img src={iconSrc} alt="" className="w-5 h-5 object-contain" />
+                      </div>
+                      <span className="text-stone-955 font-bold text-xs font-jakarta">{benefit}</span>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Select Size and Quantity Row */}
@@ -470,7 +479,7 @@ export default function ProductDetailPage({
                   PRODUCT DESCRIPTION
                 </h3>
                 <p className="text-stone-800 text-sm leading-relaxed mb-6 font-medium font-jakarta">
-                  {formatTitleCase(product.name)} is a wholesome health drink crafted with carefully selected natural ingredients to support healthy growth and everyday nutrition. It combines the goodness of bananas and traditional grains to deliver authentic taste and natural nourishment.
+                  {product.description || `${formatTitleCase(product.name)} is a wholesome product prepared from premium ingredients to deliver authentic taste and natural nourishment.`}
                 </p>
 
                 {/* Sub features list */}
@@ -579,12 +588,25 @@ export default function ProductDetailPage({
 
           {/* TAB 2: INGREDIENTS */}
           {activeTab === 'ingredients' && (
-            <div className="w-full">
-              <img
-                src="/images/products/details-page/ingredients-image.webp"
-                alt="Ingredients infographics"
-                className="w-full h-auto rounded-2xl"
-              />
+            <div className="w-full font-jakarta text-sm font-semibold text-stone-850 p-6 bg-[#FAF4E6]/25 border border-[#eeddb9]/30 rounded-[24px]">
+              {product.ingredients && product.ingredients.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  <span className="text-[#384401] font-black uppercase text-xs sm:text-sm tracking-wider mb-2 block">Catalog Ingredients</span>
+                  <div className="flex flex-wrap gap-2.5">
+                    {product.ingredients.map((ingredient: string, idx: number) => (
+                      <span key={idx} className="bg-white border border-[#eeddb9] text-[#704632] px-4.5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold shadow-2xs">
+                        {ingredient}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <img
+                  src="/images/products/details-page/ingredients-image.webp"
+                  alt="Ingredients infographics"
+                  className="w-full h-auto rounded-2xl"
+                />
+              )}
             </div>
           )}
 

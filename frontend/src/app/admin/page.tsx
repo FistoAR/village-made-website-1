@@ -86,7 +86,7 @@ interface ExtendedProduct extends Product {
 }
 
 export default function AdminPage() {
-  const { loginUser, showConfirm, user, updateUserProfile, logoutUser, products, fetchProducts } = useApp();
+  const { loginUser, showConfirm, user, updateUserProfile, logoutUser, products, fetchProducts, categories, fetchCategories } = useApp();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -148,6 +148,11 @@ export default function AdminPage() {
   const [newProdIngredients, setNewProdIngredients] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+
+  // Add Category Form
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatDesc, setNewCatDesc] = useState('');
 
   // Purchase Entry Form
   const [purchaseProdId, setPurchaseProdId] = useState('');
@@ -464,6 +469,43 @@ export default function AdminPage() {
       console.error(err);
       triggerAlert('Failed to connect to file upload server.', true);
       return null;
+    }
+  };
+
+  // Add Category Submit
+  const handleAddCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCatName) {
+      triggerAlert('Please enter category name', true);
+      return;
+    }
+
+    const newId = newCatName.toLowerCase().replace(/\s+/g, '-');
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products/categories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: newId,
+          name: newCatName,
+          description: newCatDesc
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerAlert('Category added successfully!');
+        await fetchCategories();
+        setShowAddCategory(false);
+        setNewCatName('');
+        setNewCatDesc('');
+      } else {
+        triggerAlert(data.error || 'Failed to save category.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      triggerAlert('Failed to connect to category catalog API.', true);
     }
   };
 
@@ -1231,7 +1273,7 @@ export default function AdminPage() {
             )}
 
             {/* TAB: PRODUCTS */}
-            {activeTab === 'products' && (
+{activeTab === 'products' && (
               <div className="space-y-6">
                 
                 {/* Filters and Add row */}
@@ -1240,15 +1282,12 @@ export default function AdminPage() {
                     <select
                       value={selectedProductCategory}
                       onChange={(e) => setSelectedProductCategory(e.target.value)}
-                      className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-750 focus:outline-hidden font-medium"
+                      className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-stone-900 text-xs font-bold"
                     >
                       <option value="All">All Categories</option>
-                      <option value="Malt">Malt</option>
-                      <option value="Natural Health Mix">Natural Health Mix</option>
-                      <option value="Millets">Millets</option>
-                      <option value="Millet Flours">Millet Flours</option>
-                      <option value="Millet Tiffin mix">Millet Tiffin mix</option>
-                      <option value="Millet Noodles">Millet Noodles</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.name}>{cat.name}</option>
+                      ))}
                     </select>
 
                     <div className="relative w-full sm:w-48">
@@ -1263,17 +1302,69 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      setEditingProduct(null);
-                      setShowAddProduct(!showAddProduct);
-                    }}
-                    className="flex items-center justify-center gap-1.5 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-2.5 px-4.5 rounded-xl shadow-xs transition-colors cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    New Product
-                  </button>
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      onClick={() => {
+                        setShowAddProduct(false);
+                        setEditingProduct(null);
+                        setShowAddCategory(!showAddCategory);
+                      }}
+                      className="flex items-center justify-center gap-1.5 bg-[#704632] hover:bg-[#5b3827] text-white text-xs font-bold py-2.5 px-4.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      New Category
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingProduct(null);
+                        setShowAddCategory(false);
+                        setShowAddProduct(!showAddProduct);
+                      }}
+                      className="flex items-center justify-center gap-1.5 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-2.5 px-4.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      New Product
+                    </button>
+                  </div>
                 </div>
+
+                {/* Add Category Modal/Form */}
+                {showAddCategory && (
+                  <form onSubmit={handleAddCategorySubmit} className="border border-[#eeddb9] rounded-2xl p-5 bg-[#FAF4E6]/20 space-y-4">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-[#704632] font-jakarta">Add New Provision Category</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Category Name</label>
+                        <input
+                          type="text"
+                          required
+                          value={newCatName}
+                          onChange={(e) => setNewCatName(e.target.value)}
+                          placeholder="e.g. Natural Sugar"
+                          className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-600">Category Description</label>
+                        <input
+                          type="text"
+                          value={newCatDesc}
+                          onChange={(e) => setNewCatDesc(e.target.value)}
+                          placeholder="Short description of category..."
+                          className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="submit" className="bg-[#704632] hover:bg-[#5b3827] text-white text-xs font-bold py-2 px-4 rounded-lg cursor-pointer">
+                        Save Category
+                      </button>
+                      <button type="button" onClick={() => setShowAddCategory(false)} className="border border-stone-300 hover:bg-stone-50 text-stone-700 text-xs font-bold py-2 px-4 rounded-lg cursor-pointer">
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
 
                 {/* Add Product Modal/Form */}
                 {showAddProduct && (
@@ -1287,12 +1378,9 @@ export default function AdminPage() {
                           onChange={(e) => setNewProdCat(e.target.value)}
                           className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
                         >
-                          <option value="Malt">Malt</option>
-                          <option value="Natural Health Mix">Natural Health Mix</option>
-                          <option value="Millets">Millets</option>
-                          <option value="Millet Flours">Millet Flours</option>
-                          <option value="Millet Tiffin mix">Millet Tiffin mix</option>
-                          <option value="Millet Noodles">Millet Noodles</option>
+                          {categories.map((cat) => (
+                            <option key={cat.id} value={cat.name}>{cat.name}</option>
+                          ))}
                         </select>
                       </div>
                       <div className="flex flex-col gap-1">
@@ -1441,12 +1529,9 @@ export default function AdminPage() {
                           onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
                           className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
                         >
-                          <option value="Malt">Malt</option>
-                          <option value="Natural Health Mix">Natural Health Mix</option>
-                          <option value="Millets">Millets</option>
-                          <option value="Millet Flours">Millet Flours</option>
-                          <option value="Millet Tiffin mix">Millet Tiffin mix</option>
-                          <option value="Millet Noodles">Millet Noodles</option>
+                          {categories.map((cat) => (
+                            <option key={cat.id} value={cat.name}>{cat.name}</option>
+                          ))}
                         </select>
                       </div>
                       <div className="flex flex-col gap-1">

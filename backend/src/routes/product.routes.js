@@ -232,3 +232,30 @@ productRouter.post('/upload', upload.single('file'), async (req, res, next) => {
   }
 });
 
+/**
+ * POST /api/products/categories
+ * Add a new category
+ */
+productRouter.post('/categories', async (req, res, next) => {
+  const { id, name, description } = req.body;
+  if (!id || !name) {
+    return res.status(400).json({ success: false, error: 'Category ID and name are required.' });
+  }
+
+  try {
+    const checkExist = await query('SELECT * FROM categories WHERE id = $1', [id]);
+    if (checkExist.rows.length > 0) {
+      return res.status(400).json({ success: false, error: `Category with ID "${id}" already exists.` });
+    }
+
+    await query(
+      'INSERT INTO categories (id, name, description) VALUES ($1, $2, $3)',
+      [id, name, description || '']
+    );
+
+    return res.status(201).json({ success: true, message: 'Category added successfully.' });
+  } catch (error) {
+    next(error);
+  }
+});
+

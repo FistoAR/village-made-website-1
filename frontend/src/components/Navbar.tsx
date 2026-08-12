@@ -232,34 +232,49 @@ export default function Navbar({
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-3 w-80 bg-[#FAF6EB] border border-[#eeddb9] rounded-2xl shadow-xl p-4 z-50 animate-scale-up text-left">
-              <div className="flex items-center justify-between border-b border-[#eeddb9]/40 pb-2 mb-2 font-jakarta">
-                <span className="text-xs font-bold text-stone-900 uppercase tracking-wider">
+            <div className="absolute right-0 mt-3 w-80 bg-[#FAF6EB] border border-[#eeddb9] rounded-2xl shadow-xl p-4.5 z-50 animate-scale-up text-left select-none">
+              <div className="flex items-center justify-between border-b border-[#eeddb9]/40 pb-2.5 mb-2.5 font-jakarta">
+                <span className="text-xs font-black text-stone-900 uppercase tracking-widest">
                   Notifications ({mounted && user?.notifications ? user.notifications.length : 0})
                 </span>
                 <button 
                   onClick={() => setShowNotifications(false)}
-                  className="text-[10px] font-bold text-[#384401] hover:underline cursor-pointer"
+                  className="text-[10px] font-black text-[#384401] hover:underline cursor-pointer uppercase tracking-wider"
                 >
                   Close
                 </button>
               </div>
 
-              <div className="flex flex-col gap-2.5 max-h-64 overflow-y-auto">
+              <div className="flex flex-col gap-1 max-h-72 overflow-y-auto pr-1">
                 {!mounted || !user?.notifications || user.notifications.length === 0 ? (
-                  <div className="text-center py-6 text-stone-700 text-xs font-jakarta">
+                  <div className="text-center py-8 text-stone-600 text-xs font-jakarta font-semibold">
                     No recent notifications.
                   </div>
                 ) : (
-                  user.notifications.map((notif, idx) => (
-                    <div key={idx} className="flex flex-col gap-0.5 text-xs border-b border-[#eeddb9]/30 pb-2 last:border-b-0 last:pb-0 font-jakarta text-stone-900">
-                      <div className="flex justify-between items-start gap-2">
-                        <span className="font-bold text-stone-900">{notif.title}</span>
-                        <span className="text-[9px] text-[#C56C4F] font-bold shrink-0">{notif.date}</span>
-                      </div>
-                      <p className="text-stone-700 text-[10.5px] leading-normal">{notif.message}</p>
-                    </div>
-                  ))
+                  user.notifications.map((notif, idx) => {
+                    const match = notif.message.match(/VM-[A-Za-z0-9]+/);
+                    const targetUrl = match ? `/orders/${match[0]}` : '/account';
+
+                    return (
+                      <Link 
+                        key={idx} 
+                        href={targetUrl}
+                        onClick={() => setShowNotifications(false)}
+                        className="flex flex-col gap-1 text-xs p-2.5 hover:bg-stone-150/40 rounded-xl transition-all font-jakarta text-stone-900 border-b border-[#eeddb9]/10 last:border-b-0 hover:shadow-3xs group"
+                      >
+                        <div className="flex justify-between items-start gap-2">
+                          <span className="font-extrabold text-stone-950 group-hover:text-[#384401] transition-colors">{notif.title}</span>
+                          <span className="text-[9px] text-[#C56C4F] font-bold shrink-0">{notif.date}</span>
+                        </div>
+                        <p className="text-stone-700 text-[10.5px] leading-normal font-medium">{notif.message}</p>
+                        {match && (
+                          <span className="text-[9px] font-black text-[#384401] mt-1 hover:underline flex items-center gap-0.5">
+                            Manage Order →
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })
                 )}
               </div>
             </div>

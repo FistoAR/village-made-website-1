@@ -17,7 +17,7 @@ type AccountTab = 'dashboard' | 'profile' | 'addresses' | 'orders' | 'wishlist' 
 export default function AccountPage() {
   const router = useRouter();
   const { 
-    user, logoutUser, updateUserProfile, addAddress, deleteAddress, addReview 
+    user, logoutUser, updateUserProfile, addAddress, deleteAddress, addReview, showConfirm
   } = useApp();
   
   const [activeTab, setActiveTab] = useState<AccountTab>('dashboard');
@@ -42,9 +42,11 @@ export default function AccountPage() {
   const [addrDefault, setAddrDefault] = useState(false);
 
   // Review Form for testing reviews
+  const [reviewCategory, setReviewCategory] = useState('');
   const [reviewProdId, setReviewProdId] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
 
   // Expanded order details tracker
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
@@ -147,13 +149,39 @@ export default function AccountPage() {
       triggerNotification('Please select a product and write a review.', true);
       return;
     }
-    const product = PRODUCTS.find(p => p.id === reviewProdId);
-    if (!product) return;
-    addReview(reviewProdId, product.name, reviewRating, reviewComment);
-    triggerNotification('Review submitted successfully!');
+    
+    if (editingReviewId) {
+      const updatedReviews = user.reviews.map(r => 
+        r.id === editingReviewId 
+          ? { ...r, rating: reviewRating, comment: reviewComment } 
+          : r
+      );
+      updateUserProfile({ reviews: updatedReviews });
+      triggerNotification('Review updated successfully!');
+      setEditingReviewId(null);
+    } else {
+      const product = PRODUCTS.find(p => p.id === reviewProdId);
+      if (!product) return;
+      addReview(reviewProdId, product.name, reviewRating, reviewComment);
+      triggerNotification('Review submitted successfully!');
+    }
+    
+    setReviewCategory('');
     setReviewProdId('');
     setReviewComment('');
     setReviewRating(5);
+  };
+
+  const handleDeleteReview = (reviewId: string) => {
+    showConfirm(
+      'Delete Review',
+      'Are you sure you want to delete this review? This action cannot be undone.',
+      () => {
+        const updatedReviews = user.reviews.filter(r => r.id !== reviewId);
+        updateUserProfile({ reviews: updatedReviews });
+        triggerNotification('Review deleted successfully!');
+      }
+    );
   };
 
   const handleLogout = () => {
@@ -695,31 +723,100 @@ export default function AccountPage() {
 
                 {/* Optional Review form for testing */}
                 <form onSubmit={handleAddReviewSubmit} className="bg-[#FAF4E6]/50 border border-[#eeddb9]/60 rounded-xl p-5 flex flex-col gap-4">
-                  <h3 className="text-xs sm:text-sm font-extrabold text-[#3E2C1C] uppercase tracking-wider block mb-2">Write a Review</h3>
+                  <h3 className="text-xs sm:text-sm font-extrabold text-[#3E2C1C] uppercase tracking-wider block mb-2">
+                    {editingReviewId ? 'Edit Review' : 'Write a Review'}
+                  </h3>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <select
-                      required
-                      value={reviewProdId}
-                      onChange={(e) => setReviewProdId(e.target.value)}
-                      className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-850 focus:outline-hidden"
-                    >
-                      <option value="">Select Product...</option>
-                      {PRODUCTS.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
+                  <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_1fr] items-end gap-4">
+                    {/* Category Selector */}
+                    <div className="flex flex-col gap-1.5 w-full">
+                      <span className="text-[10px] sm:text-xs font-extrabold text-[#3E2C1C] uppercase tracking-wider block">Category</span>
+                      <select
+                        required
+                        disabled={!!editingReviewId}
+                        value={reviewCategory}
+                        onChange={(e) => {
+                          setReviewCategory(e.target.value);
+                          setReviewProdId('');
+                        }}
+                        className="h-10.5 px-3.5 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-850 focus:outline-hidden disabled:bg-stone-100 disabled:cursor-not-allowed w-full font-medium"
+                      >
+                        <option value="">Select Category...</option>
+                        {Array.from(new Set(PRODUCTS.map(p => p.category))).map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Product Selector */}
+                    <div className="flex flex-col gap-1.5 w-full">
+                      <span className="text-[10px] sm:text-xs font-extrabold text-[#3E2C1C] uppercase tracking-wider block">Target Product</span>
+                      <select
+                        required
+                        disabled={!!editingReviewId || !reviewCategory}
+                        value={reviewProdId}
+                        onChange={(e) => setReviewProdId(e.target.value)}
+                        className="h-10.5 px-3.5 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-850 focus:outline-hidden disabled:bg-stone-100 disabled:cursor-not-allowed w-full font-medium"
+                      >
+                        <option value="">
+                          {!reviewCategory ? 'Select Category First...' : 'Select Product...'}
+                        </option>
+                        {PRODUCTS.filter(p => p.category === reviewCategory).map(p => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
                     
-                    <select
-                      required
-                      value={reviewRating}
-                      onChange={(e) => setReviewRating(Number(e.target.value))}
-                      className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-850 focus:outline-hidden"
-                    >
-                      {[5, 4, 3, 2, 1].map(n => (
-                        <option key={n} value={n}>{n} Stars</option>
-                      ))}
-                    </select>
+                    <div className="flex flex-col gap-1.5 justify-end w-full">
+                      <span className="text-[10px] sm:text-xs font-extrabold text-[#3E2C1C] uppercase tracking-wider block">Rating Star</span>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="number"
+                          min="1"
+                          max="5"
+                          step="0.1"
+                          required
+                          value={reviewRating || ''}
+                          onChange={(e) => {
+                            let valStr = e.target.value;
+                            if (valStr.includes('.')) {
+                              const [integerPart, decimalPart] = valStr.split('.');
+                              valStr = `${integerPart}.${decimalPart.slice(0, 1)}`;
+                            }
+                            const val = valStr === '' ? 0 : Number(valStr);
+                            setReviewRating(val > 5 ? 5 : val);
+                          }}
+                          onBlur={() => {
+                            if (reviewRating < 1) setReviewRating(1);
+                          }}
+                          className="h-10.5 w-18 px-2 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-900 font-bold text-center focus:outline-hidden focus:border-[#384401] focus:ring-1 focus:ring-[#384401]"
+                          placeholder="4.5"
+                        />
+
+                        <div className="flex items-center gap-1 h-10 select-none">
+                          {[1, 2, 3, 4, 5].map((i) => {
+                            let fillWidth = '0%';
+                            if (reviewRating >= i) {
+                              fillWidth = '100%';
+                            } else if (reviewRating > i - 1) {
+                              fillWidth = `${(reviewRating - (i - 1)) * 100}%`;
+                            }
+
+                            return (
+                              <div key={i} className="relative inline-block text-xl text-stone-200">
+                                <span>★</span>
+                                <div 
+                                  className="absolute top-0 left-0 overflow-hidden h-full text-amber-500" 
+                                  style={{ width: fillWidth }}
+                                >
+                                  <span>★</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <textarea
@@ -730,15 +827,31 @@ export default function AccountPage() {
                     placeholder="Write your honest comments about this organic goods product..."
                   />
 
-                  <button
-                    type="submit"
-                    className="w-fit bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-2.5 px-5 rounded-xl transition-colors cursor-pointer shadow-xs"
-                  >
-                    Submit Review
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      className="w-fit bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-2.5 px-5 rounded-xl transition-colors cursor-pointer shadow-xs"
+                    >
+                      {editingReviewId ? 'Update Review' : 'Submit Review'}
+                    </button>
+                    {editingReviewId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingReviewId(null);
+                          setReviewCategory('');
+                          setReviewProdId('');
+                          setReviewComment('');
+                          setReviewRating(5);
+                        }}
+                        className="w-fit bg-white border border-[#eeddb9] hover:bg-[#FAF4E6]/50 text-stone-700 text-xs font-bold py-2.5 px-5 rounded-xl transition-colors cursor-pointer shadow-xs"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
                 </form>
 
-                {/* Reviews List */}
                 <div className="flex flex-col gap-4">
                   {user.reviews.length === 0 ? (
                     <div className="text-center py-10 border border-dashed border-stone-200 rounded-2xl text-stone-400 text-xs sm:text-sm">
@@ -748,21 +861,61 @@ export default function AccountPage() {
                     user.reviews.map((rev) => (
                       <div
                         key={rev.id}
-                        className="border border-[#eeddb9]/50 rounded-2xl p-4 flex flex-col gap-2.5 bg-stone-50/20"
+                        className="border border-[#eeddb9]/50 rounded-2xl p-5 flex flex-col gap-2.5 bg-stone-50/20"
                       >
-                        <div className="flex justify-between items-center gap-4 flex-wrap">
-                          <span className="font-bold text-stone-950 text-sm sm:text-base font-jakarta">{rev.productName}</span>
-                          <span className="text-xs text-stone-500 font-jakarta">{rev.date}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <span 
-                              key={i} 
-                              className={`text-sm sm:text-base ${i < rev.rating ? 'text-amber-500' : 'text-stone-200'}`}
+                        <div className="flex justify-between items-start gap-4 flex-wrap">
+                          <div>
+                            <span className="font-bold text-stone-955 text-sm sm:text-base font-jakarta">{rev.productName}</span>
+                            <span className="text-[10px] text-stone-500 font-jakarta block mt-0.5">{rev.date}</span>
+                          </div>
+                          
+                          <div className="flex gap-1.5 shrink-0">
+                            <button
+                              onClick={() => {
+                                setEditingReviewId(rev.id);
+                                const product = PRODUCTS.find(p => p.id === rev.productId);
+                                if (product) {
+                                  setReviewCategory(product.category);
+                                }
+                                setReviewProdId(rev.productId);
+                                setReviewRating(rev.rating);
+                                setReviewComment(rev.comment);
+                              }}
+                              className="p-1.5 text-stone-400 hover:text-[#384401] transition-colors cursor-pointer rounded-lg hover:bg-stone-100"
+                              aria-label="Edit review"
                             >
-                              ★
-                            </span>
-                          ))}
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteReview(rev.id)}
+                              className="p-1.5 text-stone-400 hover:text-red-655 transition-colors cursor-pointer rounded-lg hover:bg-stone-100"
+                              aria-label="Delete review"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 select-none">
+                          {[1, 2, 3, 4, 5].map((i) => {
+                            let fillWidth = '0%';
+                            if (rev.rating >= i) {
+                              fillWidth = '100%';
+                            } else if (rev.rating > i - 1) {
+                              fillWidth = `${(rev.rating - (i - 1)) * 100}%`;
+                            }
+
+                            return (
+                              <div key={i} className="relative inline-block text-sm sm:text-base text-stone-200">
+                                <span>★</span>
+                                <div 
+                                  className="absolute top-0 left-0 overflow-hidden h-full text-amber-500" 
+                                  style={{ width: fillWidth }}
+                                >
+                                  <span>★</span>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                         <p className="text-stone-700 text-xs sm:text-sm leading-relaxed font-jakarta mt-1">"{rev.comment}"</p>
                       </div>

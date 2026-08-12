@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Phone, User as UserIcon, Mail, Key, ArrowRight, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react';
+import { Phone, User as UserIcon, Mail, Key, ArrowRight, CheckCircle2, AlertCircle, HelpCircle, Eye, EyeOff } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useApp } from '@/lib/context/AppContext';
@@ -24,6 +24,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [optionalPhone, setOptionalPhone] = useState('');
   const [forgotMobile, setForgotMobile] = useState('');
+  
+  // Forgot Password multi-step states
+  const [recoveryStep, setRecoveryStep] = useState<'mobile' | 'otp'>('mobile');
+  const [recoveryOtp, setRecoveryOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // UI status states
   const [error, setError] = useState('');
@@ -48,8 +56,37 @@ export default function LoginPage() {
     return (
       <div className="min-h-screen bg-[#FDFBF7] text-[#3E2C1C] flex flex-col justify-between">
         <Navbar />
-        <div className="flex-grow flex items-center justify-center">
-          <div className="w-12 h-12 border-4 border-[#384401]/30 border-t-[#384401] rounded-full animate-spin"></div>
+        <div className="flex-grow flex items-center justify-center px-4 py-32">
+          {/* Shimmer Skeleton Card matching form container dimensions */}
+          <div className="w-full max-w-md bg-white border border-[#eeddb9]/40 rounded-[24px] p-6 sm:p-8 shadow-2xs animate-pulse">
+            
+            {/* Header skeleton */}
+            <div className="h-6 bg-stone-200 rounded-lg w-2/5 mb-3" />
+            <div className="h-4 bg-stone-150 rounded-lg w-3/5 mb-6" />
+
+            {/* Tab header skeleton */}
+            <div className="flex border-b border-stone-150 pb-3 mb-6 gap-6">
+              <div className="h-5 bg-stone-200 rounded-md w-16" />
+              <div className="h-5 bg-stone-150 rounded-md w-16" />
+              <div className="h-5 bg-stone-100 rounded-md w-24 ml-auto" />
+            </div>
+
+            {/* Form Fields skeleton */}
+            <div className="flex flex-col gap-4 mb-6">
+              <div className="space-y-1.5">
+                <div className="h-3.5 bg-stone-150 rounded-md w-20" />
+                <div className="h-10.5 bg-stone-100 rounded-xl w-full" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="h-3.5 bg-stone-150 rounded-md w-20" />
+                <div className="h-10.5 bg-stone-100 rounded-xl w-full" />
+              </div>
+            </div>
+
+            {/* Submit Button skeleton */}
+            <div className="h-11 bg-stone-200 rounded-xl w-full" />
+
+          </div>
         </div>
         <Footer />
       </div>
@@ -65,6 +102,13 @@ export default function LoginPage() {
     setName('');
     setEmail('');
     setOptionalPhone('');
+    setForgotMobile('');
+    setRecoveryStep('mobile');
+    setRecoveryOtp('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -117,16 +161,44 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setSuccess('');
-    setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      if (forgotMobile.length >= 10) {
-        setSuccess(`Verification code sent to ${forgotMobile}.`);
-      } else {
+    if (recoveryStep === 'mobile') {
+      if (forgotMobile.length < 10) {
         setError('Please enter a valid 10-digit mobile number.');
+        return;
       }
-    }, 1000);
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
+        setSuccess(`Verification code sent to ${forgotMobile}. (Hint: Use OTP 112233)`);
+        setRecoveryStep('otp');
+      }, 800);
+    } else {
+      if (recoveryOtp !== '112233') {
+        setError('Invalid verification code (OTP). Please try again.');
+        return;
+      }
+      if (newPassword.length < 6) {
+        setError('New password must be at least 6 characters long.');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setError('Passwords do not match.');
+        return;
+      }
+
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
+        setSuccess('Password updated successfully! Please log in with your new credentials.');
+        setActiveTab('login');
+        setMobile(forgotMobile);
+        setRecoveryStep('mobile');
+        setRecoveryOtp('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }, 1000);
+    }
   };
 
   return (
@@ -335,25 +407,89 @@ export default function LoginPage() {
             {/* TAB: FORGOT */}
             {activeTab === 'forgot' && (
               <form onSubmit={handleForgotSubmit} className="space-y-5">
-                <div>
-                  <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Registered Mobile Number</label>
-                  <input
-                    type="tel"
-                    required
-                    pattern="[0-9]{10}"
-                    value={forgotMobile}
-                    onChange={(e) => setForgotMobile(e.target.value)}
-                    placeholder="Enter 10-digit mobile number"
-                    className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
-                  />
-                </div>
+                {recoveryStep === 'mobile' ? (
+                  <div>
+                    <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Registered Mobile Number</label>
+                    <input
+                      type="tel"
+                      required
+                      pattern="[0-9]{10}"
+                      value={forgotMobile}
+                      onChange={(e) => setForgotMobile(e.target.value)}
+                      placeholder="Enter 10-digit mobile number"
+                      className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Verification OTP</label>
+                      <input
+                        type="text"
+                        required
+                        value={recoveryOtp}
+                        onChange={(e) => setRecoveryOtp(e.target.value)}
+                        placeholder="Enter 6-digit OTP (112233)"
+                        className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">New Password</label>
+                      <div className="relative">
+                        <input
+                          type={showNewPassword ? "text" : "password"}
+                          required
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Enter new password (min 6 chars)"
+                          className="w-full h-11 pl-4 pr-10 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-850 cursor-pointer"
+                        >
+                          {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Confirm New Password</label>
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          required
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Confirm new password"
+                          className="w-full h-11 pl-4 pr-10 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-850 cursor-pointer"
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <button
                   type="submit"
                   disabled={loading}
                   className="w-full h-12 bg-white border border-[#384401] hover:bg-[#384401]/5 text-[#384401] font-bold rounded-xl transition-all shadow-xs cursor-pointer text-sm font-jakarta tracking-wide uppercase flex items-center justify-center gap-2"
                 >
-                  {loading ? 'Requesting...' : <>Request Recovery Code <HelpCircle className="w-4 h-4" /></>}
+                  {loading ? (
+                    recoveryStep === 'mobile' ? 'Requesting...' : 'Resetting...'
+                  ) : (
+                    recoveryStep === 'mobile' ? (
+                      <>Request Recovery Code <HelpCircle className="w-4 h-4" /></>
+                    ) : (
+                      <>Update Password <ArrowRight className="w-4 h-4" /></>
+                    )
+                  )}
                 </button>
               </form>
             )}

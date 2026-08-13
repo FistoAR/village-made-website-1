@@ -339,6 +339,83 @@ productRouter.post('/:id/reviews', async (req, res, next) => {
 });
 
 /**
+ * PUT /api/products/:id/reviews/:reviewId
+ * Edit a review for a product
+ */
+productRouter.put('/:id/reviews/:reviewId', async (req, res, next) => {
+  const { id: productId, reviewId } = req.params;
+  const { rating, title, comment, mobile } = req.body;
+
+  if (!comment || rating === undefined) {
+    return res.status(400).json({ success: false, error: 'Rating and comment are required.' });
+  }
+
+  try {
+    // Check if user exists by mobile
+    const userRes = await query('SELECT id FROM users WHERE mobile = $1', [mobile]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User session not found. Please log in first.' });
+    }
+    const userId = userRes.rows[0].id;
+
+    // Verify ownership of the review
+    const reviewRes = await query('SELECT user_id FROM reviews WHERE id = $1 AND product_id = $2', [reviewId, productId]);
+    if (reviewRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Review not found.' });
+    }
+
+    if (reviewRes.rows[0].user_id !== userId) {
+      return res.status(403).json({ success: false, error: 'You are not authorized to edit this review.' });
+    }
+
+    await query(
+      `UPDATE reviews 
+       SET rating = $1, comment = $2, title = $3, date = $4
+       WHERE id = $5 AND product_id = $6`,
+      [rating, comment, title || 'Verified Purchase Review', new Date().toLocaleDateString('en-IN'), reviewId, productId]
+    );
+
+    return res.status(200).json({ success: true, message: 'Review updated successfully.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * DELETE /api/products/:id/reviews/:reviewId
+ * Delete a review for a product
+ */
+productRouter.delete('/:id/reviews/:reviewId', async (req, res, next) => {
+  const { id: productId, reviewId } = req.params;
+  const { mobile } = req.body;
+
+  try {
+    // Check if user exists by mobile
+    const userRes = await query('SELECT id, role FROM users WHERE mobile = $1', [mobile]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User session not found. Please log in first.' });
+    }
+    const userId = userRes.rows[0].id;
+    const userRole = userRes.rows[0].role;
+
+    // Verify ownership or check if admin
+    const reviewRes = await query('SELECT user_id FROM reviews WHERE id = $1 AND product_id = $2', [reviewId, productId]);
+    if (reviewRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Review not found.' });
+    }
+
+    if (reviewRes.rows[0].user_id !== userId && userRole !== 'admin') {
+      return res.status(403).json({ success: false, error: 'You are not authorized to delete this review.' });
+    }
+
+    await query('DELETE FROM reviews WHERE id = $1 AND product_id = $2', [reviewId, productId]);
+    return res.status(200).json({ success: true, message: 'Review deleted successfully.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * POST /api/products/decrement-stock
  * Decrease product stock after validation in checkout flow
  */

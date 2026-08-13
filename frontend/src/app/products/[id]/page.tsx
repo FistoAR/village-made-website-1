@@ -8,7 +8,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { PRODUCTS, Product } from '@/data/products-list';
 import categoriesData from '@/data/categories.json';
-import { Star, Minus, Plus, ArrowLeft, Heart, Share2, Calendar, MessageSquare, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, ShieldCheck } from 'lucide-react';
+import { Star, Minus, Plus, ArrowLeft, Heart, Share2, Calendar, MessageSquare, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, ShieldCheck, Pencil, Trash2 } from 'lucide-react';
 import { Category } from '@/types';
 import { useApp } from '@/lib/context/AppContext';
 
@@ -50,7 +50,7 @@ export default function ProductDetailPage({
   // Unwrap the params promise
   const { id } = use(params);
 
-  const { addToCart, addProductReview, user, cart, products: dbProducts } = useApp();
+  const { addToCart, addProductReview, editProductReview, deleteProductReview, showConfirm, user, cart, products: dbProducts } = useApp();
 
   const products = useMemo(() => {
     return dbProducts && dbProducts.length > 0 ? dbProducts : (PRODUCTS as unknown as Product[]);
@@ -121,6 +121,43 @@ export default function ProductDetailPage({
   const [newReviewTitle, setNewReviewTitle] = useState('');
   const [newReviewComment, setNewReviewComment] = useState('');
   const [newReviewRating, setNewReviewRating] = useState(5.0);
+
+  // Edit review state
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [editRating, setEditRating] = useState<number>(5.0);
+  const [editTitle, setEditTitle] = useState<string>('');
+  const [editComment, setEditComment] = useState<string>('');
+
+  const handleStartEdit = (rev: any) => {
+    setEditingReviewId(rev.id);
+    setEditRating(rev.rating);
+    setEditTitle(rev.title || '');
+    setEditComment(rev.comment || '');
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent, reviewId: string) => {
+    e.preventDefault();
+    if (!product || !editComment.trim()) return;
+    const res = await editProductReview(product.id, reviewId, editRating, editTitle, editComment);
+    if (res && res.success) {
+      setEditingReviewId(null);
+      fetchProductReviewsFromDb();
+    }
+  };
+
+  const handleDeleteReview = (reviewId: string) => {
+    showConfirm(
+      'Delete Review',
+      'Are you sure you want to permanently delete your review?',
+      async () => {
+        if (!product) return;
+        const res = await deleteProductReview(product.id, reviewId);
+        if (res && res.success) {
+          fetchProductReviewsFromDb();
+        }
+      }
+    );
+  };
 
   const getDefaultReviews = () => [
     { author: 'Priya S.', rating: 5, time: '2 days ago', title: 'My baby loves the taste!', comment: 'My baby loves the taste and it mixes easily without lumps. Very healthy and natural product.', helpful: 12 },
@@ -860,17 +897,125 @@ export default function ProductDetailPage({
                     }
                     return name.substring(0, 2).toUpperCase();
                   };
+
+                  const isMyReview = user && user.reviews?.some(ur => ur.id === rev.id);
+
+                  if (editingReviewId === rev.id) {
+                    return (
+                      <form 
+                        key={idx} 
+                        onSubmit={(e) => handleEditSubmit(e, rev.id)} 
+                        className="bg-[#FEFAF5] border border-[#384401] rounded-[20px] p-5 flex flex-col shadow-xs gap-3 font-jakarta"
+                      >
+                        <h4 className="text-xs font-black text-stone-950 uppercase tracking-wider">Edit Your Review</h4>
+                        
+                        {/* Edit Rating */}
+                        <div className="flex items-center gap-3">
+                          <div className="flex text-[#f3a847] gap-1 select-none">
+                            {[1, 2, 3, 4, 5].map((val) => (
+                              <button
+                                type="button"
+                                key={val}
+                                onClick={() => setEditRating(val)}
+                                className="focus:outline-none hover:scale-110 transition-transform cursor-pointer"
+                              >
+                                <Star 
+                                  className={`w-4 h-4 fill-current ${
+                                    val <= Math.round(editRating) ? 'text-[#f3a847]' : 'text-stone-200'
+                                  }`}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <input
+                              type="number"
+                              min="1"
+                              max="5"
+                              step="0.1"
+                              value={editRating}
+                              onChange={(e) => {
+                                const num = parseFloat(e.target.value);
+                                if (!isNaN(num) && num >= 1 && num <= 5) setEditRating(num);
+                              }}
+                              className="w-10 h-6 border border-stone-300 bg-white rounded text-[10px] font-bold text-center text-stone-900"
+                            />
+                            <span className="text-[8px] text-stone-500 font-bold uppercase tracking-wider">Pts</span>
+                          </div>
+                        </div>
+
+                        {/* Edit Title */}
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          placeholder="Review Title"
+                          className="w-full h-8 px-3 bg-white border border-[#eeddb9]/80 focus:border-[#384401] rounded-lg text-xs"
+                        />
+
+                        {/* Edit Comment */}
+                        <textarea
+                          required
+                          rows={2}
+                          value={editComment}
+                          onChange={(e) => setEditComment(e.target.value)}
+                          placeholder="Comment"
+                          className="w-full px-3 py-1.5 bg-white border border-[#eeddb9]/80 focus:border-[#384401] rounded-lg text-xs resize-none"
+                        />
+
+                        {/* Buttons */}
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setEditingReviewId(null)}
+                            className="bg-white border border-[#eeddb9] hover:bg-[#FAF4E6]/50 text-stone-750 font-bold px-3 py-1 rounded-md text-[9px] cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="bg-[#384401] hover:bg-[#252d00] text-white font-bold px-3 py-1 rounded-md text-[9px] cursor-pointer"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </form>
+                    );
+                  }
+
                   return (
                     <div key={idx} className="bg-[#FEFAF5] border border-[#939393] rounded-[20px] p-5 flex flex-col shadow-2xs">
                       {/* Avatar row */}
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="w-9 h-9 rounded-full bg-[#EFE6DB] text-[#384401] flex items-center justify-center font-bold text-xs uppercase select-none font-jakarta">
-                          {getInitials(rev.author)}
-                        </span>
-                        <div className="flex flex-col">
-                          <span className="font-bold text-stone-900 text-xs sm:text-sm font-jakarta">{rev.author}</span>
-                          <span className="text-stone-700 text-[10px] font-jakarta">{rev.time || '1 day ago'}</span>
+                      <div className="flex items-center justify-between mb-3 gap-2">
+                        <div className="flex items-center gap-3">
+                          <span className="w-9 h-9 rounded-full bg-[#EFE6DB] text-[#384401] flex items-center justify-center font-bold text-xs uppercase select-none font-jakarta">
+                            {getInitials(rev.author)}
+                          </span>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-stone-900 text-xs sm:text-sm font-jakarta">{rev.author}</span>
+                            <span className="text-stone-700 text-[10px] font-jakarta">{rev.time || '1 day ago'}</span>
+                          </div>
                         </div>
+
+                        {/* Edit & Delete Action Buttons */}
+                        {isMyReview && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => handleStartEdit(rev)}
+                              className="p-1 text-stone-500 hover:text-[#384401] hover:bg-[#FAF4E6]/60 rounded-lg transition-colors cursor-pointer"
+                              title="Edit Review"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteReview(rev.id)}
+                              className="p-1 text-stone-500 hover:text-red-750 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                              title="Delete Review"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Stars row — filled + empty up to 5 */}

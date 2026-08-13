@@ -64,7 +64,7 @@ interface AddressData {
 
 export default function CartPage() {
   const router = useRouter();
-  const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, cartCount, user, addOrder, showAlert, showConfirm, showToast, fetchProducts, addAddress } = useApp();
+  const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, cartCount, user, addOrder, createOrder, showAlert, showConfirm, showToast, fetchProducts, addAddress } = useApp();
   const [mounted, setMounted] = useState(false);
   
   // Steps control
@@ -350,39 +350,45 @@ export default function CartPage() {
       setVerificationStatus('Securing tokenized handshake authorization...');
       setTimeout(() => {
         setVerificationStatus('Finalizing ledger updates and saving order...');
-        setTimeout(() => {
+        setTimeout(async () => {
           // Store order details in AppContext
           const finalBillingAddr = sameAsShipping ? shippingAddress : billingAddress;
           
-          if (user) {
-            addOrder(
-              cart,
-              {
-                subtotal: cartTotal,
-                shipping: shippingFee,
-                tax: estimatedTax,
-                total: grandTotal
-              },
-              {
-                id: simulatedOrderId || `VM-${Math.floor(100000 + Math.random() * 900000)}`,
-                name: customerDetails.name,
-                phone: customerDetails.phone,
-                address: finalBillingAddr.address,
-                city: finalBillingAddr.city,
-                pincode: finalBillingAddr.pincode,
-                isDefault: false
-              }
-            );
+          const orderId = simulatedOrderId || `VM-${Math.floor(100000 + Math.random() * 900000)}`;
+          const orderData = {
+            id: orderId,
+            mobile: user?.mobile || undefined,
+            date: new Date().toLocaleDateString('en-IN'),
+            subtotal: cartTotal,
+            shipping: shippingFee,
+            tax: estimatedTax,
+            total: grandTotal,
+            address: {
+              name: customerDetails.name,
+              phone: customerDetails.phone,
+              address: finalBillingAddr.address,
+              city: finalBillingAddr.city,
+              state: finalBillingAddr.state || 'Karnataka',
+              pincode: finalBillingAddr.pincode
+            },
+            items: cart
+          };
+
+          const orderResult = await createOrder(orderData);
+
+          if (orderResult.success) {
+            // Transition to CONFIRMED celebration screen
+            setCheckoutStep('order_confirmed');
+            
+            // Confirmed splash duration before final receipts page
+            setTimeout(() => {
+              setCheckoutStep('success');
+            }, 2000);
+          } else {
+            setCheckoutStep('checkout');
+            setActiveSubStep(3); // Go back to Review step
+            showAlert('Checkout Settlement Failed', orderResult.error || 'Could not place order in database.', 'error');
           }
-
-          // Transition to CONFIRMED celebration screen
-          setCheckoutStep('order_confirmed');
-          
-          // Confirmed splash duration before final receipts page
-          setTimeout(() => {
-            setCheckoutStep('success');
-          }, 2000);
-
         }, 1200);
       }, 1000);
 

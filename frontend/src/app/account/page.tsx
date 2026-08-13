@@ -6,12 +6,13 @@ import Link from 'next/link';
 import {
   User as UserIcon, ShoppingBag, MapPin, Heart, MessageSquare,
   Bell, LogOut, ChevronRight, CheckCircle2, AlertCircle, Plus, Trash2, Home, Edit,
-  CheckCheck, Package, Shield, Inbox, BellOff
+  CheckCheck, Package, Shield, Inbox, BellOff, Download
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useApp, UserAddress, UserOrder } from '@/lib/context/AppContext';
 import { PRODUCTS } from '@/data/products-list';
+import { jsPDF } from 'jspdf';
 
 type AccountTab = 'dashboard' | 'profile' | 'addresses' | 'orders' | 'wishlist' | 'reviews' | 'notifications';
 
@@ -130,6 +131,131 @@ export default function AccountPage() {
         }
       }
     );
+  };
+
+  const handleDownloadInvoice = (order: UserOrder) => {
+    try {
+      const doc = new jsPDF();
+      
+      // Set fonts & colors
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(56, 68, 1); // Accent Green (#384401)
+      doc.setFontSize(22);
+      doc.text("VILLAGE MADE", 20, 20);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text("Authentic Village Crafts & Nutrition", 20, 25);
+      
+      // Invoice Title
+      doc.setFontSize(24);
+      doc.setTextColor(197, 108, 79); // Accent Orange (#C56C4F)
+      doc.text("INVOICE", 150, 22);
+
+      // Line separator
+      doc.setDrawColor(56, 68, 1);
+      doc.setLineWidth(0.5);
+      doc.line(20, 32, 190, 32);
+
+      // Details columns
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.setFontSize(10);
+      doc.text("Bill To:", 20, 42);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      doc.text(`${order.address.name}`, 20, 48);
+      doc.text(`Phone: ${order.address.phone}`, 20, 54);
+      doc.text(`Email: ${user?.email || 'N/A'}`, 20, 60);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.text("Shipping Destination:", 20, 70);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      const splitAddress = doc.splitTextToSize(`${order.address.address}, ${order.address.city}, ${order.address.pincode}`, 80);
+      doc.text(splitAddress, 20, 76);
+
+      // Invoice Meta Right Column
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.text("Invoice ID:", 120, 42);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      doc.text(`${order.id}`, 150, 42);
+
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.text("Order Date:", 120, 48);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      doc.text(`${order.date}`, 150, 48);
+
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.text("Payment Mode:", 120, 54);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      doc.text("PAID", 150, 54);
+
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.text("Order Status:", 120, 60);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      doc.text(`${order.status}`, 150, 60);
+
+      // Items table header
+      let y = 100;
+      doc.setFillColor(250, 244, 230); // #FAF4E6
+      doc.rect(20, y, 170, 8, "F");
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.text("Item Description", 22, y + 6);
+      doc.text("Qty", 120, y + 6);
+      doc.text("Price", 145, y + 6);
+      doc.text("Total", 175, y + 6);
+
+      doc.setDrawColor(238, 221, 185);
+      doc.line(20, y + 8, 190, y + 8);
+      
+      y += 8;
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(80, 80, 80);
+
+      order.items.forEach((item: any) => {
+        y += 8;
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(`${item.name} (${item.weight})`, 22, y);
+        doc.text(`${item.quantity}`, 122, y);
+        doc.text(`₹${item.price}`, 145, y);
+        doc.text(`₹${item.price * item.quantity}`, 175, y);
+        doc.line(20, y + 2, 190, y + 2);
+      });
+
+      // Totals
+      y += 12;
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(56, 68, 1);
+      doc.text("Grand Total Paid:", 120, y);
+      doc.text(`₹${order.total}`, 175, y);
+
+      // Footer
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(120, 120, 120);
+      doc.setFontSize(8);
+      doc.text("Thank you for supporting village industries and organic farming initiatives.", 105, 285, { align: "center" });
+
+      doc.save(`invoice-${order.id}.pdf`);
+    } catch (e) {
+      console.error('Failed to generate PDF invoice', e);
+      alert('Failed to generate PDF. Please try again.');
+    }
   };
 
   if (!mounted || !isHydrated || !user) {
@@ -855,6 +981,12 @@ export default function AccountPage() {
                                   </span>
                                 )}
 
+                                <button
+                                  onClick={() => handleDownloadInvoice(order)}
+                                  className="px-5 py-2.5 bg-[#C56C4F] hover:bg-[#a85237] text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 font-jakarta"
+                                >
+                                  <Download className="w-4 h-4" /> Download Invoice
+                                </button>
                                 <Link
                                   href={`/orders/${order.id}`}
                                   className="px-5 py-2.5 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"

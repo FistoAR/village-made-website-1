@@ -19,7 +19,7 @@ adminRouter.get('/dashboard', async (req, res, next) => {
     const recentOrders = await query(`
       SELECT o.*, u.name as customer_name, u.mobile as customer_mobile 
       FROM orders o 
-      JOIN users u ON o.user_id = u.id 
+      LEFT JOIN users u ON o.user_id = u.id 
       ORDER BY o.id DESC 
       LIMIT 5
     `);
@@ -32,14 +32,17 @@ adminRouter.get('/dashboard', async (req, res, next) => {
         pendingOrders: parseInt(pendingCount.rows[0].count) || 0,
         totalSales: parseFloat(salesTotal.rows[0].sum) || 0
       },
-      recentOrders: recentOrders.rows.map(o => ({
-        id: o.id,
-        customerName: o.customer_name,
-        customerMobile: o.customer_mobile,
-        date: o.date,
-        total: parseFloat(o.total) || 0,
-        status: o.status
-      }))
+      recentOrders: recentOrders.rows.map(o => {
+        const addrObj = typeof o.address === 'string' ? JSON.parse(o.address) : o.address;
+        return {
+          id: o.id,
+          customerName: o.customer_name || addrObj?.name || 'Guest Customer',
+          customerMobile: o.customer_mobile || addrObj?.phone || 'Guest Phone',
+          date: o.date,
+          total: parseFloat(o.total) || 0,
+          status: o.status
+        };
+      })
     });
   } catch (error) {
     next(error);
@@ -71,25 +74,28 @@ adminRouter.get('/orders', async (req, res, next) => {
     const result = await query(`
       SELECT o.*, u.name as customer_name, u.mobile as customer_mobile 
       FROM orders o 
-      JOIN users u ON o.user_id = u.id 
+      LEFT JOIN users u ON o.user_id = u.id 
       ORDER BY o.id DESC
     `);
     
     return res.status(200).json({
       success: true,
-      orders: result.rows.map(o => ({
-        id: o.id,
-        date: o.date,
-        subtotal: parseFloat(o.subtotal) || 0,
-        shipping: parseFloat(o.shipping) || 0,
-        tax: parseFloat(o.tax) || 0,
-        total: parseFloat(o.total) || 0,
-        status: o.status,
-        address: typeof o.address === 'string' ? JSON.parse(o.address) : o.address,
-        items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items,
-        customerName: o.customer_name,
-        customerMobile: o.customer_mobile
-      }))
+      orders: result.rows.map(o => {
+        const addrObj = typeof o.address === 'string' ? JSON.parse(o.address) : o.address;
+        return {
+          id: o.id,
+          date: o.date,
+          subtotal: parseFloat(o.subtotal) || 0,
+          shipping: parseFloat(o.shipping) || 0,
+          tax: parseFloat(o.tax) || 0,
+          total: parseFloat(o.total) || 0,
+          status: o.status,
+          address: addrObj,
+          items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items,
+          customerName: o.customer_name || addrObj?.name || 'Guest Customer',
+          customerMobile: o.customer_mobile || addrObj?.phone || 'Guest Phone'
+        };
+      })
     });
   } catch (error) {
     next(error);
@@ -146,19 +152,21 @@ adminRouter.put('/orders/:id', async (req, res, next) => {
       }
     }
 
-    // Push alert notification to the user's notifications table list
-    const notifId = Math.random().toString(36).substring(2, 11);
-    await query(
-      `INSERT INTO notifications (id, user_id, title, message, date, read)
-       VALUES ($1, $2, $3, $4, $5, false)`,
-      [
-        notifId,
-        order.user_id,
-        'Order Status Update',
-        `Your order ${orderId} is now ${status}. Check the tracker page for updates.`,
-        new Date().toLocaleDateString('en-IN')
-      ]
-    );
+    // Push alert notification to the user's notifications table list if they are registered
+    if (order.user_id) {
+      const notifId = Math.random().toString(36).substring(2, 11);
+      await query(
+        `INSERT INTO notifications (id, user_id, title, message, date, read)
+         VALUES ($1, $2, $3, $4, $5, false)`,
+        [
+          notifId,
+          order.user_id,
+          'Order Status Update',
+          `Your order ${orderId} is now ${status}. Check the tracker page for updates.`,
+          new Date().toLocaleDateString('en-IN')
+        ]
+      );
+    }
 
     await query('COMMIT');
 

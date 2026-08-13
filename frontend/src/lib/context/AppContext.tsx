@@ -92,6 +92,24 @@ interface AppContextType {
   updateUserProfile: (data: Partial<User>) => void;
   toggleWishlist: (productId: string) => void;
   addOrder: (items: CartItem[], totalDetails: { subtotal: number; shipping: number; tax: number; total: number }, address: UserAddress) => void;
+  createOrder: (orderData: {
+    id: string;
+    mobile?: string;
+    date: string;
+    subtotal: number;
+    shipping: number;
+    tax: number;
+    total: number;
+    address: {
+      name: string;
+      phone: string;
+      address: string;
+      city: string;
+      state: string;
+      pincode: string;
+    };
+    items: CartItem[];
+  }) => Promise<{ success: boolean; error?: string }>;
   updateOrderStatus: (orderId: string, status: UserOrder['status']) => void;
   addAddress: (address: Omit<UserAddress, 'id'>) => void;
   deleteAddress: (id: string) => void;
@@ -102,6 +120,8 @@ interface AppContextType {
   clearAllNotifications: () => void;
   addReview: (productId: string, productName: string, rating: number, comment: string) => void;
   addProductReview: (productId: string, author: string, rating: number, title: string, comment: string) => Promise<{ success: boolean; error?: string }>;
+  editProductReview: (productId: string, reviewId: string, rating: number, title: string, comment: string) => Promise<{ success: boolean; error?: string }>;
+  deleteProductReview: (productId: string, reviewId: string) => Promise<{ success: boolean; error?: string }>;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   showAlert: (title: string, message: string, type?: 'success' | 'error' | 'info') => void;
   showConfirm: (title: string, message: string, onConfirm: () => void, onCancel?: () => void) => void;
@@ -525,6 +545,83 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const createOrder = async (orderData: {
+    id: string;
+    mobile?: string;
+    date: string;
+    subtotal: number;
+    shipping: number;
+    tax: number;
+    total: number;
+    address: {
+      name: string;
+      phone: string;
+      address: string;
+      city: string;
+      state: string;
+      pincode: string;
+    };
+    items: CartItem[];
+  }) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Order placed successfully!', 'success');
+
+        // If registered user, update local user state
+        if (user) {
+          const newOrder: UserOrder = {
+            id: orderData.id,
+            date: orderData.date,
+            items: orderData.items,
+            subtotal: orderData.subtotal,
+            shipping: orderData.shipping,
+            tax: orderData.tax,
+            total: orderData.total,
+            status: 'Processing',
+            address: {
+              id: orderData.id,
+              ...orderData.address,
+              isDefault: false
+            }
+          };
+
+          setUser(prev => {
+            if (!prev) return null;
+            const orders = [newOrder, ...prev.orders];
+            const notifications = [
+              {
+                id: Math.random().toString(36).substr(2, 9),
+                title: 'Order Placed!',
+                message: `Your order ${newOrder.id} has been received and is being processed.`,
+                date: orderData.date,
+                read: false
+              },
+              ...prev.notifications
+            ];
+            return { ...prev, orders, notifications };
+          });
+        }
+
+        return { success: true };
+      } else {
+        showToast(data.error || 'Failed to place order.', 'error');
+        return { success: false, error: data.error };
+      }
+    } catch (err) {
+      console.error('Error placing order:', err);
+      showToast('Connection error. Please try again.', 'error');
+      return { success: false, error: 'Connection error' };
+    }
+  };
+
   const updateOrderStatus = (orderId: string, status: UserOrder['status']) => {
     setUser(prev => {
       if (!prev) return null;
@@ -714,6 +811,119 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const editProductReview = async (productId: string, reviewId: string, rating: number, title: string, comment: string) => {
+    if (!user) {
+      showToast('You must be logged in to edit a review.', 'error');
+      return { success: false, error: 'Not logged in' };
+    }
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products/${productId}/reviews/${reviewId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rating,
+          title: title.trim() || 'Verified Purchase Review',
+          comment: comment.trim(),
+          mobile: user.mobile
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Review updated successfully!', 'success');
+        
+        // Update user session reviews
+        setUser(prev => {
+          if (!prev) return null;
+          const reviews = prev.reviews.map(r => 
+            r.id === reviewId ? { ...r, rating, comment, productName: title || r.productName } : r
+          );
+          return { ...prev, reviews };
+        });
+
+        return { success: true };
+      } else {
+        showToast(data.error || 'Failed to update review.', 'error');
+        return { success: false, error: data.error };
+      }
+    } catch (err) {
+      console.warn('⚠️ Connection error, editing review locally:', err);
+      showToast('Offline: Review edit saved locally.', 'info');
+
+      // Local storage fallback
+      const allReviews = JSON.parse(localStorage.getItem('village_made_global_reviews') || '{}');
+      if (allReviews[productId]) {
+        allReviews[productId] = allReviews[productId].map((r: any) => 
+          r.id === reviewId ? { ...r, rating, title, comment } : r
+        );
+        localStorage.setItem('village_made_global_reviews', JSON.stringify(allReviews));
+      }
+
+      setUser(prev => {
+        if (!prev) return null;
+        const reviews = prev.reviews.map(r => 
+          r.id === reviewId ? { ...r, rating, comment, productName: title || r.productName } : r
+        );
+        return { ...prev, reviews };
+      });
+
+      return { success: true };
+    }
+  };
+
+  const deleteProductReview = async (productId: string, reviewId: string) => {
+    if (!user) {
+      showToast('You must be logged in to delete a review.', 'error');
+      return { success: false, error: 'Not logged in' };
+    }
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products/${productId}/reviews/${reviewId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mobile: user.mobile
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Review deleted successfully!', 'success');
+        
+        // Remove from user session reviews
+        setUser(prev => {
+          if (!prev) return null;
+          const reviews = prev.reviews.filter(r => r.id !== reviewId);
+          return { ...prev, reviews };
+        });
+
+        return { success: true };
+      } else {
+        showToast(data.error || 'Failed to delete review.', 'error');
+        return { success: false, error: data.error };
+      }
+    } catch (err) {
+      console.warn('⚠️ Connection error, deleting review locally:', err);
+      showToast('Offline: Review deleted locally.', 'info');
+
+      // Local storage fallback
+      const allReviews = JSON.parse(localStorage.getItem('village_made_global_reviews') || '{}');
+      if (allReviews[productId] && Array.isArray(allReviews[productId])) {
+        allReviews[productId] = allReviews[productId].filter((r: any) => r.id !== reviewId);
+        localStorage.setItem('village_made_global_reviews', JSON.stringify(allReviews));
+      }
+
+      setUser(prev => {
+        if (!prev) return null;
+        const reviews = prev.reviews.filter(r => r.id !== reviewId);
+        return { ...prev, reviews };
+      });
+
+      return { success: true };
+    }
+  };
+
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; show: boolean }>({ message: '', type: 'info', show: false });
     const [alertData, setAlertData] = useState<{ title: string; message: string; type: 'success' | 'error' | 'info'; show: boolean }>({ title: '', message: '', type: 'info', show: false });
     const [confirmData, setConfirmData] = useState<{ title: string; message: string; show: boolean; onConfirm: () => void; onCancel?: () => void }>({ title: '', message: '', show: false, onConfirm: () => {} });
@@ -765,6 +975,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateUserProfile,
         toggleWishlist,
         addOrder,
+        createOrder,
         updateOrderStatus,
         addAddress,
         deleteAddress,
@@ -775,6 +986,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         clearAllNotifications,
         addReview,
         addProductReview,
+        editProductReview,
+        deleteProductReview,
         showToast,
         showAlert,
         showConfirm,

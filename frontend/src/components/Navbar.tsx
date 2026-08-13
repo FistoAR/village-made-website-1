@@ -52,6 +52,26 @@ function PhaseIndicator({ phase }: { phase: string }) {
   );
 }
 
+const getInitials = (user: any) => {
+  if (!user) return '';
+  if (user.name) {
+    const trimmed = user.name.trim();
+    const parts = trimmed.split(/\s+/);
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return trimmed.slice(0, Math.min(2, trimmed.length)).toUpperCase();
+  }
+  if (user.email) {
+    const emailName = user.email.split('@')[0];
+    return emailName.slice(0, Math.min(2, emailName.length)).toUpperCase();
+  }
+  if (user.mobile) {
+    return user.mobile.slice(0, 2);
+  }
+  return 'U';
+};
+
 export default function Navbar({
   isHero = false,
   onReturnClick,
@@ -223,13 +243,22 @@ export default function Navbar({
           {mounted && (!user || user.role !== 'admin' || !isAdminAuth) && (
             <Link
               href={mounted && user ? "/account" : "/login"}
-              className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${isTransparent
-                  ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
-                  : 'border-[#eeddb9] bg-[#fcf9f2] text-[#3d2b1f] hover:bg-[#ebdcc1]'
-                }`}
+              className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-xs font-bold font-jakarta cursor-pointer shadow-xs ${
+                mounted && user
+                  ? isTransparent
+                    ? 'border-[#C56C4F]/30 bg-[#C56C4F] text-white hover:bg-[#C56C4F]/80'
+                    : 'border-[#eeddb9] bg-[#4f5a30] text-[#fcf9f2] hover:bg-[#384401]'
+                  : isTransparent
+                    ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
+                    : 'border-[#eeddb9] bg-[#fcf9f2] text-[#3d2b1f] hover:bg-[#ebdcc1]'
+              }`}
               aria-label="User Account"
             >
-              <UserIcon className="w-4.5 h-4.5" />
+              {mounted && user ? (
+                <span>{getInitials(user)}</span>
+              ) : (
+                <UserIcon className="w-4.5 h-4.5" />
+              )}
             </Link>
           )}
         </div>
@@ -384,13 +413,22 @@ export default function Navbar({
         {mounted && (!user || user.role !== 'admin' || !isAdminAuth) && (
           <Link
             href={mounted && user ? "/account" : "/login"}
-            className={`lg:hidden w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${isTransparent
-                ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
-                : 'p-2 hover:bg-stone-200/50 text-[#3d2b1f]'
-              }`}
+            className={`lg:hidden w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-xs font-bold font-jakarta cursor-pointer shadow-xs ${
+              mounted && user
+                ? isTransparent
+                  ? 'border-[#C56C4F]/30 bg-[#C56C4F] text-white hover:bg-[#C56C4F]/80'
+                  : 'border-[#eeddb9] bg-[#4f5a30] text-[#fcf9f2] hover:bg-[#384401]'
+                : isTransparent
+                  ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
+                  : 'p-2 hover:bg-stone-200/50 text-[#3d2b1f]'
+            }`}
             aria-label="User Account"
           >
-            <UserIcon className="w-4.5 h-4.5" />
+            {mounted && user ? (
+              <span>{getInitials(user)}</span>
+            ) : (
+              <UserIcon className="w-4.5 h-4.5" />
+            )}
           </Link>
         )}
 
@@ -438,7 +476,13 @@ export default function Navbar({
               onClick={() => setIsOpen(false)}
               className="text-[#C56C4F] font-body text-sm font-bold tracking-wider uppercase hover:text-[#4f5a30] py-2 border-b border-stone-200/50 flex items-center gap-2"
             >
-              <UserIcon className="w-4.5 h-4.5" />
+              {mounted && user ? (
+                <span className="w-5 h-5 rounded-full bg-[#4f5a30] text-[#fcf9f2] flex items-center justify-center text-[10px] font-bold font-jakarta border border-[#eeddb9]">
+                  {getInitials(user)}
+                </span>
+              ) : (
+                <UserIcon className="w-4.5 h-4.5" />
+              )}
               {mounted && user ? "My Account" : "Login / Register"}
             </Link>
           )}

@@ -1,8 +1,7 @@
-'use client';
-
 import React from 'react';
-import { Loader2, ShoppingBag, ShieldCheck, CheckCircle, Check } from 'lucide-react';
+import { Loader2, ShoppingBag, ShieldCheck, CheckCircle, Check, Download } from 'lucide-react';
 import { CartItem } from '@/lib/context/AppContext';
+import { jsPDF } from 'jspdf';
 
 interface AddressData {
   address: string;
@@ -42,6 +41,131 @@ export default function CheckoutSimulations({
 }: CheckoutSimulationsProps) {
   const codFee = paymentMethod === 'cod' ? 15 : 0;
   const finalTotal = grandTotal + codFee;
+
+  const handleDownloadInvoice = () => {
+    try {
+      const doc = new jsPDF();
+      
+      // Set fonts & colors
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(56, 68, 1); // Accent Green (#384401)
+      doc.setFontSize(22);
+      doc.text("VILLAGE MADE", 20, 20);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text("Authentic Village Crafts & Nutrition", 20, 25);
+      
+      // Invoice Title
+      doc.setFontSize(24);
+      doc.setTextColor(197, 108, 79); // Accent Orange (#C56C4F)
+      doc.text("INVOICE", 150, 22);
+
+      // Line separator
+      doc.setDrawColor(56, 68, 1);
+      doc.setLineWidth(0.5);
+      doc.line(20, 32, 190, 32);
+
+      // Details columns
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.setFontSize(10);
+      doc.text("Bill To:", 20, 42);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      doc.text(`${customerDetails.name}`, 20, 48);
+      doc.text(`Phone: ${customerDetails.phone}`, 20, 54);
+      doc.text(`Email: ${customerDetails.email || 'N/A'}`, 20, 60);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.text("Shipping Destination:", 20, 70);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      const splitAddress = doc.splitTextToSize(`${shippingAddress.address}, ${shippingAddress.city}, ${shippingAddress.pincode}`, 80);
+      doc.text(splitAddress, 20, 76);
+
+      // Invoice Meta Right Column
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.text("Invoice ID:", 120, 42);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      doc.text(`${simulatedOrderId || 'VM-DRAFT'}`, 150, 42);
+
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.text("Order Date:", 120, 48);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      doc.text(`${new Date().toLocaleDateString('en-IN')}`, 150, 48);
+
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.text("Payment Mode:", 120, 54);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      doc.text(`${paymentMethod ? paymentMethod.toUpperCase() : 'PAID'}`, 150, 54);
+
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.text("Delivery Type:", 120, 60);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      doc.text(`${deliveryMethod === 'express' ? 'Express Delivery' : 'Standard Delivery'}`, 150, 60);
+
+      // Items table header
+      let y = 100;
+      doc.setFillColor(250, 244, 230); // #FAF4E6
+      doc.rect(20, y, 170, 8, "F");
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(62, 44, 28);
+      doc.text("Item Description", 22, y + 6);
+      doc.text("Qty", 120, y + 6);
+      doc.text("Price", 145, y + 6);
+      doc.text("Total", 175, y + 6);
+
+      doc.setDrawColor(238, 221, 185);
+      doc.line(20, y + 8, 190, y + 8);
+      
+      y += 8;
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(80, 80, 80);
+
+      cart.forEach((item) => {
+        y += 8;
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(`${item.name} (${item.weight})`, 22, y);
+        doc.text(`${item.quantity}`, 122, y);
+        doc.text(`₹${item.price}`, 145, y);
+        doc.text(`₹${item.price * item.quantity}`, 175, y);
+        doc.line(20, y + 2, 190, y + 2);
+      });
+
+      // Totals
+      y += 12;
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(56, 68, 1);
+      doc.text("Grand Total Paid:", 120, y);
+      doc.text(`₹${finalTotal}`, 175, y);
+
+      // Footer
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(120, 120, 120);
+      doc.setFontSize(8);
+      doc.text("Thank you for supporting village industries and organic farming initiatives.", 105, 285, { align: "center" });
+
+      doc.save(`invoice-${simulatedOrderId || 'VM'}.pdf`);
+    } catch (e) {
+      console.error('Failed to generate PDF invoice', e);
+      alert('Failed to generate PDF. Please try again.');
+    }
+  };
 
   switch (checkoutStep) {
     case 'create_order':
@@ -229,6 +353,12 @@ export default function CheckoutSimulations({
               className="w-full sm:w-auto bg-[#384401] hover:bg-[#252d00] text-white font-black py-4.5 px-10 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs uppercase tracking-wider text-center"
             >
               Explore More Products
+            </button>
+            <button
+              onClick={handleDownloadInvoice}
+              className="w-full sm:w-auto bg-[#C56C4F] hover:bg-[#a85237] text-white font-black py-4.5 px-10 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs uppercase tracking-wider text-center flex items-center justify-center gap-2 font-jakarta"
+            >
+              <Download className="w-4 h-4" /> Download Invoice (PDF)
             </button>
           </div>
         </div>

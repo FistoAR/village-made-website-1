@@ -322,10 +322,25 @@ export default function ProductDetailPage({
               </p>
 
               {/* Ratings */}
-              <div className="flex items-center gap-2 mb-5">
+              <div className="flex items-center gap-2 mb-4">
                 <StarRating rating={displayRating} size={16} gap={2} />
                 <span className="text-stone-900 font-bold text-sm font-jakarta">{displayRating}</span>
                 <span className="text-stone-505 text-xs font-semibold">({displayReviews} Reviews)</span>
+              </div>
+
+              {/* Stock Status Badge */}
+              <div className="mb-5 flex items-center animate-fade-in">
+                {product && product.stock > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-full border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    In Stock ({product.stock} units left)
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-800 text-xs font-bold rounded-full border border-red-250 animate-pulse">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                    Out of Stock
+                  </span>
+                )}
               </div>
 
               {/* Price Box */}
@@ -381,17 +396,19 @@ export default function ProductDetailPage({
                 {/* Quantity Counter */}
                 <div className="flex flex-col gap-1.5 min-w-[130px]">
                   <span className="text-stone-900 text-xs font-bold font-jakarta">Quantity</span>
-                  <div className="flex items-center justify-between border border-[#eeddb9] bg-white rounded-xl h-11 px-4 w-full">
+                  <div className={`flex items-center justify-between border border-[#eeddb9] rounded-xl h-11 px-4 w-full ${product && product.stock <= 0 ? 'bg-stone-100 opacity-60' : 'bg-white'}`}>
                     <button
+                      disabled={!product || product.stock <= 0}
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="p-1 text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
+                      className="p-1 text-stone-600 hover:text-stone-900 transition-colors cursor-pointer disabled:cursor-not-allowed"
                     >
                       <Minus className="w-4 h-4" />
                     </button>
-                    <span className="text-stone-850 font-bold font-jakarta">{quantity}</span>
+                    <span className="text-stone-850 font-bold font-jakarta">{product && product.stock <= 0 ? 0 : quantity}</span>
                     <button
+                      disabled={!product || product.stock <= 0 || quantity >= product.stock}
                       onClick={() => setQuantity(quantity + 1)}
-                      className="p-1 text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
+                      className="p-1 text-stone-600 hover:text-stone-900 transition-colors cursor-pointer disabled:cursor-not-allowed"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
@@ -402,24 +419,30 @@ export default function ProductDetailPage({
               {/* Actions Buttons Row */}
               <div className="flex flex-row gap-4 mb-8">
                 <button 
+                  disabled={!product || product.stock <= 0}
                   onClick={handleAddToCart}
-                  className={`flex-1 h-12 text-sm font-bold rounded-xl transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 text-white shadow-xs ${
-                    added 
-                      ? 'bg-[#C56C4F] scale-[0.98]' 
-                      : 'bg-[#704632] hover:bg-[#5b3827]'
+                  className={`flex-1 h-12 text-sm font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-white shadow-xs ${
+                    !product || product.stock <= 0
+                      ? 'bg-stone-300 text-stone-505 cursor-not-allowed'
+                      : added 
+                        ? 'bg-[#C56C4F] scale-[0.98] cursor-pointer' 
+                        : 'bg-[#704632] hover:bg-[#5b3827] cursor-pointer'
                   }`}
                 >
-                  {added ? 'Added to Cart! ✓' : 'Add to Cart'}
+                  {!product || product.stock <= 0 ? 'Out of Stock' : added ? 'Added to Cart! ✓' : 'Add to Cart'}
                 </button>
                 <button 
+                  disabled={!product || product.stock <= 0}
                   onClick={isItemInCart ? () => router.push('/cart') : handleBuyNow}
-                  className={`flex-1 h-12 text-sm font-bold rounded-xl transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2 text-white ${
-                    isItemInCart 
-                      ? 'bg-[#56701b] hover:bg-[#435714]' 
-                      : 'bg-[#384401] hover:bg-[#252d00]'
+                  className={`flex-1 h-12 text-sm font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 text-white ${
+                    !product || product.stock <= 0
+                      ? 'bg-stone-300 text-stone-505 cursor-not-allowed'
+                      : isItemInCart 
+                        ? 'bg-[#56701b] hover:bg-[#435714] cursor-pointer' 
+                        : 'bg-[#384401] hover:bg-[#252d00] cursor-pointer'
                   }`}
                 >
-                  {isItemInCart ? 'View in Cart ✓' : 'Buy Now'}
+                  {!product || product.stock <= 0 ? 'Out of Stock' : isItemInCart ? 'View in Cart ✓' : 'Buy Now'}
                 </button>
               </div>
 

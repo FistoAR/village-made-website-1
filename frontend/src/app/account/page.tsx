@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   User as UserIcon, ShoppingBag, MapPin, Heart, MessageSquare,
-  Bell, LogOut, ChevronRight, CheckCircle2, AlertCircle, Plus, Trash2, Home, Edit
+  Bell, LogOut, ChevronRight, CheckCircle2, AlertCircle, Plus, Trash2, Home, Edit,
+  CheckCheck, Package, Shield, Inbox, BellOff
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -17,7 +18,9 @@ type AccountTab = 'dashboard' | 'profile' | 'addresses' | 'orders' | 'wishlist' 
 export default function AccountPage() {
   const router = useRouter();
   const {
-    user, logoutUser, updateUserProfile, addAddress, deleteAddress, addReview, showConfirm, isHydrated
+    user, logoutUser, updateUserProfile, addAddress, deleteAddress, addReview, showConfirm, isHydrated,
+    markAllNotificationsAsRead, markNotificationAsRead, deleteNotification, clearAllNotifications,
+    updateOrderStatus, showToast, fetchProducts
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<AccountTab>('dashboard');
@@ -75,6 +78,59 @@ export default function AccountPage() {
       router.push('/login?redirect=/account');
     }
   }, [user, mounted, isHydrated, router]);
+
+  const handleCancelOrder = (orderId: string) => {
+    showConfirm(
+      'Cancel Order?',
+      'Are you sure you want to cancel this order? This action cannot be undone and your inventory allocation will be released.',
+      async () => {
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+          const res = await fetch(`${baseUrl}/auth/orders/${orderId}/cancel`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            updateOrderStatus(orderId, 'Cancelled');
+            showToast('Order cancelled successfully!', 'success');
+            await fetchProducts(); // Refresh products stock
+          } else {
+            showToast(data.error || 'Failed to cancel order.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Failed to connect to backend server.', 'error');
+        }
+      }
+    );
+  };
+
+  const handleRequestReturn = (orderId: string) => {
+    showConfirm(
+      'Request Return?',
+      'Are you sure you want to request a return for this order? Our admin team will verify details and approve/process the refund shortly.',
+      async () => {
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+          const res = await fetch(`${baseUrl}/auth/orders/${orderId}/return`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            updateOrderStatus(orderId, 'Return Requested');
+            showToast('Return requested successfully!', 'success');
+          } else {
+            showToast(data.error || 'Failed to submit return request.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Failed to connect to backend server.', 'error');
+        }
+      }
+    );
+  };
 
   if (!mounted || !isHydrated || !user) {
     return (
@@ -774,10 +830,34 @@ export default function AccountPage() {
                               </div>
 
                               {/* Track & Manage order navigation button */}
-                              <div className="flex justify-end pt-3 mt-1.5 border-t border-[#eeddb9]/30">
+                              <div className="flex justify-end items-center gap-3 pt-3 mt-1.5 border-t border-[#eeddb9]/30 flex-wrap">
+                                {order.status === 'Processing' && (
+                                  <button
+                                    onClick={() => handleCancelOrder(order.id)}
+                                    className="px-4 py-2.5 bg-red-50 hover:bg-red-100/80 text-red-655 text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs"
+                                  >
+                                    Cancel Order
+                                  </button>
+                                )}
+
+                                {order.status === 'Delivered' && (
+                                  <button
+                                    onClick={() => handleRequestReturn(order.id)}
+                                    className="px-4 py-2.5 bg-amber-50 hover:bg-amber-100/80 text-[#C56C4F] text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs"
+                                  >
+                                    Request Return
+                                  </button>
+                                )}
+
+                                {order.status === 'Return Requested' && (
+                                  <span className="text-xs font-jakarta font-extrabold text-amber-700 bg-amber-50/50 border border-amber-200 px-3 py-2 rounded-xl">
+                                    Return Requested (Pending Admin)
+                                  </span>
+                                )}
+
                                 <Link
                                   href={`/orders/${order.id}`}
-                                  className="px-5 py-2.5 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-medium rounded-xl transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+                                  className="px-5 py-2.5 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
                                 >
                                   Track & Manage Order
                                 </Link>
@@ -1008,29 +1088,124 @@ export default function AccountPage() {
             {/* TAB: NOTIFICATIONS */}
             {activeTab === 'notifications' && (
               <div className="flex flex-col gap-6">
-                <div>
-                  <h2 className="text-xl md:text-2xl font-bold font-jakarta text-stone-955 mb-1">My Notifications</h2>
-                  <p className="text-stone-600 text-xs leading-relaxed">Alerts regarding orders, dispatches, and member announcements.</p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#eeddb9]/30 pb-4">
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-bold font-jakarta text-[#3e2c1c] mb-1">My Notifications</h2>
+                    <p className="text-stone-600 text-xs sm:text-sm leading-relaxed">Alerts regarding orders, dispatches, and member announcements.</p>
+                  </div>
+                  {user.notifications.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      {user.notifications.some(n => !n.read) && (
+                        <button
+                          onClick={() => markAllNotificationsAsRead()}
+                          className="px-3 py-1.5 bg-[#4f5a30]/10 hover:bg-[#4f5a30]/20 text-[#384401] text-xs sm:text-sm font-bold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-3xs"
+                        >
+                          <CheckCheck className="w-3.5 h-3.5" /> Mark all read
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          showConfirm(
+                            'Clear All Notifications?',
+                            'Are you sure you want to clear your entire notification history? This action cannot be undone.',
+                            () => clearAllNotifications()
+                          );
+                        }}
+                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100/80 text-red-655 text-xs sm:text-sm font-bold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-3xs"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Clear all
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-4">
                   {user.notifications.length === 0 ? (
-                    <div className="text-center py-12 border border-dashed border-stone-200 rounded-2xl text-stone-400 text-xs sm:text-sm">
-                      No notifications or announcements.
+                    <div className="flex flex-col items-center justify-center text-center py-16 px-4 bg-stone-50 border border-dashed border-stone-200 rounded-3xl gap-3">
+                      <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center text-stone-400">
+                        <BellOff className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-stone-900 text-sm sm:text-base font-jakarta">Your inbox is clean</h3>
+                        <p className="text-stone-500 text-xs sm:text-sm mt-1 max-w-xs font-jakarta">We'll alert you here when dispatches, order updates, or announcement posts drop.</p>
+                      </div>
                     </div>
                   ) : (
-                    user.notifications.map((n) => (
-                      <div
-                        key={n.id}
-                        className="bg-stone-50 border-l-4 border-[#384401] rounded-r-2xl p-4 flex justify-between gap-4"
-                      >
-                        <div className="text-xs sm:text-sm font-jakarta flex flex-col gap-1.5 leading-relaxed text-stone-750">
-                          <h4 className="font-bold text-stone-950 text-sm sm:text-base">{n.title}</h4>
-                          <p>{n.message}</p>
-                          <span className="text-[10px] text-stone-400 block mt-1">{n.date}</span>
+                    user.notifications.map((n) => {
+                      const match = n.message.match(/VM-[A-Za-z0-9]+/);
+                      const targetUrl = match ? `/orders/${match[0]}` : null;
+
+                      // Pick icons based on content
+                      let notifIcon = <Bell className="w-5 h-5 text-stone-500" />;
+                      if (n.title.toLowerCase().includes('order') || n.message.toLowerCase().includes('order') || n.message.toLowerCase().includes('dispatch')) {
+                        notifIcon = <Package className="w-5 h-5 text-[#C56C4F]" />;
+                      } else if (n.title.toLowerCase().includes('profile') || n.title.toLowerCase().includes('security') || n.title.toLowerCase().includes('address')) {
+                        notifIcon = <Shield className="w-5 h-5 text-emerald-700" />;
+                      }
+
+                      return (
+                        <div
+                          key={n.id}
+                          className={`border rounded-2xl p-4 flex gap-3.5 transition-all relative group ${
+                            !n.read 
+                              ? 'bg-amber-50/40 border-[#eeddb9] border-l-4 border-l-[#C56C4F] shadow-xs' 
+                              : 'bg-white border-stone-200/80 hover:bg-stone-50/40 border-l-4 border-l-[#384401]'
+                          }`}
+                        >
+                          <div className="shrink-0 mt-0.5">
+                            <div className={`w-9.5 h-9.5 rounded-xl flex items-center justify-center ${!n.read ? 'bg-amber-100/60' : 'bg-stone-100'}`}>
+                              {notifIcon}
+                            </div>
+                          </div>
+                          <div className="flex-1 flex flex-col gap-1 text-xs sm:text-sm font-jakarta leading-relaxed text-stone-750 pr-8">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className={`text-stone-950 font-jakarta ${!n.read ? 'font-black text-sm sm:text-base' : 'font-extrabold text-sm sm:text-[15px]'}`}>
+                                {n.title}
+                              </h4>
+                              {!n.read && (
+                                <span className="bg-[#C56C4F]/10 text-[#C56C4F] text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md">
+                                  New
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-stone-750 text-xs sm:text-sm font-medium mt-0.5 leading-relaxed">{n.message}</p>
+                            <div className="flex items-center gap-4 mt-2">
+                              <span className="text-[10.5px] sm:text-xs text-stone-400 font-semibold">{n.date}</span>
+                              {targetUrl && (
+                                <Link
+                                  href={targetUrl}
+                                  className="text-[11.5px] sm:text-xs font-extrabold text-[#4f5a30] hover:text-[#384401] hover:underline flex items-center gap-0.5"
+                                >
+                                  Manage Order →
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Quick Actions (Unread mark / Delete) */}
+                          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 opacity-85 sm:opacity-0 group-hover:opacity-100 transition-all">
+                            {!n.read && (
+                              <button
+                                onClick={() => markNotificationAsRead(n.id)}
+                                className="p-1.5 bg-amber-100 hover:bg-amber-200 text-[#4f5a30] rounded-xl transition-all cursor-pointer shadow-3xs"
+                                title="Mark as Read"
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                deleteNotification(n.id);
+                              }}
+                              className="p-1.5 bg-red-50 hover:bg-red-100 text-red-655 rounded-xl transition-all cursor-pointer shadow-3xs"
+                              title="Delete Notification"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>

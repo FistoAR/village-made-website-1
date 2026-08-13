@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { query } from '../config/db.js';
+import { broadcastInventoryUpdate } from '../config/socket.js';
 
 export const authRouter = Router();
 
@@ -303,6 +304,120 @@ authRouter.put('/profile', async (req, res, next) => {
     const updatedUser = await fetchUserData(freshUserResult.rows[0]);
 
     return res.status(200).json({ success: true, user: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/auth/orders/:id/cancel
+ * Cancel order and restore product stock
+ */
+authRouter.post('/orders/:id/cancel', async (req, res, next) => {
+  const orderId = req.params.id;
+
+  try {
+    const orderRes = await query('SELECT * FROM orders WHERE id = $1', [orderId]);
+    if (orderRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Order not found.' });
+    }
+
+    const order = orderRes.rows[0];
+    if (order.status !== 'Processing') {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Only orders in "Processing" status can be cancelled. Current status: ${order.status}` 
+      });
+    }
+
+    // Begin SQL Transaction to update status and restore stock
+    await query('BEGIN');
+
+    await query("UPDATE orders SET status = 'Cancelled' WHERE id = $1", [orderId]);
+
+    // Restore stock
+    const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+    const updatedProducts = [];
+    for (const item of items) {
+      const prodRes = await query('UPDATE products SET stock = stock + $1 WHERE id = $2 RETURNING stock', [item.quantity, item.id]);
+      if (prodRes.rows.length > 0) {
+        updatedProducts.push({ id: item.id, stock: Number(prodRes.rows[0].stock) });
+      }
+    }
+
+    // Insert user notification
+    const notifId = `notif-${Math.random().toString(36).substring(2, 11)}`;
+    await query(
+      `INSERT INTO notifications (id, user_id, title, message, date, read)
+       VALUES ($1, $2, $3, $4, $5, false)`,
+      [
+        notifId,
+        order.user_id,
+        'Order Cancelled',
+        `Your order ${orderId} has been successfully cancelled and your payment has been queued for refund.`,
+        new Date().toLocaleDateString('en-IN')
+      ]
+    );
+
+    await query('COMMIT');
+
+    for (const p of updatedProducts) {
+      broadcastInventoryUpdate(p.id, p.stock);
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Order cancelled successfully and inventory restored.',
+      status: 'Cancelled' 
+    });
+  } catch (error) {
+    await query('ROLLBACK');
+    next(error);
+  }
+});
+
+/**
+ * POST /api/auth/orders/:id/return
+ * Request a return/refund for a delivered order
+ */
+authRouter.post('/orders/:id/return', async (req, res, next) => {
+  const orderId = req.params.id;
+
+  try {
+    const orderRes = await query('SELECT * FROM orders WHERE id = $1', [orderId]);
+    if (orderRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Order not found.' });
+    }
+
+    const order = orderRes.rows[0];
+    if (order.status !== 'Delivered') {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Only orders that are in "Delivered" status can be returned. Current status: ${order.status}` 
+      });
+    }
+
+    await query("UPDATE orders SET status = 'Return Requested' WHERE id = $1", [orderId]);
+
+    // Insert user notification
+    const notifId = `notif-${Math.random().toString(36).substring(2, 11)}`;
+    await query(
+      `INSERT INTO notifications (id, user_id, title, message, date, read)
+       VALUES ($1, $2, $3, $4, $5, false)`,
+      [
+        notifId,
+        order.user_id,
+        'Return Requested',
+        `Your return request for order ${orderId} has been received. Our team will verify and approve the return shortly.`,
+        new Date().toLocaleDateString('en-IN')
+      ]
+    );
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Return request submitted successfully.',
+      status: 'Return Requested' 
+    });
   } catch (error) {
     next(error);
   }

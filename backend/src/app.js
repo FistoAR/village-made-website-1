@@ -18,8 +18,8 @@ const allowedOrigins = env.CORS_ORIGINS.split(',').map((o) => o.trim());
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. curl, Postman)
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin (e.g. server-to-server) or from allowed origins or in development
+      if (!origin || env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`CORS: origin '${origin}' not allowed`));

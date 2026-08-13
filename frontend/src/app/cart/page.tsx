@@ -64,7 +64,7 @@ interface AddressData {
 
 export default function CartPage() {
   const router = useRouter();
-  const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, cartCount, user, addOrder, showAlert, showConfirm, showToast } = useApp();
+  const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, cartCount, user, addOrder, showAlert, showConfirm, showToast, fetchProducts } = useApp();
   const [mounted, setMounted] = useState(false);
   
   // Steps control
@@ -136,28 +136,36 @@ export default function CartPage() {
     }
   }, [user, mounted]);
 
-  const handleApplyCoupon = (e: React.FormEvent) => {
+  const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     setCouponError('');
     setCouponSuccess('');
-    const code = couponCode.trim().toUpperCase();
+    const code = couponCode.trim();
 
-    if (code === 'VILLAGE10') {
-      const discount = Math.round(cartTotal * 0.1);
-      setDiscountValue(discount);
-      setCouponSuccess('10% discount coupon applied successfully!');
-    } else if (code === 'WELCOME100') {
-      if (cartTotal < 300) {
-        setCouponError('Minimum order value of ₹300 required for this coupon.');
-        setDiscountValue(0);
-      } else {
-        setDiscountValue(100);
-        setCouponSuccess('Flat ₹100 discount applied successfully!');
-      }
-    } else if (code === '') {
+    if (!code) {
       setDiscountValue(0);
-    } else {
-      setCouponError('Invalid coupon code. Try VILLAGE10 or WELCOME100.');
+      return;
+    }
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products/validate-coupon`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, cartTotal })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setDiscountValue(data.discountValue);
+        setCouponSuccess(data.message || 'Coupon applied successfully!');
+        showToast('Coupon applied successfully!', 'success');
+      } else {
+        setCouponError(data.error || 'Failed to apply coupon.');
+        setDiscountValue(0);
+      }
+    } catch (err) {
+      console.error(err);
+      setCouponError('Network error validating coupon. Please try again.');
       setDiscountValue(0);
     }
   };
@@ -223,14 +231,37 @@ export default function CartPage() {
   };
 
   // 1. PLACE ORDER -> CREATE ORDER pipeline
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setCheckoutStep('create_order');
     setCreationStatus('Preparing order parameters...');
-    
-    // Simulate ORDER CREATION
-    setTimeout(() => {
+
+    try {
+      // Fetch fresh products list from backend to check latest stock levels
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products`);
+      const data = await res.json();
+      
+      if (!res.ok || !data.success) {
+        throw new Error('Could not verify inventory status. Please try again.');
+      }
+
       setCreationStatus('Checking inventory allocation...');
+      const dbProducts = data.products;
+      
+      for (const item of cart) {
+        const dbProd = dbProducts.find((p: any) => p.id === item.id);
+        if (!dbProd) {
+          throw new Error(`Product "${item.name}" not found in our catalog.`);
+        }
+        if (dbProd.stock < item.quantity) {
+          throw new Error(
+            `Insufficient stock for "${item.name}". Only ${dbProd.stock} units available, but your cart has ${item.quantity}.`
+          );
+        }
+      }
+
+      // Complete allocation simulation
       setTimeout(() => {
         setCreationStatus('Generating secure unique invoice reference...');
         setTimeout(() => {
@@ -239,13 +270,18 @@ export default function CartPage() {
           
           // Proceed to Payment screen
           setCheckoutStep('payment_gateway');
-        }, 1000);
-      }, 1000);
-    }, 1000);
+        }, 800);
+      }, 800);
+
+    } catch (err: any) {
+      setCheckoutStep('checkout');
+      setActiveSubStep(3); // Stay on review step
+      showAlert('Inventory Allocation Failed', err.message || 'Failed to verify stock availability. Please try again.', 'error');
+    }
   };
 
   // 2. PAYMENT -> PAYMENT VERIFICATION -> ORDER CONFIRMED -> ORDER SUCCESS pipeline
-  const handleSimulatePayment = (success: boolean) => {
+  const handleSimulatePayment = async (success: boolean) => {
     if (!success) {
       showToast('The payment request was cancelled or declined. Please try again.', 'error');
       setCheckoutStep('checkout');
@@ -257,7 +293,24 @@ export default function CartPage() {
     setCheckoutStep('payment_verification');
     setVerificationStatus('Validating transaction with provider network...');
 
-    setTimeout(() => {
+    try {
+      // Deduct stock in DB
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products/decrement-stock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart.map(item => ({ id: item.id, quantity: item.quantity }))
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to allocate stock in database.');
+      }
+
+      // Refresh frontend product catalog stock
+      await fetchProducts();
+
       setVerificationStatus('Securing tokenized handshake authorization...');
       setTimeout(() => {
         setVerificationStatus('Finalizing ledger updates and saving order...');
@@ -275,7 +328,7 @@ export default function CartPage() {
                 total: grandTotal
               },
               {
-                id: Math.random().toString(36).substr(2, 9),
+                id: simulatedOrderId || `VM-${Math.floor(100000 + Math.random() * 900000)}`,
                 name: customerDetails.name,
                 phone: customerDetails.phone,
                 address: finalBillingAddr.address,
@@ -296,7 +349,12 @@ export default function CartPage() {
 
         }, 1200);
       }, 1000);
-    }, 1000);
+
+    } catch (err: any) {
+      setCheckoutStep('checkout');
+      setActiveSubStep(3); // Go back to Review step
+      showAlert('Checkout Settlement Failed', err.message || 'Could not deduct stock and complete checkout.', 'error');
+    }
   };
 
   const handleSuccessClose = () => {

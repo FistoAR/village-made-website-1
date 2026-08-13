@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query } from '../config/db.js';
+import { broadcastInventoryUpdate } from '../config/socket.js';
 
 export const adminRouter = Router();
 
@@ -114,9 +115,36 @@ adminRouter.put('/orders/:id', async (req, res, next) => {
     }
 
     const order = orderRes.rows[0];
+    const oldStatus = order.status;
+
+    // Begin SQL Transaction to ensure stock matches status transitions
+    await query('BEGIN');
 
     // Update order status
     await query('UPDATE orders SET status = $1 WHERE id = $2', [status, orderId]);
+
+    // Handle stock changes
+    const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+    const updatedProducts = [];
+    
+    // Transition INTO Cancelled/Returned -> Restore stock
+    if ((status === 'Cancelled' || status === 'Returned') && (oldStatus !== 'Cancelled' && oldStatus !== 'Returned')) {
+      for (const item of items) {
+        const prodRes = await query('UPDATE products SET stock = stock + $1 WHERE id = $2 RETURNING stock', [item.quantity, item.id]);
+        if (prodRes.rows.length > 0) {
+          updatedProducts.push({ id: item.id, stock: Number(prodRes.rows[0].stock) });
+        }
+      }
+    }
+    // Transition OUT of Cancelled/Returned -> Deduct stock
+    else if ((oldStatus === 'Cancelled' || oldStatus === 'Returned') && (status !== 'Cancelled' && status !== 'Returned')) {
+      for (const item of items) {
+        const prodRes = await query('UPDATE products SET stock = GREATEST(0, stock - $1) WHERE id = $2 RETURNING stock', [item.quantity, item.id]);
+        if (prodRes.rows.length > 0) {
+          updatedProducts.push({ id: item.id, stock: Number(prodRes.rows[0].stock) });
+        }
+      }
+    }
 
     // Push alert notification to the user's notifications table list
     const notifId = Math.random().toString(36).substring(2, 11);
@@ -132,8 +160,15 @@ adminRouter.put('/orders/:id', async (req, res, next) => {
       ]
     );
 
+    await query('COMMIT');
+
+    for (const p of updatedProducts) {
+      broadcastInventoryUpdate(p.id, p.stock);
+    }
+
     return res.status(200).json({ success: true, message: 'Order status updated successfully.' });
   } catch (error) {
+    await query('ROLLBACK');
     next(error);
   }
 });

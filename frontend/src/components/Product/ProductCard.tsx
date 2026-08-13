@@ -16,6 +16,7 @@ interface ProductCardProps {
     reviews?: number;
     weights?: string[];
     image?: string;
+    video?: string;
     category?: string;
     badge?: string;
   };
@@ -44,7 +45,7 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
         if (entry.isIntersecting) {
           // Only load + play when visible
           if (!video.src) {
-            video.src = '/videos/products/product-sample-video.webm';
+            video.src = product.video || '/videos/products/product-sample-video.webm';
           }
           video.play().catch(() => {/* autoplay policy: silently ignore */});
         } else {
@@ -56,7 +57,7 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
 
     observer.observe(wrap);
     return () => observer.disconnect();
-  }, []);
+  }, [product.video]);
 
   const isItemInCart = React.useMemo(() => {
     return cart.some(item => 

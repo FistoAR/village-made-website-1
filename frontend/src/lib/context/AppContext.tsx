@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useMe
 import { getDictionary } from '@/lib/translations';
 import Script from 'next/script';
 import { X, CheckCircle, AlertTriangle, AlertCircle, Info, Check } from 'lucide-react';
+import { io } from 'socket.io-client';
 
 export interface CartItem {
   id: string;
@@ -33,7 +34,7 @@ export interface UserOrder {
   shipping: number;
   tax: number;
   total: number;
-  status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled' | 'Return Requested' | 'Returned';
   address: UserAddress;
 }
 
@@ -91,9 +92,14 @@ interface AppContextType {
   updateUserProfile: (data: Partial<User>) => void;
   toggleWishlist: (productId: string) => void;
   addOrder: (items: CartItem[], totalDetails: { subtotal: number; shipping: number; tax: number; total: number }, address: UserAddress) => void;
+  updateOrderStatus: (orderId: string, status: UserOrder['status']) => void;
   addAddress: (address: Omit<UserAddress, 'id'>) => void;
   deleteAddress: (id: string) => void;
   addNotification: (title: string, message: string) => void;
+  markAllNotificationsAsRead: () => void;
+  markNotificationAsRead: (id: string) => void;
+  deleteNotification: (id: string) => void;
+  clearAllNotifications: () => void;
   addReview: (productId: string, productName: string, rating: number, comment: string) => void;
   addProductReview: (productId: string, author: string, rating: number, title: string, comment: string) => Promise<{ success: boolean; error?: string }>;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -119,6 +125,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+
+  useEffect(() => {
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5001';
+    const socket = io(socketUrl);
+
+    socket.on('connect', () => {
+      console.log('🔌 Connected to real-time inventory socket');
+    });
+
+    socket.on('inventory-update', (data: { productId: string; stock: number }) => {
+      console.log('📡 Real-time inventory update received:', data);
+      setProducts((prevProducts) =>
+        prevProducts.map((p) =>
+          p.id === data.productId ? { ...p, stock: data.stock } : p
+        )
+      );
+    });
+
+    socket.on('disconnect', () => {
+      console.log('🔌 Disconnected from real-time inventory socket');
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -274,17 +306,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [user, isHydrated]);
 
   const addToCart = (newItem: Omit<CartItem, 'quantity'>, qty: number = 1) => {
+    const product = products.find(p => p.id === newItem.id);
+    const stockLimit = product ? product.stock : 50;
+
+    if (stockLimit <= 0) {
+      showToast(`Sorry, "${newItem.name}" is currently out of stock.`, 'error');
+      return;
+    }
+
     setCart(prevCart => {
       const existingItemIndex = prevCart.findIndex(
         item => item.id === newItem.id && item.weight === newItem.weight
       );
 
       if (existingItemIndex > -1) {
+        const currentQty = prevCart[existingItemIndex].quantity;
+        if (currentQty + qty > stockLimit) {
+          showToast(`Cannot add more. Only ${stockLimit} units of "${newItem.name}" are in stock.`, 'error');
+          return prevCart;
+        }
         const updatedCart = [...prevCart];
         updatedCart[existingItemIndex].quantity += qty;
+        showToast(`Added more "${newItem.name}" to cart.`, 'success');
         return updatedCart;
       }
 
+      if (qty > stockLimit) {
+        showToast(`Cannot add. Only ${stockLimit} units of "${newItem.name}" are in stock.`, 'error');
+        return prevCart;
+      }
+
+      showToast(`Added "${newItem.name}" to cart.`, 'success');
       return [...prevCart, { ...newItem, quantity: qty }];
     });
   };
@@ -295,6 +347,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateQuantity = (id: string, weight: string, qty: number) => {
     const finalQty = Math.max(1, qty);
+    const cartItem = cart.find(item => item.id === id && item.weight === weight);
+    if (!cartItem) return;
+
+    const product = products.find(p => p.id === id);
+    const stockLimit = product ? product.stock : 50;
+
+    if (finalQty > stockLimit) {
+      showToast(`Only ${stockLimit} units of "${cartItem.name}" are in stock.`, 'error');
+      return;
+    }
+
     setCart(prevCart =>
       prevCart.map(item =>
         item.id === id && item.weight === weight ? { ...item, quantity: finalQty } : item
@@ -432,7 +495,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addOrder = (items: CartItem[], totalDetails: { subtotal: number; shipping: number; tax: number; total: number }, address: UserAddress) => {
     if (!user) return;
     const newOrder: UserOrder = {
-      id: `VM-${Math.floor(100000 + Math.random() * 900000)}`,
+      id: address.id || `VM-${Math.floor(100000 + Math.random() * 900000)}`,
       date: new Date().toLocaleDateString('en-IN'),
       items,
       subtotal: totalDetails.subtotal,
@@ -457,6 +520,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...prev.notifications
       ];
       return { ...prev, orders, notifications };
+    });
+  };
+
+  const updateOrderStatus = (orderId: string, status: UserOrder['status']) => {
+    setUser(prev => {
+      if (!prev) return null;
+      const orders = prev.orders.map(o => o.id === orderId ? { ...o, status } : o);
+      return { ...prev, orders };
     });
   };
 
@@ -504,6 +575,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUser(prev => {
       if (!prev) return null;
       return { ...prev, notifications: [newNotification, ...prev.notifications] };
+    });
+  };
+
+  const markAllNotificationsAsRead = () => {
+    if (!user) return;
+    setUser(prev => {
+      if (!prev) return null;
+      const updated = prev.notifications.map(n => ({ ...n, read: true }));
+      return { ...prev, notifications: updated };
+    });
+  };
+
+  const markNotificationAsRead = (id: string) => {
+    if (!user) return;
+    setUser(prev => {
+      if (!prev) return null;
+      const updated = prev.notifications.map(n => n.id === id ? { ...n, read: true } : n);
+      return { ...prev, notifications: updated };
+    });
+  };
+
+  const deleteNotification = (id: string) => {
+    if (!user) return;
+    setUser(prev => {
+      if (!prev) return null;
+      const updated = prev.notifications.filter(n => n.id !== id);
+      return { ...prev, notifications: updated };
+    });
+  };
+
+  const clearAllNotifications = () => {
+    if (!user) return;
+    setUser(prev => {
+      if (!prev) return null;
+      return { ...prev, notifications: [] };
     });
   };
 
@@ -657,9 +763,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateUserProfile,
         toggleWishlist,
         addOrder,
+        updateOrderStatus,
         addAddress,
         deleteAddress,
         addNotification,
+        markAllNotificationsAsRead,
+        markNotificationAsRead,
+        deleteNotification,
+        clearAllNotifications,
         addReview,
         addProductReview,
         showToast,

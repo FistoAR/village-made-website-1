@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, AlertTriangle } from 'lucide-react';
 import { AdminOrder } from './types';
 
 interface AdminOrdersTabProps {
@@ -117,6 +117,39 @@ export default function AdminOrdersTab({
             <h3 className="font-display text-2xl font-black text-stone-900 mb-2">Order Dispatch Profile</h3>
             <p className="text-xs text-stone-455 font-jakarta mb-5">Detail sheet for logs matching: <span className="font-bold text-stone-750">{selectedOrder.id}</span></p>
 
+            {/* Return Request Banner */}
+            {selectedOrder.status === 'Return Requested' && (
+              <div className="bg-amber-50 border border-amber-250 rounded-2xl p-4 flex flex-col gap-2 mb-6 font-jakarta">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-amber-700 animate-pulse" />
+                  <span className="font-extrabold text-stone-900 text-sm">Return & Refund Request Pending</span>
+                </div>
+                <p className="text-xs text-stone-700 leading-relaxed font-semibold">
+                  This user has submitted a return request for their items. Verify that goods have been received or confirm policies before issuing credit refunds.
+                </p>
+                <div className="flex gap-2.5 mt-2 flex-wrap">
+                  <button
+                    onClick={() => {
+                      handleOrderStatusUpdate(selectedOrder.id, 'Returned');
+                      setSelectedOrder(prev => prev ? { ...prev, status: 'Returned' } : null);
+                    }}
+                    className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs uppercase tracking-wide"
+                  >
+                    Approve Return (Refund Stock)
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleOrderStatusUpdate(selectedOrder.id, 'Delivered');
+                      setSelectedOrder(prev => prev ? { ...prev, status: 'Delivered' } : null);
+                    }}
+                    className="px-4 py-2 bg-red-650 hover:bg-red-700 text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs uppercase tracking-wide"
+                  >
+                    Reject Request
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
               {/* Status controls */}
               <div className="border border-[#d3c099] rounded-2xl p-4 bg-stone-50/20 font-jakarta">
@@ -130,6 +163,8 @@ export default function AdminOrdersTab({
                   <option value="Shipped">Shipped</option>
                   <option value="Delivered">Delivered</option>
                   <option value="Cancelled">Cancelled</option>
+                  <option value="Return Requested">Return Requested</option>
+                  <option value="Returned">Returned</option>
                 </select>
               </div>
               

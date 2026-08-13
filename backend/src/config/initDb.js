@@ -65,6 +65,16 @@ export async function initDb() {
       items JSONB NOT NULL
     );
 
+    -- Coupons Table
+    CREATE TABLE IF NOT EXISTS coupons (
+      code VARCHAR(50) PRIMARY KEY,
+      discount_type VARCHAR(20) NOT NULL,
+      discount_value DECIMAL(10,2) NOT NULL,
+      min_cart_value DECIMAL(10,2) DEFAULT 0,
+      expiry_date TIMESTAMP WITH TIME ZONE,
+      active BOOLEAN DEFAULT true
+    );
+
     -- Categories Table
     CREATE TABLE IF NOT EXISTS categories (
       id VARCHAR(100) PRIMARY KEY,
@@ -274,6 +284,26 @@ export async function initDb() {
       // Ensure existing admin user has the admin role set
       await query("UPDATE users SET role = 'admin' WHERE mobile = '9999999999'");
     }
+
+    // Seed default coupons
+    console.log('🔄  Syncing coupons catalog...');
+    const defaultCoupons = [
+      { code: 'VILLAGE10', discount_type: 'percentage', discount_value: 10.00, min_cart_value: 0.00 },
+      { code: 'WELCOME100', discount_type: 'flat', discount_value: 100.00, min_cart_value: 300.00 },
+      { code: 'FRESH50', discount_type: 'flat', discount_value: 50.00, min_cart_value: 200.00 }
+    ];
+    for (const c of defaultCoupons) {
+      await query(
+        `INSERT INTO coupons (code, discount_type, discount_value, min_cart_value, active) 
+         VALUES ($1, $2, $3, $4, true)
+         ON CONFLICT (code) DO UPDATE SET 
+           discount_type = EXCLUDED.discount_type,
+           discount_value = EXCLUDED.discount_value,
+           min_cart_value = EXCLUDED.min_cart_value`,
+        [c.code, c.discount_type, c.discount_value, c.min_cart_value]
+      );
+    }
+    console.log('✅  Coupons synced.');
   } catch (error) {
     console.error('❌  Error initializing relational database tables:', error);
   }

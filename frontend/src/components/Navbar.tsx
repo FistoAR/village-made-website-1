@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
-import { Menu, X, ShoppingCart, User as UserIcon, Bell, ShieldCheck } from 'lucide-react';
+import { Menu, X, ShoppingCart, User as UserIcon, Bell, ShieldCheck, CheckCheck, Trash2, Info, Package, Shield, BellOff } from 'lucide-react';
 import { useApp } from '@/lib/context/AppContext';
 import LanguageSelector from '@/components/Language/LanguageSelector';
 import gsap from 'gsap';
@@ -64,7 +64,15 @@ export default function Navbar({
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const { cartCount, user, soundOn, toggleSound } = useApp();
+  const {
+    cartCount,
+    user,
+    soundOn,
+    toggleSound,
+    markAllNotificationsAsRead,
+    markNotificationAsRead,
+    deleteNotification
+  } = useApp();
   const isAdminAuth = mounted && typeof window !== 'undefined' && sessionStorage.getItem('is_admin_auth') === 'true';
 
   useEffect(() => {
@@ -92,20 +100,18 @@ export default function Navbar({
   return (
     <header
       translate="no"
-      className={`notranslate fixed top-0 left-0 right-0 z-[150] flex items-center justify-between px-6 py-3 md:px-10 md:py-4 transition-all duration-300 ${
-        isTransparent
+      className={`notranslate fixed top-0 left-0 right-0 z-[150] flex items-center justify-between px-6 py-3 md:px-10 md:py-4 transition-all duration-300 ${isTransparent
           ? 'bg-black/25 backdrop-blur-xs border-b border-white/5 text-white'
           : 'bg-[#fcf9f2]/95 backdrop-blur-md border-b border-[#eeddb9]/50 shadow-md text-[#3d2b1f]'
-      }`}
+        }`}
     >
       {/* Left Side: Logo & Phase Indicator */}
       <div className="flex items-center gap-3">
         {isHero ? (
           <a
             href="#"
-            className={`font-display text-xl md:text-2xl tracking-[0.22em] font-semibold cursor-pointer select-none transition-colors duration-300 ${
-              isTransparent ? 'text-warm-cream' : 'text-[#4f5a30] hover:text-[#3e2c1c]'
-            }`}
+            className={`font-display text-xl md:text-2xl tracking-[0.22em] font-semibold cursor-pointer select-none transition-colors duration-300 ${isTransparent ? 'text-warm-cream' : 'text-[#4f5a30] hover:text-[#3e2c1c]'
+              }`}
             onClick={(e) => {
               e.preventDefault();
               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -127,11 +133,10 @@ export default function Navbar({
       {/* Center: Brand Navigation Items */}
       <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-xs font-body tracking-[0.15em] uppercase font-semibold">
         {navLinks.map((item) => {
-          const linkClassName = `transition-all duration-300 py-1.5 border-b-2 border-transparent hover:border-current ${
-            isTransparent
+          const linkClassName = `transition-all duration-300 py-1.5 border-b-2 border-transparent hover:border-current ${isTransparent
               ? 'text-white/80 hover:text-white'
               : 'text-[#5d5449] hover:text-[#4f5a30]'
-          }`;
+            }`;
 
           if (item.isExternal || !isHero) {
             return (
@@ -171,11 +176,10 @@ export default function Navbar({
         {isHero && heroPhase === 'INTRO' && introSequence !== 'EXPLANATION_CLIP' && !isPreloading && onSkipIntro && (
           <button
             onClick={onSkipIntro}
-            className={`hidden lg:flex px-4 py-1.5 rounded-full border text-xs font-semibold tracking-wider transition-all cursor-pointer font-body items-center gap-1.5 shadow-sm ${
-              isTransparent
+            className={`hidden lg:flex px-4 py-1.5 rounded-full border text-xs font-semibold tracking-wider transition-all cursor-pointer font-body items-center gap-1.5 shadow-sm ${isTransparent
                 ? 'border-white/20 bg-black/45 text-white hover:bg-white/15'
                 : 'border-[#eeddb9] bg-[#fcf9f2] text-[#3d2b1f] hover:bg-[#ebdcc1]'
-            }`}
+              }`}
           >
             Skip Intro
           </button>
@@ -189,11 +193,10 @@ export default function Navbar({
           {isHero && (
             <button
               onClick={toggleSound}
-              className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${
-                isTransparent
+              className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${isTransparent
                   ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
                   : 'border-[#eeddb9] bg-[#fcf9f2] text-[#3d2b1f] hover:bg-[#ebdcc1]'
-              }`}
+                }`}
               aria-label={soundOn ? 'Mute' : 'Unmute'}
               title={soundOn ? 'Mute' : 'Unmute'}
             >
@@ -205,11 +208,10 @@ export default function Navbar({
           {mounted && user?.role === 'admin' && isAdminAuth && (
             <Link
               href="/admin"
-              className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${
-                isTransparent
+              className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${isTransparent
                   ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
                   : 'border-[#eeddb9] bg-[#FAF4E6] text-[#384401] hover:bg-[#384401] hover:text-white'
-              }`}
+                }`}
               aria-label="Admin Control panel"
               title="Admin Control Panel"
             >
@@ -221,11 +223,10 @@ export default function Navbar({
           {mounted && (!user || user.role !== 'admin' || !isAdminAuth) && (
             <Link
               href={mounted && user ? "/account" : "/login"}
-              className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${
-                isTransparent
+              className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${isTransparent
                   ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
                   : 'border-[#eeddb9] bg-[#fcf9f2] text-[#3d2b1f] hover:bg-[#ebdcc1]'
-              }`}
+                }`}
               aria-label="User Account"
             >
               <UserIcon className="w-4.5 h-4.5" />
@@ -237,61 +238,123 @@ export default function Navbar({
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs relative ${
-              isTransparent
+            className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs relative ${isTransparent
                 ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
                 : 'p-2 hover:bg-stone-200/50 text-[#3d2b1f] hover:text-[#4f5a30]'
-            }`}
+              }`}
             aria-label="View Notifications"
           >
             <Bell className="w-4.5 h-4.5" />
-            {mounted && user?.notifications && user.notifications.length > 0 && (
-              <span className="absolute top-1.5 right-1.5 bg-red-655 rounded-full w-2 h-2 border border-[#fcf9f2]"></span>
+            {mounted && user?.notifications && user.notifications.some(n => !n.read) && (
+              <span className="absolute top-1.5 right-1.5 bg-[#C56C4F] rounded-full w-2 h-2 border border-[#fcf9f2] animate-pulse"></span>
             )}
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-3 w-80 bg-[#FAF6EB] border border-[#eeddb9] rounded-2xl shadow-xl p-4.5 z-50 animate-scale-up text-left select-none">
-              <div className="flex items-center justify-between border-b border-[#eeddb9]/40 pb-2.5 mb-2.5 font-jakarta">
-                <span className="text-xs font-black text-stone-900 uppercase tracking-widest">
-                  Notifications ({mounted && user?.notifications ? user.notifications.length : 0})
-                </span>
-                <button 
-                  onClick={() => setShowNotifications(false)}
-                  className="text-[10px] font-black text-[#384401] hover:underline cursor-pointer uppercase tracking-wider"
-                >
-                  Close
-                </button>
+            <div className="absolute right-0 mt-3 w-90 bg-[#FAF6EB]/95 backdrop-blur-md border border-[#eeddb9] rounded-2xl shadow-xl p-3.5 z-50 animate-scale-up text-left select-none max-h-[500px] flex flex-col">
+              <div className="flex items-center justify-between border-b border-[#eeddb9]/40 pb-2 mb-2 font-jakarta shrink-0">
+                <div>
+                  <span className="text-[13px] font-black text-stone-900 uppercase tracking-widest block">
+                    Notifications
+                  </span>
+                  {mounted && user?.notifications && user.notifications.filter(n => !n.read).length > 0 && (
+                    <span className="text-[11px] text-[#C56C4F] font-bold">
+                      {user.notifications.filter(n => !n.read).length} unread
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  {mounted && user?.notifications && user.notifications.some(n => !n.read) && (
+                    <button
+                      onClick={() => markAllNotificationsAsRead()}
+                      className="text-[11px] font-bold text-[#4f5a30] hover:text-[#384401] cursor-pointer flex items-center gap-1 hover:underline animate-fade-in"
+                      title="Mark all as read"
+                    >
+                      <CheckCheck className="w-3 h-3" /> Mark all read
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => setShowNotifications(false)}
+                    className="text-[11px] font-black text-stone-600 hover:text-stone-900 cursor-pointer uppercase tracking-wider"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
 
-              <div className="flex flex-col gap-1 max-h-72 overflow-y-auto pr-1">
+              <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-stone-250">
                 {!mounted || !user?.notifications || user.notifications.length === 0 ? (
-                  <div className="text-center py-8 text-stone-600 text-xs font-jakarta font-semibold">
-                    No recent notifications.
+                  <div className="flex flex-col items-center justify-center py-10 text-center gap-2">
+                    <BellOff className="w-8 h-8 text-stone-400/80" />
+                    <div className="text-stone-500 text-xs font-jakarta font-semibold">
+                      No notifications yet.
+                    </div>
                   </div>
                 ) : (
-                  user.notifications.map((notif, idx) => {
+                  user.notifications.map((notif) => {
                     const match = notif.message.match(/VM-[A-Za-z0-9]+/);
                     const targetUrl = match ? `/orders/${match[0]}` : '/account';
 
+                    // Pick icons based on content
+                    let notifIcon = <Info className="w-4 h-4 text-stone-655" />;
+                    if (notif.title.toLowerCase().includes('order') || notif.message.toLowerCase().includes('order') || notif.message.toLowerCase().includes('dispatch')) {
+                      notifIcon = <Package className="w-4 h-4 text-[#C56C4F]" />;
+                    } else if (notif.title.toLowerCase().includes('profile') || notif.title.toLowerCase().includes('security') || notif.title.toLowerCase().includes('address')) {
+                      notifIcon = <ShieldCheck className="w-4 h-4 text-emerald-700" />;
+                    }
+
                     return (
-                      <Link 
-                        key={idx} 
-                        href={targetUrl}
-                        onClick={() => setShowNotifications(false)}
-                        className="flex flex-col gap-1 text-xs p-2.5 hover:bg-stone-150/40 rounded-xl transition-all font-jakarta text-stone-900 border-b border-[#eeddb9]/10 last:border-b-0 hover:shadow-3xs group"
+                      <div
+                        key={notif.id}
+                        onClick={() => {
+                          if (!notif.read) markNotificationAsRead(notif.id);
+                        }}
+                        className={`flex gap-3 p-3 rounded-xl transition-all font-jakarta border border-transparent hover:border-[#eeddb9]/45 hover:shadow-xs group cursor-pointer relative ${
+                          !notif.read ? 'bg-amber-50/70 shadow-3xs' : 'bg-transparent hover:bg-stone-100/35'
+                        }`}
                       >
-                        <div className="flex justify-between items-start gap-2">
-                          <span className="font-extrabold text-stone-950 group-hover:text-[#384401] transition-colors">{notif.title}</span>
-                          <span className="text-[9px] text-[#C56C4F] font-bold shrink-0">{notif.date}</span>
+                        <div className="shrink-0 mt-0.5">
+                          {notifIcon}
                         </div>
-                        <p className="text-stone-700 text-[10.5px] leading-normal font-medium">{notif.message}</p>
-                        {match && (
-                          <span className="text-[9px] font-black text-[#384401] mt-1 hover:underline flex items-center gap-0.5">
-                            Manage Order →
-                          </span>
-                        )}
-                      </Link>
+                        <div className="flex-1 flex flex-col gap-0.5 min-w-0 pr-4">
+                          <div className="flex justify-between items-start gap-1.5">
+                            <span className={`text-stone-900 text-[12.5px] truncate font-jakarta ${notif.read ? 'font-semibold' : 'font-extrabold'}`}>
+                              {notif.title}
+                            </span>
+                            <span className="text-[10px] text-stone-500 font-medium shrink-0">{notif.date}</span>
+                          </div>
+                          <p className="text-stone-750 text-[11.5px] leading-relaxed font-medium break-words">
+                            {notif.message}
+                          </p>
+                          <div className="flex items-center gap-3 mt-1 shrink-0">
+                            <Link
+                              href={targetUrl}
+                              onClick={() => setShowNotifications(false)}
+                              className="text-[11px] font-bold text-[#4f5a30] hover:text-[#384401] hover:underline"
+                            >
+                              {match ? 'Manage Order →' : 'View Account →'}
+                            </Link>
+                          </div>
+                        </div>
+
+                        {/* Unread indicator / Delete button */}
+                        <div className="absolute right-2.5 top-3 flex flex-col items-center gap-2">
+                          {!notif.read && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#C56C4F]" />
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              deleteNotification(notif.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 text-stone-400 hover:text-red-600 rounded transition-all cursor-pointer"
+                            title="Delete Notification"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
                     );
                   })
                 )}
@@ -303,11 +366,10 @@ export default function Navbar({
         {/* Cart Button */}
         <Link
           href="/cart"
-          className={`relative w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${
-            isTransparent
+          className={`relative w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${isTransparent
               ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
               : 'p-2 hover:bg-stone-200/50 text-[#3d2b1f] hover:text-[#4f5a30]'
-          }`}
+            }`}
           aria-label="Shopping Cart"
         >
           <ShoppingCart className="w-4.5 h-4.5" />
@@ -322,11 +384,10 @@ export default function Navbar({
         {mounted && (!user || user.role !== 'admin' || !isAdminAuth) && (
           <Link
             href={mounted && user ? "/account" : "/login"}
-            className={`lg:hidden w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${
-              isTransparent
+            className={`lg:hidden w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${isTransparent
                 ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
                 : 'p-2 hover:bg-stone-200/50 text-[#3d2b1f]'
-            }`}
+              }`}
             aria-label="User Account"
           >
             <UserIcon className="w-4.5 h-4.5" />
@@ -337,11 +398,10 @@ export default function Navbar({
         <div className="lg:hidden flex items-center">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${
-              isTransparent
+            className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all duration-300 text-sm cursor-pointer shadow-xs ${isTransparent
                 ? 'border-white/20 bg-black/40 text-white/95 hover:bg-white/10'
                 : 'p-1.5 hover:bg-stone-100 text-[#3d2b1f]'
-            }`}
+              }`}
             aria-label="Toggle menu"
           >
             {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}

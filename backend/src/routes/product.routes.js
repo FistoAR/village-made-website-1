@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { query } from '../config/db.js';
 import multer from 'multer';
+import { broadcastInventoryUpdate } from '../config/socket.js';
 
 export const productRouter = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -161,6 +162,8 @@ productRouter.put('/:id', async (req, res, next) => {
         productId
       ]
     );
+
+    broadcastInventoryUpdate(productId, stock || 50);
 
     return res.status(200).json({ success: true, message: 'Product updated successfully.' });
   } catch (error) {
@@ -330,6 +333,104 @@ productRouter.post('/:id/reviews', async (req, res, next) => {
     );
 
     return res.status(201).json({ success: true, message: 'Review saved successfully.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/products/decrement-stock
+ * Decrease product stock after validation in checkout flow
+ */
+productRouter.post('/decrement-stock', async (req, res, next) => {
+  const { items } = req.body;
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ success: false, error: 'Items list is required.' });
+  }
+
+  try {
+    // Run validation & updates in a SQL Transaction
+    await query('BEGIN');
+
+    const updatedStocks = [];
+    for (const item of items) {
+      const prodRes = await query('SELECT stock, name FROM products WHERE id = $1', [item.id]);
+      if (prodRes.rows.length === 0) {
+        await query('ROLLBACK');
+        return res.status(404).json({ success: false, error: `Product with ID ${item.id} not found.` });
+      }
+      const currentStock = prodRes.rows[0].stock;
+      if (currentStock < item.quantity) {
+        await query('ROLLBACK');
+        return res.status(400).json({ 
+          success: false, 
+          error: `Insufficient stock for "${prodRes.rows[0].name}". Available: ${currentStock}, requested: ${item.quantity}.` 
+        });
+      }
+
+      const nextStock = currentStock - item.quantity;
+      await query('UPDATE products SET stock = $1 WHERE id = $2', [nextStock, item.id]);
+      updatedStocks.push({ id: item.id, stock: nextStock });
+    }
+
+    await query('COMMIT');
+
+    for (const u of updatedStocks) {
+      broadcastInventoryUpdate(u.id, u.stock);
+    }
+
+    return res.status(200).json({ success: true, message: 'Stock allocated and decremented successfully.' });
+  } catch (error) {
+    await query('ROLLBACK');
+    next(error);
+  }
+});
+
+/**
+ * POST /api/products/validate-coupon
+ * Validate coupon code against the DB coupons table
+ */
+productRouter.post('/validate-coupon', async (req, res, next) => {
+  const { code, cartTotal } = req.body;
+  if (!code) {
+    return res.status(400).json({ success: false, error: 'Coupon code is required.' });
+  }
+
+  try {
+    const couponRes = await query('SELECT * FROM coupons WHERE UPPER(code) = UPPER($1) AND active = true', [code.trim()]);
+    if (couponRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Invalid or inactive coupon code.' });
+    }
+
+    const coupon = couponRes.rows[0];
+    
+    // Validate minimum cart value
+    const minVal = Number(coupon.min_cart_value);
+    if (cartTotal < minVal) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Minimum cart purchase value of ₹${minVal} is required for this coupon.` 
+      });
+    }
+
+    // Check expiry if any
+    if (coupon.expiry_date && new Date(coupon.expiry_date) < new Date()) {
+      return res.status(400).json({ success: false, error: 'This coupon code has expired.' });
+    }
+
+    let discountValue = 0;
+    if (coupon.discount_type === 'percentage') {
+      discountValue = Math.round(cartTotal * (Number(coupon.discount_value) / 100));
+    } else {
+      discountValue = Number(coupon.discount_value);
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      discountType: coupon.discount_type, 
+      discountValue: discountValue,
+      message: `${coupon.discount_type === 'percentage' ? coupon.discount_value + '%' : 'Flat ₹' + coupon.discount_value} discount applied successfully!` 
+    });
   } catch (error) {
     next(error);
   }

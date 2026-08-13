@@ -53,7 +53,7 @@ export default function AdminDashboardTab({
         ].map((s, idx) => {
           const Icon = s.icon;
           return (
-            <div key={idx} className="border border-[#eeddb9]/50 rounded-2xl p-5 flex items-center justify-between bg-stone-50/20">
+            <div key={idx} className="border border-[#d3c099] rounded-2xl p-5 flex items-center justify-between bg-stone-50/20">
               <div>
                 <span className="text-[10px] sm:text-xs font-bold text-stone-500 uppercase tracking-wider block mb-1 font-jakarta">{s.label}</span>
                 <span className="text-xl sm:text-2xl font-black text-stone-900">{s.val}</span>
@@ -74,32 +74,32 @@ export default function AdminDashboardTab({
             <ShoppingBag className="w-4.5 h-4.5 text-[#C56C4F]" />
             Recent Placed Orders
           </h3>
-          <div className="border border-[#eeddb9]/50 rounded-2xl overflow-hidden bg-stone-50/10">
+          <div className="border border-[#d3c099] rounded-2xl overflow-hidden bg-stone-50/10">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border border-[#eeddb9] border-collapse">
+              <table className="w-full text-left text-xs border border-[#d3c099] border-collapse">
                 <thead>
-                  <tr className="bg-stone-50 border-b border-[#eeddb9] text-stone-500 font-extrabold uppercase tracking-wider">
-                    <th className="p-3.5 pl-5 border border-[#eeddb9]">Order ID</th>
-                    <th className="p-3.5 border border-[#eeddb9]">Customer</th>
-                    <th className="p-3.5 border border-[#eeddb9]">Total</th>
-                    <th className="p-3.5 pr-5 border border-[#eeddb9]">Status</th>
+                  <tr className="bg-stone-50 border-b border-[#d3c099] text-stone-500 font-extrabold uppercase tracking-wider">
+                    <th className="p-3.5 pl-5 border border-[#d3c099]">Order ID</th>
+                    <th className="p-3.5 border border-[#d3c099]">Customer</th>
+                    <th className="p-3.5 border border-[#d3c099]">Total</th>
+                    <th className="p-3.5 pr-5 border border-[#d3c099]">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#eeddb9]">
+                <tbody className="divide-y divide-[#d3c099]">
                   {recentOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="p-8 text-center text-stone-400 font-medium font-jakarta border border-[#eeddb9]">No orders recorded yet.</td>
+                      <td colSpan={4} className="p-8 text-center text-stone-400 font-medium font-jakarta border border-[#d3c099]">No orders recorded yet.</td>
                     </tr>
                   ) : (
                     recentOrders.map(o => (
                       <tr key={o.id} className="hover:bg-stone-50/40 font-medium">
-                        <td className="p-3.5 pl-5 font-bold text-stone-850 font-jakarta border border-[#eeddb9]">{o.id}</td>
-                        <td className="p-3.5 text-stone-600 border border-[#eeddb9]">
+                        <td className="p-3.5 pl-5 font-bold text-stone-850 font-jakarta border border-[#d3c099]">{o.id}</td>
+                        <td className="p-3.5 text-stone-600 border border-[#d3c099]">
                           <div className="font-semibold">{o.customerName || 'Walk-in User'}</div>
-                          <div className="text-[10px] text-stone-450">{o.customerMobile}</div>
+                          <div className="text-[10px] text-stone-455">{o.customerMobile}</div>
                         </td>
-                        <td className="p-3.5 font-bold text-stone-850 border border-[#eeddb9]">₹{o.total}</td>
-                        <td className="p-3.5 pr-5 border border-[#eeddb9]">
+                        <td className="p-3.5 font-bold text-stone-850 border border-[#d3c099]">₹{o.total}</td>
+                        <td className="p-3.5 pr-5 border border-[#d3c099]">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             o.status === 'Delivered' ? 'bg-green-50 text-green-700' :
                             o.status === 'Shipped' ? 'bg-blue-50 text-blue-700' :
@@ -124,7 +124,7 @@ export default function AdminDashboardTab({
             <Activity className="w-4.5 h-4.5 text-[#384401]" />
             Warehouse Diagnostics
           </h3>
-          <div className="border border-[#eeddb9]/50 rounded-2xl p-5 space-y-4.5 bg-stone-50/20 font-jakarta">
+          <div className="border border-[#d3c099] rounded-2xl p-5 space-y-4.5 bg-stone-50/20 font-jakarta">
             {[
               { label: 'Postgres Connection', status: 'Healthy', ping: '12ms', dot: 'bg-green-500' },
               { label: 'Express Router Server', status: 'Online', ping: 'port 5001', dot: 'bg-green-500' },

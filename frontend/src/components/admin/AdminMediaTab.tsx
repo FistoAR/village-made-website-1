@@ -22,7 +22,7 @@ export default function AdminMediaTab({
   return (
     <div className="space-y-6">
       {/* Upload Section */}
-      <form onSubmit={handleAddMedia} className="border border-[#eeddb9] rounded-2xl p-5 bg-[#FAF4E6]/10 flex flex-col sm:flex-row gap-4 items-end font-jakarta">
+      <form onSubmit={handleAddMedia} className="border border-[#d3c099] rounded-2xl p-5 bg-[#FAF4E6]/10 flex flex-col sm:flex-row gap-4 items-end font-jakarta">
         <div className="flex-grow flex flex-col gap-1 w-full">
           <label className="text-[10px] font-bold text-stone-600">Register Image to Media Library</label>
           <input
@@ -31,7 +31,7 @@ export default function AdminMediaTab({
             placeholder="Enter Image Path URL (e.g. /images/about/natural.svg)"
             value={newMediaUrl}
             onChange={(e) => setNewMediaUrl(e.target.value)}
-            className="h-10 px-3.5 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 w-full"
+            className="h-10 px-3.5 bg-white border border-[#d3c099] rounded-xl text-xs text-stone-900 w-full"
           />
         </div>
         <button
@@ -45,7 +45,7 @@ export default function AdminMediaTab({
       {/* Media Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
         {mediaFiles.map((url, idx) => (
-          <div key={idx} className="border border-[#eeddb9]/55 rounded-2xl overflow-hidden bg-stone-50/20 group relative shadow-2xs">
+          <div key={idx} className="border border-[#d3c099] rounded-2xl overflow-hidden bg-stone-50/20 group relative shadow-2xs">
             <div className="aspect-video w-full bg-stone-150 relative">
               <img src={url} alt={`Media file ${idx}`} className="w-full h-full object-cover" />
             </div>

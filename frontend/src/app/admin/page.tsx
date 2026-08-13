@@ -79,7 +79,7 @@ export default function AdminPage() {
   const [selectedProductCategory, setSelectedProductCategory] = useState('All');
   const [editingProduct, setEditingProduct] = useState<ExtendedProduct | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
-  const [productViewMode, setProductViewMode] = useState<'card' | 'table'>('card');
+  const [productViewMode, setProductViewMode] = useState<'card' | 'table'>('table');
 
   // Add Product Form
   const [newProdName, setNewProdName] = useState('');
@@ -795,10 +795,10 @@ export default function AdminPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as AdminTab)}
-                  className={`flex items-center gap-3 px-4.5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider shrink-0 transition-all cursor-pointer ${
+                  className={`flex items-center gap-3 px-4.5 py-3 rounded-2xl text-sm font-bold uppercase tracking-wider shrink-0 transition-all cursor-pointer ${
                     isActive 
                       ? 'bg-[#384401] text-white shadow-md' 
-                      : 'bg-white border border-[#eeddb9]/45 text-stone-700 hover:bg-[#FAF4E6]/50'
+                      : 'bg-white border border-[#d3c099] text-stone-700 hover:bg-[#FAF4E6]/50'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -809,7 +809,7 @@ export default function AdminPage() {
           </nav>
 
           {/* Core Content Window */}
-          <div className="bg-white border border-[#eeddb9]/50 rounded-[32px] p-6 sm:p-8 shadow-xs min-h-[500px]">
+          <div className="bg-white border border-[#d3c099] rounded-[32px] p-6 sm:p-8 shadow-xs min-h-[500px]">
             
             {activeTab === 'dashboard' && (
               <AdminDashboardTab

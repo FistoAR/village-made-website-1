@@ -35,7 +35,7 @@ export default function AdminInventoryTab({
     <div className="space-y-8">
       {/* Top Reports Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="border border-[#eeddb9]/50 rounded-2xl p-5 bg-stone-50/25 font-jakarta">
+        <div className="border border-[#d3c099] rounded-2xl p-5 bg-stone-50/25 font-jakarta">
           <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block mb-1">Total Stock Value (Cost)</span>
           <span className="text-xl font-extrabold text-stone-955">₹{totalInventoryVal.toLocaleString('en-IN')}</span>
           <span className="text-[10px] text-stone-400 block mt-0.5">Aggregated purchase valuation</span>
@@ -54,7 +54,7 @@ export default function AdminInventoryTab({
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.8fr] gap-8 items-start">
         {/* Left Column: Purchase Entry Form */}
-        <form onSubmit={handlePurchaseSubmit} className="border border-[#eeddb9] rounded-2xl p-5 bg-[#FAF4E6]/10 space-y-4 font-jakarta">
+        <form onSubmit={handlePurchaseSubmit} className="border border-[#d3c099] rounded-2xl p-5 bg-[#FAF4E6]/10 space-y-4 font-jakarta">
           <h3 className="text-xs font-black uppercase tracking-wider text-[#384401] flex items-center gap-1.5">
             <FileSpreadsheet className="w-4 h-4" />
             Record Purchase Entry
@@ -70,7 +70,7 @@ export default function AdminInventoryTab({
                 const prod = localProducts.find(p => p.id === e.target.value);
                 if (prod) setPurchaseCost(prod.purchasePrice || Math.floor(prod.price * 0.6));
               }}
-              className="h-10 px-3.5 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+              className="h-10 px-3.5 bg-white border border-[#d3c099] rounded-xl text-xs text-stone-900"
             >
               <option value="">Select Item...</option>
               {localProducts.map(p => (
@@ -88,7 +88,7 @@ export default function AdminInventoryTab({
                 min="1"
                 value={purchaseQty}
                 onChange={(e) => setPurchaseQty(parseInt(e.target.value) || 0)}
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-bold"
+                className="h-10 px-3 bg-white border border-[#d3c099] rounded-xl text-xs text-stone-900 font-bold"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -99,7 +99,7 @@ export default function AdminInventoryTab({
                 min="1"
                 value={purchaseCost}
                 onChange={(e) => setPurchaseCost(parseInt(e.target.value) || 0)}
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-bold"
+                className="h-10 px-3 bg-white border border-[#d3c099] rounded-xl text-xs text-stone-900 font-bold"
               />
             </div>
           </div>
@@ -118,33 +118,33 @@ export default function AdminInventoryTab({
             Stock Level Updates
           </h3>
           
-          <div className="border border-[#eeddb9]/50 rounded-2xl overflow-hidden bg-stone-50/10">
+          <div className="border border-[#d3c099] rounded-2xl overflow-hidden bg-stone-50/10">
             <div className="overflow-y-auto max-h-[300px]">
-              <table className="w-full text-left text-xs border border-[#eeddb9] border-collapse">
+              <table className="w-full text-left text-xs border border-[#d3c099] border-collapse">
                 <thead>
-                  <tr className="bg-stone-50 border-b border-[#eeddb9] text-stone-500 font-extrabold uppercase tracking-wider sticky top-0">
-                    <th className="p-3 pl-4 border border-[#eeddb9]">Product</th>
-                    <th className="p-3 text-center border border-[#eeddb9]">Stock</th>
-                    <th className="p-3 text-right pr-4 border border-[#eeddb9]">Quick Adjust</th>
+                  <tr className="bg-stone-50 border-b border-[#d3c099] text-stone-500 font-extrabold uppercase tracking-wider sticky top-0">
+                    <th className="p-3 pl-4 border border-[#d3c099]">Product</th>
+                    <th className="p-3 text-center border border-[#d3c099]">Stock</th>
+                    <th className="p-3 text-right pr-4 border border-[#d3c099]">Quick Adjust</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#eeddb9]">
+                <tbody className="divide-y divide-[#d3c099]">
                   {localProducts.map(p => {
                     const isLow = p.stock < 10;
                     return (
                       <tr key={p.id} className={`font-semibold ${isLow ? 'bg-amber-50/20' : ''}`}>
-                        <td className="p-3 pl-4 font-jakarta border border-[#eeddb9]">
+                        <td className="p-3 pl-4 font-jakarta border border-[#d3c099]">
                           <span className="font-bold text-stone-855 block">{p.name}</span>
                           <span className="text-[9px] text-stone-400 font-normal">{p.category}</span>
                         </td>
-                        <td className="p-3 text-center border border-[#eeddb9]">
+                        <td className="p-3 text-center border border-[#d3c099]">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
                             isLow ? 'bg-amber-100 text-amber-800 animate-pulse' : 'bg-stone-100 text-stone-700'
                           }`}>
                             {p.stock} Units
                           </span>
                         </td>
-                        <td className="p-3 text-right pr-4 border border-[#eeddb9]">
+                        <td className="p-3 text-right pr-4 border border-[#d3c099]">
                           <div className="flex justify-end gap-1.5">
                             <button
                               onClick={() => {
@@ -179,25 +179,25 @@ export default function AdminInventoryTab({
         <h3 className="text-sm font-extrabold uppercase tracking-wider text-stone-955 font-jakarta">
           Purchase Logs History
         </h3>
-        <div className="border border-[#eeddb9]/50 rounded-2xl overflow-hidden bg-stone-50/10">
-          <table className="w-full text-left text-xs border border-[#eeddb9] border-collapse">
+        <div className="border border-[#d3c099] rounded-2xl overflow-hidden bg-stone-50/10">
+          <table className="w-full text-left text-xs border border-[#d3c099] border-collapse">
             <thead>
-              <tr className="bg-stone-50 border-b border-[#eeddb9] text-stone-500 font-bold uppercase tracking-wider">
-                <th className="p-3 pl-4 border border-[#eeddb9]">Entry ID</th>
-                <th className="p-3 border border-[#eeddb9]">Product Name</th>
-                <th className="p-3 text-center border border-[#eeddb9]">Qty Added</th>
-                <th className="p-3 border border-[#eeddb9]">Unit Cost</th>
-                <th className="p-3 text-right pr-4 border border-[#eeddb9]">Total Cost</th>
+              <tr className="bg-stone-50 border-b border-[#d3c099] text-stone-500 font-bold uppercase tracking-wider">
+                <th className="p-3 pl-4 border border-[#d3c099]">Entry ID</th>
+                <th className="p-3 border border-[#d3c099]">Product Name</th>
+                <th className="p-3 text-center border border-[#d3c099]">Qty Added</th>
+                <th className="p-3 border border-[#d3c099]">Unit Cost</th>
+                <th className="p-3 text-right pr-4 border border-[#d3c099]">Total Cost</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#eeddb9]">
+            <tbody className="divide-y divide-[#d3c099]">
               {purchaseHistory.map(ph => (
                 <tr key={ph.id} className="font-semibold text-stone-750 font-jakarta">
-                  <td className="p-3 pl-4 font-bold text-[#384401] border border-[#eeddb9]">{ph.id}</td>
-                  <td className="p-3 text-stone-900 border border-[#eeddb9]">{ph.productName}</td>
-                  <td className="p-3 text-center font-bold text-stone-900 border border-[#eeddb9]">+{ph.quantity}</td>
-                  <td className="p-3 border border-[#eeddb9]">₹{ph.unitCost}</td>
-                  <td className="p-3 text-right pr-4 font-bold text-stone-900 border border-[#eeddb9]">₹{ph.totalCost}</td>
+                  <td className="p-3 pl-4 font-bold text-[#384401] border border-[#d3c099]">{ph.id}</td>
+                  <td className="p-3 text-stone-900 border border-[#d3c099]">{ph.productName}</td>
+                  <td className="p-3 text-center font-bold text-stone-900 border border-[#d3c099]">+{ph.quantity}</td>
+                  <td className="p-3 border border-[#d3c099]">₹{ph.unitCost}</td>
+                  <td className="p-3 text-right pr-4 font-bold text-stone-900 border border-[#d3c099]">₹{ph.totalCost}</td>
                 </tr>
               ))}
             </tbody>

@@ -38,7 +38,7 @@ export default function AdminGatedAuth({
     <div className="min-h-screen bg-[#FDFBF7] text-[#3E2C1C] flex flex-col justify-between">
       <Navbar />
       <main className="flex-grow pt-32 pb-20 px-4 flex items-center justify-center">
-        <div className="w-full max-w-md bg-white border border-[#eeddb9]/55 rounded-[28px] p-6 sm:p-8 shadow-xl">
+        <div className="w-full max-w-md bg-white border border-[#d3c099] rounded-[28px] p-6 sm:p-8 shadow-xl">
           <div className="flex flex-col items-center text-center mb-6">
             <div className="w-12 h-12 bg-[#384401]/10 rounded-2xl flex items-center justify-center text-[#384401] mb-3">
               <Key className="w-6 h-6" />
@@ -63,7 +63,7 @@ export default function AdminGatedAuth({
                 placeholder="e.g. 9999999999"
                 value={adminPhone}
                 onChange={(e) => setAdminPhone(e.target.value)}
-                className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] bg-white text-sm"
+                className="w-full h-11 px-4 border border-[#d3c099] rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] bg-white text-sm"
               />
             </div>
 
@@ -76,12 +76,12 @@ export default function AdminGatedAuth({
                   placeholder="Enter security password"
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
-                  className="w-full h-11 pl-4 pr-10 border border-[#eeddb9] rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] bg-white text-sm"
+                  className="w-full h-11 pl-4 pr-10 border border-[#d3c099] rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] bg-white text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowAdminPassword(!showAdminPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-450 cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-455 cursor-pointer"
                 >
                   {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -98,7 +98,7 @@ export default function AdminGatedAuth({
                   maxLength={4}
                   value={adminPasscode}
                   onChange={(e) => setAdminPasscode(e.target.value)}
-                  className="w-full h-11 pl-4 pr-10 border border-[#eeddb9] rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] bg-white text-sm text-center font-black tracking-[0.4em]"
+                  className="w-full h-11 pl-4 pr-10 border border-[#d3c099] rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] bg-white text-sm text-center font-black tracking-[0.4em]"
                 />
                 <button
                   type="button"

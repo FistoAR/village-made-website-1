@@ -162,7 +162,7 @@ export default function AdminProductsTab({
             <button
               type="button"
               onClick={() => setProductViewMode('card')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold font-jakarta transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-lg text-sm font-bold font-jakarta transition-all cursor-pointer ${
                 productViewMode === 'card' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500 hover:text-stone-850'
               }`}
             >
@@ -171,7 +171,7 @@ export default function AdminProductsTab({
             <button
               type="button"
               onClick={() => setProductViewMode('table')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold font-jakarta transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-lg text-sm font-bold font-jakarta transition-all cursor-pointer ${
                 productViewMode === 'table' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500 hover:text-stone-850'
               }`}
             >
@@ -208,28 +208,28 @@ export default function AdminProductsTab({
 
       {/* Add Category Modal/Form */}
       {showAddCategory && (
-        <form onSubmit={handleAddCategorySubmit} className="border border-[#eeddb9] rounded-2xl p-5 bg-[#FAF4E6]/20 space-y-4">
+        <form onSubmit={handleAddCategorySubmit} className="border border-[#d3c099] rounded-2xl p-5 bg-[#FAF4E6]/20 space-y-4">
           <h4 className="text-xs font-black uppercase tracking-wider text-[#704632] font-jakarta">Add New Provision Category</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Category Name</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Category Name</label>
               <input
                 type="text"
                 required
                 value={newCatName}
                 onChange={(e) => setNewCatName(e.target.value)}
                 placeholder="e.g. Natural Sugar"
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Category Description</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Category Description</label>
               <input
                 type="text"
                 value={newCatDesc}
                 onChange={(e) => setNewCatDesc(e.target.value)}
                 placeholder="Short description of category..."
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
           </div>
@@ -246,73 +246,73 @@ export default function AdminProductsTab({
 
       {/* Add Product Modal/Form */}
       {showAddProduct && (
-        <form onSubmit={handleAddProductSubmit} className="border border-[#eeddb9] rounded-2xl p-5 bg-[#FAF4E6]/20 space-y-4">
+        <form onSubmit={handleAddProductSubmit} className="border border-[#d3c099] rounded-2xl p-5 bg-[#FAF4E6]/20 space-y-4">
           <h4 className="text-xs font-black uppercase tracking-wider text-[#384401] font-jakarta">Add New Provision Product</h4>
           <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_1fr] gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Category</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Category</label>
               <select
                 value={newProdCat}
                 onChange={(e) => setNewProdCat(e.target.value)}
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               >
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.name}>{cat.name}</option>
                 ))}
               </select>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Product Name</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Product Name</label>
               <input
                 type="text"
                 required
                 value={newProdName}
                 onChange={(e) => setNewProdName(e.target.value)}
                 placeholder="e.g. MULTI GRAIN COOKIES"
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Base Price (₹)</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Base Price (₹)</label>
               <input
                 type="number"
                 required
                 value={newProdPrice}
                 onChange={(e) => setNewProdPrice(Number(e.target.value))}
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-jakarta">
-            <div className="flex flex-col gap-1 sm:col-span-3">
-              <label className="text-[10px] font-bold text-stone-600">Description</label>
+            <div className="flex flex-col gap-1.5 sm:col-span-3">
+              <label className="text-xs font-bold text-stone-700">Description</label>
               <textarea
                 rows={3}
                 value={newProdDesc}
                 onChange={(e) => setNewProdDesc(e.target.value)}
                 placeholder="Detailed product explanation..."
-                className="p-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 resize-none"
+                className="p-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 resize-none focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Ribbon Badge (Optional)</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Ribbon Badge (Optional)</label>
               <input
                 type="text"
                 value={newProdBadge}
                 onChange={(e) => setNewProdBadge(e.target.value)}
                 placeholder="e.g. BEST SELLER"
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Initial Stock</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Initial Stock</label>
               <input
                 type="number"
                 value={newProdStock}
                 onChange={(e) => setNewProdStock(parseInt(e.target.value) || 0)}
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
           </div>
@@ -365,19 +365,19 @@ export default function AdminProductsTab({
             </div>
           </div>
           
-          {/* Ingredients Infographic Setup */}
-          <div className="border border-[#eeddb9]/60 rounded-xl p-4 bg-amber-50/5 space-y-3 font-jakarta">
+          {/* Ingredients Infographic Setup */ }
+          <div className="border border-[#d3c099] rounded-xl p-4 bg-amber-50/5 space-y-3 font-jakarta">
             <span className="text-xs font-bold text-[#704632] block uppercase tracking-wider">Ingredients Infographics Image Configuration</span>
             
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Desktop Ingredients Image URL / Upload</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Desktop Ingredients Image URL / Upload</label>
               <div className="flex items-center gap-3">
                 <input
                   type="text"
                   value={newProdIngDesktop}
                   onChange={(e) => setNewProdIngDesktop(e.target.value)}
                   placeholder="e.g. /images/products/ingredients-image.webp"
-                  className="flex-grow h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                  className="flex-grow h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
                 />
                 <input
                   type="file"
@@ -389,7 +389,7 @@ export default function AdminProductsTab({
                       if (url) setNewProdIngDesktop(url);
                     }
                   }}
-                  className="text-xs w-48 file:py-1 file:px-3 file:rounded-lg file:bg-stone-100"
+                  className="text-xs w-48 file:py-2 file:px-3 file:rounded-lg file:bg-stone-100"
                 />
               </div>
             </div>
@@ -401,19 +401,19 @@ export default function AdminProductsTab({
                   id="newProdIngSameTab"
                   checked={newProdIngSameTab}
                   onChange={(e) => setNewProdIngSameTab(e.target.checked)}
-                  className="cursor-pointer rounded border-[#eeddb9]"
+                  className="cursor-pointer rounded border-[#d3c099]"
                 />
-                <label htmlFor="newProdIngSameTab" className="text-[10px] font-bold text-stone-650 cursor-pointer select-none">Use same ingredients image for tablet</label>
+                <label htmlFor="newProdIngSameTab" className="text-xs font-bold text-stone-700 cursor-pointer select-none">Use same ingredients image for tablet</label>
               </div>
               {!newProdIngSameTab && (
-                <div className="flex flex-col gap-1 pl-5">
-                  <label className="text-[9px] font-bold text-stone-500">Tablet Ingredients Image URL</label>
+                <div className="flex flex-col gap-1.5 pl-5">
+                  <label className="text-xs font-bold text-stone-500">Tablet Ingredients Image URL</label>
                   <input
                     type="text"
                     value={newProdIngTablet}
                     onChange={(e) => setNewProdIngTablet(e.target.value)}
                     placeholder="Tablet specific ingredients image URL..."
-                    className="h-9 px-3 bg-white border border-[#eeddb9] rounded-lg text-xs"
+                    className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
                   />
                 </div>
               )}
@@ -421,11 +421,11 @@ export default function AdminProductsTab({
 
             <div className="flex flex-col gap-2 border-t border-stone-200/50 pt-2">
               <div className="flex items-center gap-4">
-                <label className="text-[10px] font-bold text-stone-650">Mobile Option:</label>
+                <label className="text-xs font-bold text-stone-700">Mobile Option:</label>
                 <select
                   value={newProdIngSameMobile}
                   onChange={(e: any) => setNewProdIngSameMobile(e.target.value)}
-                  className="h-8 px-2 bg-white border border-[#eeddb9] rounded-lg text-xs"
+                  className="h-9 px-3 bg-white border border-[#d3c099] rounded-lg text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
                 >
                   <option value="desktop">Use the same as desktop</option>
                   <option value="tablet">Use the same as tablet</option>
@@ -433,14 +433,14 @@ export default function AdminProductsTab({
                 </select>
               </div>
               {newProdIngSameMobile === 'none' && (
-                <div className="flex flex-col gap-1 pl-5">
-                  <label className="text-[9px] font-bold text-stone-500">Mobile Ingredients Image URL</label>
+                <div className="flex flex-col gap-1.5 pl-5">
+                  <label className="text-xs font-bold text-stone-500">Mobile Ingredients Image URL</label>
                   <input
                     type="text"
                     value={newProdIngMobile}
                     onChange={(e) => setNewProdIngMobile(e.target.value)}
                     placeholder="Mobile specific ingredients image URL..."
-                    className="h-9 px-3 bg-white border border-[#eeddb9] rounded-lg text-xs"
+                    className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
                   />
                 </div>
               )}
@@ -448,81 +448,82 @@ export default function AdminProductsTab({
           </div>
 
           <div className="grid grid-cols-1 gap-4 font-jakarta">
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Benefits (Comma separated)</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Benefits (Comma separated)</label>
               <input
                 type="text"
                 value={newProdBenefits}
                 onChange={(e) => setNewProdBenefits(e.target.value)}
                 placeholder="e.g. Traditional Nutrition, Easy to Digest"
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
-          </div>
-
-          {/* FAQ section creator */}
-          <div className="border border-[#eeddb9]/60 rounded-xl p-4 bg-stone-50/5 space-y-4.5 font-jakarta">
-            <span className="text-xs font-bold text-[#384401] block uppercase tracking-wider">Product FAQ Editor</span>
+          </div>          {/* FAQ section creator */}
+          <div className="border border-[#eeddb9]/60 rounded-xl p-5 bg-[#FAF4E6]/10 space-y-5 font-jakarta shadow-xs">
+            <div className="flex justify-between items-center border-b border-[#eeddb9]/30 pb-3">
+              <span className="text-xs font-black text-[#384401] uppercase tracking-wider">Product FAQ Editor</span>
+              <button
+                type="button"
+                onClick={() => setNewProdFaqs(prev => [...prev, { q: '', a: '' }])}
+                className="bg-[#384401] hover:bg-[#252d00] text-white text-[11px] font-bold py-1.5 px-3 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3 h-3" /> Add FAQ Pair
+              </button>
+            </div>
             
             {/* Active FAQs list */}
-            {newProdFaqs.length > 0 && (
-              <div className="space-y-2 border-b border-stone-200 pb-3">
+            {newProdFaqs.length > 0 ? (
+              <div className="space-y-4">
                 {newProdFaqs.map((faq, idx) => (
-                  <div key={idx} className="flex justify-between items-start gap-2 bg-white border border-[#eeddb9]/45 rounded-lg p-2.5 text-[11px]">
-                    <div>
-                      <span className="font-bold text-stone-850 block">Q: {faq.q}</span>
-                      <span className="text-stone-550 block mt-0.5">A: {faq.a}</span>
+                  <div key={idx} className="bg-white border border-[#eeddb9]/40 rounded-xl p-4 space-y-3 relative shadow-xs">
+                    <div className="flex justify-between items-center border-b border-stone-100 pb-2">
+                      <span className="text-[11px] font-black text-amber-850 uppercase tracking-wider">FAQ Pair #{idx + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => setNewProdFaqs(prev => prev.filter((_, i) => i !== idx))}
+                        className="text-red-500 hover:text-red-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setNewProdFaqs(prev => prev.filter((_, i) => i !== idx))}
-                      className="text-red-500 hover:text-red-700 font-bold shrink-0 cursor-pointer text-[10px] uppercase"
-                    >
-                      Remove
-                    </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold text-stone-550 uppercase tracking-wider">Question</label>
+                        <input
+                          type="text"
+                          value={faq.q}
+                          onChange={(e) => {
+                            const updated = [...newProdFaqs];
+                            updated[idx] = { ...updated[idx], q: e.target.value };
+                            setNewProdFaqs(updated);
+                          }}
+                          placeholder="e.g. Is this product gluten-free?"
+                          className="h-10 px-3 bg-stone-50 border border-[#d3c099]/60 rounded-lg text-sm text-stone-900 focus:bg-white focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold text-stone-550 uppercase tracking-wider">Answer</label>
+                        <textarea
+                          rows={2}
+                          value={faq.a}
+                          onChange={(e) => {
+                            const updated = [...newProdFaqs];
+                            updated[idx] = { ...updated[idx], a: e.target.value };
+                            setNewProdFaqs(updated);
+                          }}
+                          placeholder="e.g. Yes, it is made of natural gluten-free grains..."
+                          className="p-2.5 bg-stone-50 border border-[#d3c099]/60 rounded-lg text-sm text-stone-900 focus:bg-white focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all resize-none"
+                        />
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
+            ) : (
+              <div className="text-center py-6 text-stone-450 border border-dashed border-[#eeddb9]/50 rounded-xl bg-stone-50/50">
+                <p className="text-xs font-medium">No FAQs added yet. Click &quot;Add FAQ Pair&quot; to begin.</p>
+              </div>
             )}
-
-            {/* Add FAQ form controls */}
-            <div className="flex flex-col gap-2 bg-stone-100/50 p-3 rounded-lg border border-stone-200/50">
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-bold text-stone-500">Question</label>
-                <input
-                  type="text"
-                  value={faqInputQ}
-                  onChange={(e) => setFaqInputQ(e.target.value)}
-                  placeholder="e.g. Is this gluten-free?"
-                  className="h-9 px-3 bg-white border border-[#eeddb9] rounded-lg text-xs text-stone-900"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-bold text-stone-500">Answer</label>
-                <textarea
-                  rows={2}
-                  value={faqInputA}
-                  onChange={(e) => setFaqInputA(e.target.value)}
-                  placeholder="e.g. Yes, fingermillet is naturally gluten-free..."
-                  className="p-2.5 bg-white border border-[#eeddb9] rounded-lg text-xs text-stone-900 resize-none"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (faqInputQ.trim() && faqInputA.trim()) {
-                    setNewProdFaqs(prev => [...prev, { q: faqInputQ.trim(), a: faqInputA.trim() }]);
-                    setFaqInputQ('');
-                    setFaqInputA('');
-                  } else {
-                    triggerAlert('Please enter both FAQ Question and Answer.', true);
-                  }
-                }}
-                className="self-end bg-[#384401] hover:bg-[#252d00] text-white text-[10px] font-bold py-1.5 px-4 rounded-lg cursor-pointer"
-              >
-                Add Q&A Pair
-              </button>
-            </div>
           </div>
 
           <div className="flex gap-2">
@@ -538,71 +539,71 @@ export default function AdminProductsTab({
 
       {/* Edit Product Inline Form */}
       {editingProduct && (
-        <form onSubmit={handleUpdateProduct} className="border border-amber-200 rounded-2xl p-5 bg-amber-50/10 space-y-4 font-jakarta">
+        <form onSubmit={handleUpdateProduct} className="border border-[#d3c099] rounded-2xl p-5 bg-[#FAF4E6]/10 space-y-4 font-jakarta">
           <h4 className="text-xs font-black uppercase tracking-wider text-amber-800 font-jakarta">Edit Provision Product Details</h4>
           <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_1fr] gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Category</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Category</label>
               <select
                 value={editingProduct.category}
                 onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               >
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.name}>{cat.name}</option>
                 ))}
               </select>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Product Name</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Product Name</label>
               <input
                 type="text"
                 required
                 value={editingProduct.name}
                 onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Base Price (₹)</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Base Price (₹)</label>
               <input
                 type="number"
                 required
                 value={editingProduct.price}
                 onChange={(e) => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-jakarta">
-            <div className="flex flex-col gap-1 sm:col-span-3">
-              <label className="text-[10px] font-bold text-stone-600">Description</label>
+            <div className="flex flex-col gap-1.5 sm:col-span-3">
+              <label className="text-xs font-bold text-stone-700">Description</label>
               <textarea
                 rows={3}
                 value={editingProduct.description}
                 onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
-                className="p-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 resize-none font-jakarta"
+                className="p-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 resize-none font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Ribbon Badge (Optional)</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Ribbon Badge (Optional)</label>
               <input
                 type="text"
                 value={editingProduct.badge || ''}
                 onChange={(e) => setEditingProduct({ ...editingProduct, badge: e.target.value || undefined })}
                 placeholder="e.g. BEST SELLER"
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Stock</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700">Stock</label>
               <input
                 type="number"
                 value={editingProduct.stock}
                 onChange={(e) => setEditingProduct({ ...editingProduct, stock: parseInt(e.target.value) || 0 })}
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
           </div>
@@ -656,11 +657,11 @@ export default function AdminProductsTab({
           </div>
 
           {/* Ingredients Infographic Setup */}
-          <div className="border border-[#eeddb9]/60 rounded-xl p-4 bg-amber-50/5 space-y-3 font-jakarta text-xs text-stone-900">
+          <div className="border border-[#d3c099] rounded-xl p-4 bg-amber-50/5 space-y-3 font-jakarta text-sm text-stone-900">
             <span className="text-xs font-bold text-[#704632] block uppercase tracking-wider">Ingredients Infographics Image Configuration</span>
             
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600 font-jakarta">Desktop Ingredients Image URL / Upload</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700 font-jakarta">Desktop Ingredients Image URL / Upload</label>
               <div className="flex items-center gap-3">
                 <input
                   type="text"
@@ -673,7 +674,7 @@ export default function AdminProductsTab({
                     });
                   }}
                   placeholder="e.g. /images/products/ingredients-image.webp"
-                  className="flex-grow h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                  className="flex-grow h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
                 />
                 <input
                   type="file"
@@ -691,7 +692,7 @@ export default function AdminProductsTab({
                       }
                     }
                   }}
-                  className="text-xs w-48 file:py-1 file:px-3 file:rounded-lg file:bg-stone-100"
+                  className="text-xs w-48 file:py-2 file:px-3 file:rounded-lg file:bg-stone-100"
                 />
               </div>
             </div>
@@ -709,13 +710,13 @@ export default function AdminProductsTab({
                       ingredients: { ...(prevIng as any), useSameForTab: e.target.checked }
                     });
                   }}
-                  className="cursor-pointer rounded border-[#eeddb9]"
+                  className="cursor-pointer rounded border-[#d3c099]"
                 />
-                <label htmlFor="editProdIngSameTab" className="text-[10px] font-bold text-stone-650 cursor-pointer select-none">Use same ingredients image for tablet</label>
+                <label htmlFor="editProdIngSameTab" className="text-xs font-bold text-stone-750 cursor-pointer select-none">Use same ingredients image for tablet</label>
               </div>
               {!(typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? !!((editingProduct.ingredients as any)?.useSameForTab) : true) && (
-                <div className="flex flex-col gap-1 pl-5">
-                  <label className="text-[9px] font-bold text-stone-500 font-jakarta">Tablet Ingredients Image URL</label>
+                <div className="flex flex-col gap-1.5 pl-5">
+                  <label className="text-xs font-bold text-stone-500 font-jakarta">Tablet Ingredients Image URL</label>
                   <input
                     type="text"
                     value={typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? ((editingProduct.ingredients as any)?.tablet || '') : ''}
@@ -727,7 +728,7 @@ export default function AdminProductsTab({
                       });
                     }}
                     placeholder="Tablet specific ingredients image URL..."
-                    className="h-9 px-3 bg-white border border-[#eeddb9] rounded-lg text-xs"
+                    className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
                   />
                 </div>
               )}
@@ -735,7 +736,7 @@ export default function AdminProductsTab({
 
             <div className="flex flex-col gap-2 border-t border-stone-200/50 pt-2">
               <div className="flex items-center gap-4">
-                <label className="text-[10px] font-bold text-stone-655 font-jakarta">Mobile Option:</label>
+                <label className="text-xs font-bold text-stone-750 font-jakarta">Mobile Option:</label>
                 <select
                   value={typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? ((editingProduct.ingredients as any)?.useSameForMobile || 'desktop') : 'desktop'}
                   onChange={(e: any) => {
@@ -745,7 +746,7 @@ export default function AdminProductsTab({
                       ingredients: { ...(prevIng as any), useSameForMobile: e.target.value }
                     });
                   }}
-                  className="h-8 px-2 bg-white border border-[#eeddb9] rounded-lg text-xs"
+                  className="h-9 px-3 bg-white border border-[#d3c099] rounded-lg text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
                 >
                   <option value="desktop">Use the same as desktop</option>
                   <option value="tablet">Use the same as tablet</option>
@@ -753,8 +754,8 @@ export default function AdminProductsTab({
                 </select>
               </div>
               {(typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? ((editingProduct.ingredients as any)?.useSameForMobile || 'desktop') : 'desktop') === 'none' && (
-                <div className="flex flex-col gap-1 pl-5">
-                  <label className="text-[9px] font-bold text-stone-500 font-jakarta">Mobile Ingredients Image URL</label>
+                <div className="flex flex-col gap-1.5 pl-5">
+                  <label className="text-xs font-bold text-stone-500 font-jakarta">Mobile Ingredients Image URL</label>
                   <input
                     type="text"
                     value={typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? ((editingProduct.ingredients as any)?.mobile || '') : ''}
@@ -766,7 +767,7 @@ export default function AdminProductsTab({
                       });
                     }}
                     placeholder="Mobile specific ingredients image URL..."
-                    className="h-9 px-3 bg-white border border-[#eeddb9] rounded-lg text-xs"
+                    className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
                   />
                 </div>
               )}
@@ -774,87 +775,89 @@ export default function AdminProductsTab({
           </div>
 
           <div className="grid grid-cols-1 gap-4 font-jakarta">
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600 font-jakarta">Benefits (Comma separated)</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-stone-700 font-jakarta">Benefits (Comma separated)</label>
               <input
                 type="text"
                 value={editingProduct.benefits ? editingProduct.benefits.join(', ') : ''}
                 onChange={(e) => setEditingProduct({ ...editingProduct, benefits: e.target.value.split(',').map(s => s.trim()) })}
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900 font-jakarta"
+                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
           </div>
 
           {/* FAQ section creator */}
-          <div className="border border-[#eeddb9]/60 rounded-xl p-4 bg-stone-50/5 space-y-4.5 font-jakarta">
-            <span className="text-xs font-bold text-[#384401] block uppercase tracking-wider font-jakarta">Product FAQ Editor</span>
-            
-            {/* Active FAQs list */}
-            {editingProduct.faqs && editingProduct.faqs.length > 0 && (
-              <div className="space-y-2 border-b border-stone-200 pb-3 text-xs text-stone-900">
-                {editingProduct.faqs.map((faq: { q: string; a: string }, idx: number) => (
-                  <div key={idx} className="flex justify-between items-start gap-2 bg-white border border-[#eeddb9]/45 rounded-lg p-2.5">
-                    <div>
-                      <span className="font-bold text-stone-850 block">Q: {faq.q}</span>
-                      <span className="text-stone-555 block mt-0.5 font-jakarta font-medium">A: {faq.a}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const updatedFaqs = editingProduct.faqs.filter((_: any, i: number) => i !== idx);
-                        setEditingProduct({ ...editingProduct, faqs: updatedFaqs });
-                      }}
-                      className="text-red-500 hover:text-red-700 font-bold shrink-0 cursor-pointer text-[10px] uppercase font-jakarta"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add FAQ form controls */}
-            <div className="flex flex-col gap-2 bg-stone-100/50 p-3 rounded-lg border border-stone-200/50 text-xs text-stone-900 font-jakarta">
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-bold text-stone-500">Question</label>
-                <input
-                  type="text"
-                  value={faqInputQ}
-                  onChange={(e) => setFaqInputQ(e.target.value)}
-                  placeholder="e.g. Is this gluten-free?"
-                  className="h-9 px-3 bg-white border border-[#eeddb9] rounded-lg text-xs"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-bold text-stone-500">Answer</label>
-                <textarea
-                  rows={2}
-                  value={faqInputA}
-                  onChange={(e) => setFaqInputA(e.target.value)}
-                  placeholder="e.g. Yes, fingermillet is naturally gluten-free..."
-                  className="p-2.5 bg-white border border-[#eeddb9] rounded-lg text-xs resize-none"
-                />
-              </div>
+          <div className="border border-[#eeddb9]/60 rounded-xl p-5 bg-[#FAF4E6]/10 space-y-5 font-jakarta shadow-xs">
+            <div className="flex justify-between items-center border-b border-[#eeddb9]/30 pb-3">
+              <span className="text-xs font-black text-[#384401] uppercase tracking-wider font-jakarta">Product FAQ Editor</span>
               <button
                 type="button"
                 onClick={() => {
-                  if (faqInputQ.trim() && faqInputA.trim()) {
-                    const prevFaqs = editingProduct.faqs || [];
-                    setEditingProduct({
-                      ...editingProduct,
-                      faqs: [...prevFaqs, { q: faqInputQ.trim(), a: faqInputA.trim() }]
-                    });
-                    setFaqInputQ('');
-                    setFaqInputA('');
-                  } else {
-                    triggerAlert('Please enter both FAQ Question and Answer.', true);
-                  }
+                  const prevFaqs = editingProduct.faqs || [];
+                  setEditingProduct({ ...editingProduct, faqs: [...prevFaqs, { q: '', a: '' }] });
                 }}
-                className="self-end bg-[#384401] hover:bg-[#252d00] text-white text-[10px] font-bold py-1.5 px-4 rounded-lg cursor-pointer font-jakarta"
+                className="bg-[#384401] hover:bg-[#252d00] text-white text-[11px] font-bold py-1.5 px-3 rounded-lg flex items-center gap-1 transition-colors cursor-pointer font-jakarta"
               >
-                Add Q&A Pair
+                <Plus className="w-3 h-3" /> Add FAQ Pair
               </button>
             </div>
+            
+            {/* Active FAQs list */}
+            {editingProduct.faqs && editingProduct.faqs.length > 0 ? (
+              <div className="space-y-4">
+                {editingProduct.faqs.map((faq: { q: string; a: string }, idx: number) => (
+                  <div key={idx} className="bg-white border border-[#eeddb9]/40 rounded-xl p-4 space-y-3 relative shadow-xs">
+                    <div className="flex justify-between items-center border-b border-stone-100 pb-2">
+                      <span className="text-[11px] font-black text-amber-850 uppercase tracking-wider font-jakarta">FAQ Pair #{idx + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updatedFaqs = editingProduct.faqs.filter((_: any, i: number) => i !== idx);
+                          setEditingProduct({ ...editingProduct, faqs: updatedFaqs });
+                        }}
+                        className="text-red-500 hover:text-red-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 font-jakarta"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold text-stone-550 uppercase tracking-wider font-jakarta">Question</label>
+                        <input
+                          type="text"
+                          value={faq.q}
+                          onChange={(e) => {
+                            const updatedFaqs = [...editingProduct.faqs];
+                            updatedFaqs[idx] = { ...updatedFaqs[idx], q: e.target.value };
+                            setEditingProduct({ ...editingProduct, faqs: updatedFaqs });
+                          }}
+                          placeholder="e.g. Is this product gluten-free?"
+                          className="h-10 px-3 bg-stone-50 border border-[#d3c099]/60 rounded-lg text-sm text-stone-900 focus:bg-white focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all font-jakarta"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold text-stone-550 uppercase tracking-wider font-jakarta">Answer</label>
+                        <textarea
+                          rows={2}
+                          value={faq.a}
+                          onChange={(e) => {
+                            const updatedFaqs = [...editingProduct.faqs];
+                            updatedFaqs[idx] = { ...updatedFaqs[idx], a: e.target.value };
+                            setEditingProduct({ ...editingProduct, faqs: updatedFaqs });
+                          }}
+                          placeholder="e.g. Yes, it is made of natural gluten-free grains..."
+                          className="p-2.5 bg-stone-50 border border-[#d3c099]/60 rounded-lg text-sm text-stone-900 focus:bg-white focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all resize-none font-jakarta"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-stone-450 border border-dashed border-[#eeddb9]/50 rounded-xl bg-stone-50/50">
+                <p className="text-xs font-medium font-jakarta">No FAQs added yet. Click &quot;Add FAQ Pair&quot; to begin.</p>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2">
@@ -879,7 +882,7 @@ export default function AdminProductsTab({
                 setShowAddCategory(false);
                 setEditingProduct(p);
               }}
-              className="border border-[#eeddb9]/50 hover:border-[#384401]/60 rounded-2xl p-4.5 bg-stone-50/20 flex flex-col justify-between gap-3 cursor-pointer hover:shadow-md transition-all group"
+              className="border border-[#d3c099] hover:border-[#384401] rounded-2xl p-4.5 bg-stone-50/20 flex flex-col justify-between gap-3 cursor-pointer hover:shadow-md transition-all group"
             >
               <div>
                 <div className="flex justify-between items-start gap-2">

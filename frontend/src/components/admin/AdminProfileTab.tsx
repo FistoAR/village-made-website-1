@@ -54,7 +54,7 @@ export default function AdminProfileTab({
               required
               value={profName}
               onChange={(e) => setProfName(e.target.value)}
-              className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 bg-white text-xs font-bold"
+              className="w-full h-11 px-4 border border-[#d3c099] rounded-xl text-stone-900 bg-white text-xs font-bold"
             />
           </div>
           <div>
@@ -64,7 +64,7 @@ export default function AdminProfileTab({
               required
               value={profEmail}
               onChange={(e) => setProfEmail(e.target.value)}
-              className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 bg-white text-xs font-bold"
+              className="w-full h-11 px-4 border border-[#d3c099] rounded-xl text-stone-900 bg-white text-xs font-bold"
             />
           </div>
         </div>
@@ -76,7 +76,7 @@ export default function AdminProfileTab({
             required
             value={profPhone}
             onChange={(e) => setProfPhone(e.target.value)}
-            className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 bg-white text-xs font-bold"
+            className="w-full h-11 px-4 border border-[#d3c099] rounded-xl text-stone-900 bg-white text-xs font-bold"
           />
         </div>
 
@@ -88,7 +88,7 @@ export default function AdminProfileTab({
               placeholder="Enter new security password"
               value={profPassword}
               onChange={(e) => setProfPassword(e.target.value)}
-              className="w-full h-11 pl-4 pr-10 border border-[#eeddb9] rounded-xl text-stone-900 bg-white text-xs font-bold"
+              className="w-full h-11 pl-4 pr-10 border border-[#d3c099] rounded-xl text-stone-900 bg-white text-xs font-bold"
             />
             <button
               type="button"

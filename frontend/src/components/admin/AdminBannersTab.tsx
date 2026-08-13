@@ -36,7 +36,7 @@ export default function AdminBannersTab({
     <div className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.8fr] gap-8 items-start">
         {/* Left Column: Upload Banner Form */}
-        <form onSubmit={handleAddBanner} className="border border-[#eeddb9] rounded-2xl p-5 bg-[#FAF4E6]/10 space-y-4 font-jakarta">
+        <form onSubmit={handleAddBanner} className="border border-[#d3c099] rounded-2xl p-5 bg-[#FAF4E6]/10 space-y-4 font-jakarta">
           <h3 className="text-xs font-black uppercase tracking-wider text-[#384401] flex items-center gap-1.5">
             <Sparkles className="w-4 h-4" />
             Upload Offer Banner
@@ -50,7 +50,7 @@ export default function AdminBannersTab({
               placeholder="e.g. Sprouted Ragi Special 15%"
               value={bannerTitle}
               onChange={(e) => setBannerTitle(e.target.value)}
-              className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+              className="h-10 px-3 bg-white border border-[#d3c099] rounded-xl text-xs text-stone-900"
             />
           </div>
 
@@ -62,7 +62,7 @@ export default function AdminBannersTab({
               placeholder="e.g. /images/cookies-banner.webp"
               value={bannerImageUrl}
               onChange={(e) => setBannerImageUrl(e.target.value)}
-              className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+              className="h-10 px-3 bg-white border border-[#d3c099] rounded-xl text-xs text-stone-900"
             />
           </div>
 
@@ -74,7 +74,7 @@ export default function AdminBannersTab({
                 placeholder="/products?category=Malt"
                 value={bannerLink}
                 onChange={(e) => setBannerLink(e.target.value)}
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                className="h-10 px-3 bg-white border border-[#d3c099] rounded-xl text-xs text-stone-900"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -84,7 +84,7 @@ export default function AdminBannersTab({
                 placeholder="e.g. LIMITED OFFER"
                 value={bannerTag}
                 onChange={(e) => setBannerTag(e.target.value)}
-                className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-xs text-stone-900"
+                className="h-10 px-3 bg-white border border-[#d3c099] rounded-xl text-xs text-stone-900"
               />
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function AdminBannersTab({
 
           <div className="space-y-4 font-jakarta">
             {banners.map(b => (
-              <div key={b.id} className="border border-[#eeddb9]/50 rounded-2xl p-4 bg-stone-50/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div key={b.id} className="border border-[#d3c099] rounded-2xl p-4 bg-stone-50/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-16 h-10 bg-stone-200 rounded-lg overflow-hidden shrink-0 border border-stone-300 relative">
                     <img src={b.imageUrl} alt={b.title} className="w-full h-full object-cover" />

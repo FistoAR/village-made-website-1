@@ -128,7 +128,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5001';
-    const socket = io(socketUrl);
+    const socket = io(socketUrl, {
+      transports: ['websocket'],
+    });
 
     socket.on('connect', () => {
       console.log('🔌 Connected to real-time inventory socket');

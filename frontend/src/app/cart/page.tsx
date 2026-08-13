@@ -64,7 +64,7 @@ interface AddressData {
 
 export default function CartPage() {
   const router = useRouter();
-  const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, cartCount, user, addOrder, showAlert, showConfirm, showToast, fetchProducts } = useApp();
+  const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, cartCount, user, addOrder, showAlert, showConfirm, showToast, fetchProducts, addAddress } = useApp();
   const [mounted, setMounted] = useState(false);
   
   // Steps control
@@ -216,6 +216,42 @@ export default function CartPage() {
 
   const handleNextStep = () => {
     if (validateSubStep()) {
+      if (activeSubStep === 2 && user) {
+        // Check if the current shipping address is already in user's addresses
+        const addressExists = user.addresses?.some(
+          addr => 
+            addr.address.trim().toLowerCase() === shippingAddress.address.trim().toLowerCase() &&
+            addr.city.trim().toLowerCase() === shippingAddress.city.trim().toLowerCase() &&
+            addr.pincode.trim() === shippingAddress.pincode.trim()
+        );
+
+        if (!addressExists) {
+          showConfirm(
+            'Save Address?',
+            'Would you like to save this shipping address to your address book for future orders?',
+            () => {
+              addAddress({
+                name: customerDetails.name || user.name || 'Default Name',
+                phone: customerDetails.phone || user.phone || user.mobile,
+                address: shippingAddress.address,
+                city: shippingAddress.city,
+                state: shippingAddress.state,
+                pincode: shippingAddress.pincode,
+                isDefault: user.addresses?.length === 0
+              });
+              showToast('Address saved to your address book.', 'success');
+              setActiveSubStep(prev => prev + 1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+            () => {
+              setActiveSubStep(prev => prev + 1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          );
+          return;
+        }
+      }
+
       setActiveSubStep(prev => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {

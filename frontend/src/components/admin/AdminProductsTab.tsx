@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Plus, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, X } from 'lucide-react';
 import { ExtendedProduct } from './types';
 
 interface AdminProductsTabProps {
@@ -131,6 +131,30 @@ export default function AdminProductsTab({
   filteredProducts,
   triggerAlert,
 }: AdminProductsTabProps) {
+  const groupedProducts = React.useMemo(() => {
+    const groups: { [key: string]: ExtendedProduct[] } = {};
+    filteredProducts.forEach((p) => {
+      const cat = p.category || 'Uncategorized';
+      if (!groups[cat]) {
+        groups[cat] = [];
+      }
+      groups[cat].push(p);
+    });
+    return groups;
+  }, [filteredProducts]);
+
+  const sortedCategoryNames = React.useMemo(() => {
+    const categoryOrder = categories.map((c) => c.name);
+    return Object.keys(groupedProducts).sort((a, b) => {
+      const indexA = categoryOrder.indexOf(a);
+      const indexB = categoryOrder.indexOf(b);
+      if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+  }, [groupedProducts, categories]);
+
   return (
     <div className="space-y-6">
       {/* Filters and Add row */}
@@ -247,7 +271,17 @@ export default function AdminProductsTab({
       {/* Add Product Modal/Form */}
       {showAddProduct && (
         <form onSubmit={handleAddProductSubmit} className="border border-[#d3c099] rounded-2xl p-5 bg-[#FAF4E6]/20 space-y-4">
-          <h4 className="text-xs font-black uppercase tracking-wider text-[#384401] font-jakarta">Add New Provision Product</h4>
+          <div className="flex justify-between items-center">
+            <h4 className="text-xs font-black uppercase tracking-wider text-[#384401] font-jakarta">Add New Provision Product</h4>
+            <button
+              type="button"
+              onClick={() => setShowAddProduct(false)}
+              className="text-stone-600 hover:text-stone-900 p-1 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer"
+              aria-label="Cancel"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_1fr] gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-stone-700">Category</label>
@@ -318,7 +352,7 @@ export default function AdminProductsTab({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Product Banner Image (Upload directly to Supabase storage)</label>
+              <label className="text-xs font-bold text-stone-650">Product Banner Image (Upload directly to Supabase storage)</label>
               <div className="flex items-center gap-2 mt-1">
                 <input
                   type="file"
@@ -334,14 +368,14 @@ export default function AdminProductsTab({
                   }}
                   className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border file:border-[#eeddb9] file:text-xs file:font-bold file:bg-white file:text-[#384401] hover:file:bg-[#FAF4E6] cursor-pointer"
                 />
-                {uploadingImage && <span className="text-[10px] text-[#C56C4F] font-bold animate-pulse">Uploading...</span>}
+                {uploadingImage && <span className="text-xs text-[#C56C4F] font-bold animate-pulse">Uploading...</span>}
               </div>
               {newProdImage && (
-                <span className="text-[9px] text-[#384401] font-bold block truncate max-w-xs mt-1">Uploaded: {newProdImage}</span>
+                <span className="text-xs text-[#384401] font-bold block truncate max-w-xs mt-1">Uploaded: {newProdImage}</span>
               )}
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Product Video (Upload directly to Supabase storage)</label>
+              <label className="text-xs font-bold text-stone-650">Product Video (Upload directly to Supabase storage)</label>
               <div className="flex items-center gap-2 mt-1">
                 <input
                   type="file"
@@ -357,10 +391,10 @@ export default function AdminProductsTab({
                   }}
                   className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border file:border-[#eeddb9] file:text-xs file:font-bold file:bg-white file:text-[#384401] hover:file:bg-[#FAF4E6] cursor-pointer"
                 />
-                {uploadingVideo && <span className="text-[10px] text-[#C56C4F] font-bold animate-pulse">Uploading...</span>}
+                {uploadingVideo && <span className="text-xs text-[#C56C4F] font-bold animate-pulse">Uploading...</span>}
               </div>
               {newProdVideo && (
-                <span className="text-[9px] text-[#384401] font-bold block truncate max-w-xs mt-1">Uploaded: {newProdVideo}</span>
+                <span className="text-xs text-[#384401] font-bold block truncate max-w-xs mt-1">Uploaded: {newProdVideo}</span>
               )}
             </div>
           </div>
@@ -465,7 +499,7 @@ export default function AdminProductsTab({
               <button
                 type="button"
                 onClick={() => setNewProdFaqs(prev => [...prev, { q: '', a: '' }])}
-                className="bg-[#384401] hover:bg-[#252d00] text-white text-[11px] font-bold py-1.5 px-3 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+                className="bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-1.5 px-3 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <Plus className="w-3 h-3" /> Add FAQ Pair
               </button>
@@ -477,7 +511,7 @@ export default function AdminProductsTab({
                 {newProdFaqs.map((faq, idx) => (
                   <div key={idx} className="bg-white border border-[#eeddb9]/40 rounded-xl p-4 space-y-3 relative shadow-xs">
                     <div className="flex justify-between items-center border-b border-stone-100 pb-2">
-                      <span className="text-[11px] font-black text-amber-850 uppercase tracking-wider">FAQ Pair #{idx + 1}</span>
+                      <span className="text-xs font-black text-amber-850 uppercase tracking-wider">FAQ Pair #{idx + 1}</span>
                       <button
                         type="button"
                         onClick={() => setNewProdFaqs(prev => prev.filter((_, i) => i !== idx))}
@@ -488,7 +522,7 @@ export default function AdminProductsTab({
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-stone-550 uppercase tracking-wider">Question</label>
+                        <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">Question</label>
                         <input
                           type="text"
                           value={faq.q}
@@ -502,7 +536,7 @@ export default function AdminProductsTab({
                         />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-stone-550 uppercase tracking-wider">Answer</label>
+                        <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">Answer</label>
                         <textarea
                           rows={2}
                           value={faq.a}
@@ -526,7 +560,7 @@ export default function AdminProductsTab({
             )}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex justify-end gap-2">
             <button type="submit" className="bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-2.5 px-6 rounded-xl cursor-pointer">
               Save Product
             </button>
@@ -540,7 +574,17 @@ export default function AdminProductsTab({
       {/* Edit Product Inline Form */}
       {editingProduct && (
         <form onSubmit={handleUpdateProduct} className="border border-[#d3c099] rounded-2xl p-5 bg-[#FAF4E6]/10 space-y-4 font-jakarta">
-          <h4 className="text-xs font-black uppercase tracking-wider text-amber-800 font-jakarta">Edit Provision Product Details</h4>
+          <div className="flex justify-between items-center">
+            <h4 className="text-xs font-black uppercase tracking-wider text-amber-800 font-jakarta">Edit Provision Product Details</h4>
+            <button
+              type="button"
+              onClick={() => setEditingProduct(null)}
+              className="text-stone-600 hover:text-stone-900 p-1 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer"
+              aria-label="Cancel"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_1fr] gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-stone-700">Category</label>
@@ -609,7 +653,7 @@ export default function AdminProductsTab({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Product Image (Change file)</label>
+              <label className="text-xs font-bold text-stone-650">Product Image (Change file)</label>
               <div className="flex items-center gap-2 mt-1">
                 <input
                   type="file"
@@ -625,14 +669,14 @@ export default function AdminProductsTab({
                   }}
                   className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border file:border-[#eeddb9] file:text-xs file:font-bold file:bg-white file:text-[#384401] hover:file:bg-[#FAF4E6] cursor-pointer"
                 />
-                {uploadingImage && <span className="text-[10px] text-[#C56C4F] font-bold animate-pulse">Uploading...</span>}
+                {uploadingImage && <span className="text-xs text-[#C56C4F] font-bold animate-pulse">Uploading...</span>}
               </div>
               {editingProduct.image && (
-                <span className="text-[9px] text-[#384401] font-bold block truncate max-w-xs mt-1">URL: {editingProduct.image}</span>
+                <span className="text-xs text-[#384401] font-bold block truncate max-w-xs mt-1">URL: {editingProduct.image}</span>
               )}
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-stone-600">Product Video (Change file)</label>
+              <label className="text-xs font-bold text-stone-650">Product Video (Change file)</label>
               <div className="flex items-center gap-2 mt-1">
                 <input
                   type="file"
@@ -648,10 +692,10 @@ export default function AdminProductsTab({
                   }}
                   className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border file:border-[#eeddb9] file:text-xs file:font-bold file:bg-white file:text-[#384401] hover:file:bg-[#FAF4E6] cursor-pointer"
                 />
-                {uploadingVideo && <span className="text-[10px] text-[#C56C4F] font-bold animate-pulse">Uploading...</span>}
+                {uploadingVideo && <span className="text-xs text-[#C56C4F] font-bold animate-pulse">Uploading...</span>}
               </div>
               {editingProduct.video && (
-                <span className="text-[9px] text-[#384401] font-bold block truncate max-w-xs mt-1">URL: {editingProduct.video}</span>
+                <span className="text-xs text-[#384401] font-bold block truncate max-w-xs mt-1">URL: {editingProduct.video}</span>
               )}
             </div>
           </div>
@@ -794,9 +838,9 @@ export default function AdminProductsTab({
                 type="button"
                 onClick={() => {
                   const prevFaqs = editingProduct.faqs || [];
-                  setEditingProduct({ ...editingProduct, faqs: [...prevFaqs, { q: '', a: '' }] });
+                  setEditingProduct({ ...editingProduct, faqs: [{ q: '', a: '' }, ...prevFaqs] });
                 }}
-                className="bg-[#384401] hover:bg-[#252d00] text-white text-[11px] font-bold py-1.5 px-3 rounded-lg flex items-center gap-1 transition-colors cursor-pointer font-jakarta"
+                className="bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-1.5 px-3 rounded-lg flex items-center gap-1 transition-colors cursor-pointer font-jakarta"
               >
                 <Plus className="w-3 h-3" /> Add FAQ Pair
               </button>
@@ -808,7 +852,7 @@ export default function AdminProductsTab({
                 {editingProduct.faqs.map((faq: { q: string; a: string }, idx: number) => (
                   <div key={idx} className="bg-white border border-[#eeddb9]/40 rounded-xl p-4 space-y-3 relative shadow-xs">
                     <div className="flex justify-between items-center border-b border-stone-100 pb-2">
-                      <span className="text-[11px] font-black text-amber-850 uppercase tracking-wider font-jakarta">FAQ Pair #{idx + 1}</span>
+                      <span className="text-xs font-black text-amber-850 uppercase tracking-wider font-jakarta">FAQ Pair #{editingProduct.faqs.length - idx}</span>
                       <button
                         type="button"
                         onClick={() => {
@@ -822,7 +866,7 @@ export default function AdminProductsTab({
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-stone-550 uppercase tracking-wider font-jakarta">Question</label>
+                        <label className="text-xs font-bold text-stone-700 uppercase tracking-wider font-jakarta">Question</label>
                         <input
                           type="text"
                           value={faq.q}
@@ -836,7 +880,7 @@ export default function AdminProductsTab({
                         />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-stone-550 uppercase tracking-wider font-jakarta">Answer</label>
+                        <label className="text-xs font-bold text-stone-700 uppercase tracking-wider font-jakarta">Answer</label>
                         <textarea
                           rows={2}
                           value={faq.a}
@@ -860,7 +904,7 @@ export default function AdminProductsTab({
             )}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex justify-end gap-2">
             <button type="submit" className="bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-2.5 px-6 rounded-xl cursor-pointer">
               Update Product
             </button>
@@ -872,120 +916,133 @@ export default function AdminProductsTab({
       )}
 
       {/* Products List (Grid or Table View) */}
-      {productViewMode === 'card' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredProducts.map(p => (
-            <div 
-              key={p.id} 
-              onClick={() => {
-                setShowAddProduct(false);
-                setShowAddCategory(false);
-                setEditingProduct(p);
-              }}
-              className="border border-[#d3c099] hover:border-[#384401] rounded-2xl p-4.5 bg-stone-50/20 flex flex-col justify-between gap-3 cursor-pointer hover:shadow-md transition-all group"
-            >
-              <div>
-                <div className="flex justify-between items-start gap-2">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wide text-stone-400 font-jakarta">{p.category}</span>
-                  {p.badge && (
-                    <span className="bg-[#C56C4F]/10 text-[#C56C4F] text-[9px] font-extrabold px-2 py-0.5 rounded-full font-jakarta">{p.badge}</span>
-                  )}
-                </div>
-                <h4 className="font-extrabold text-stone-850 group-hover:text-[#384401] text-sm font-jakarta mt-1.5 transition-colors">{p.name}</h4>
-                <p className="text-[11px] text-stone-500 font-jakarta mt-1 line-clamp-2 leading-relaxed">{p.description}</p>
-              </div>
-              <div className="flex justify-between items-center pt-3 border-t border-stone-150">
-                <div className="flex flex-col">
-                  <span className="font-bold text-stone-955">₹{p.price}</span>
-                  <span className="text-[10px] text-stone-455 font-jakarta">Stock: {p.stock}</span>
-                </div>
-                <div className="flex gap-3 items-center" onClick={(e) => e.stopPropagation()}>
-                  <button
+      {filteredProducts.length === 0 ? (
+        <div className="border border-[#eeddb9]/50 rounded-2xl p-8 text-center text-stone-455 font-medium bg-stone-50/10">
+          No products found.
+        </div>
+      ) : productViewMode === 'card' ? (
+        <div className="space-y-8 animate-fade-in">
+          {sortedCategoryNames.map((catName) => (
+            <div key={catName} className="space-y-4">
+              <h3 className="sticky top-[76px] bg-[#fdfbf7] z-10 text-sm font-extrabold text-[#384401] uppercase tracking-wider font-jakarta border-b border-[#eeddb9]/45 py-2">
+                {catName} ({groupedProducts[catName].length})
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {groupedProducts[catName].map((p) => (
+                  <div
+                    key={p.id}
                     onClick={() => {
                       setShowAddProduct(false);
+                      setShowAddCategory(false);
                       setEditingProduct(p);
                     }}
-                    className="flex items-center gap-1 text-stone-600 hover:text-[#384401] text-xs font-bold cursor-pointer"
+                    className="border border-[#d3c099] hover:border-[#384401] rounded-2xl p-4.5 bg-stone-50/20 flex flex-col justify-between gap-3 cursor-pointer hover:shadow-md transition-all group"
                   >
-                    <Edit className="w-3.5 h-3.5" />
-                    Modify
-                  </button>
-                  <button
-                    onClick={() => handleDeleteProduct(p.id)}
-                    className="flex items-center gap-1 text-red-650 hover:text-red-800 text-xs font-bold cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Delete
-                  </button>
-                </div>
+                    <div>
+                      <div className="flex justify-end items-start gap-2">
+                        {p.badge && (
+                          <span className="bg-[#C56C4F]/10 text-[#C56C4F] text-sm font-extrabold px-2 py-0.5 rounded-full font-jakarta">{p.badge}</span>
+                        )}
+                      </div>
+                      <h4 className="font-extrabold text-stone-850 group-hover:text-[#384401] text-sm font-jakarta mt-1.5 transition-colors">{p.name}</h4>
+                      <p className="text-sm text-stone-500 font-jakarta mt-1 line-clamp-2 leading-relaxed">{p.description}</p>
+                    </div>
+                    <div className="flex justify-between items-center pt-3 border-t border-stone-150">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-stone-955">₹{p.price}</span>
+                        <span className="text-sm text-stone-455 font-jakarta">Stock: {p.stock}</span>
+                      </div>
+                      <div className="flex gap-3 items-center" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => {
+                            setShowAddProduct(false);
+                            setEditingProduct(p);
+                          }}
+                          className="flex items-center gap-1 text-stone-600 hover:text-[#384401] text-sm font-bold cursor-pointer"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                          Modify
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(p.id)}
+                          className="flex items-center gap-1 text-red-650 hover:text-red-800 text-sm font-bold cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="border border-[#eeddb9]/50 rounded-2xl overflow-hidden bg-stone-50/10 animate-fade-in">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border border-[#eeddb9] border-collapse font-jakarta">
-              <thead>
-                <tr className="bg-stone-50 border-b border-[#eeddb9] text-stone-500 font-extrabold uppercase tracking-wider">
-                  <th className="p-3.5 pl-5 border border-[#eeddb9]">SKU/ID</th>
-                  <th className="p-3.5 border border-[#eeddb9]">Product Name</th>
-                  <th className="p-3.5 border border-[#eeddb9]">Category</th>
-                  <th className="p-3.5 border border-[#eeddb9]">Price</th>
-                  <th className="p-3.5 border border-[#eeddb9]">Stock</th>
-                  <th className="p-3.5 pr-5 border border-[#eeddb9] text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#eeddb9]">
-                {filteredProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-stone-455 font-medium border border-[#eeddb9]">No products found.</td>
-                  </tr>
-                ) : (
-                  filteredProducts.map(p => (
-                    <tr 
-                      key={p.id} 
-                      onClick={() => {
-                        setShowAddProduct(false);
-                        setShowAddCategory(false);
-                        setEditingProduct(p);
-                      }}
-                      className="hover:bg-stone-50/60 font-semibold cursor-pointer transition-colors"
-                    >
-                      <td className="p-3.5 pl-5 text-stone-900 border border-[#eeddb9]">#{p.id}</td>
-                      <td className="p-3.5 text-[#384401] font-bold border border-[#eeddb9]">{p.name}</td>
-                      <td className="p-3.5 text-stone-500 border border-[#eeddb9]">{p.category}</td>
-                      <td className="p-3.5 text-stone-900 border border-[#eeddb9]">₹{p.price}</td>
-                      <td className="p-3.5 border border-[#eeddb9]">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${p.stock < 10 ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-700'}`}>
-                          {p.stock} units
-                        </span>
-                      </td>
-                      <td className="p-3.5 pr-5 border border-[#eeddb9] text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex justify-end gap-3.5">
-                          <button
-                            onClick={() => {
-                              setShowAddProduct(false);
-                              setEditingProduct(p);
-                            }}
-                            className="text-stone-600 hover:text-[#384401] font-bold flex items-center gap-1 cursor-pointer"
-                          >
-                            <Edit className="w-3.5 h-3.5" /> Modify
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProduct(p.id)}
-                            className="text-red-600 hover:text-red-800 font-bold flex items-center gap-1 cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-8 animate-fade-in">
+          {sortedCategoryNames.map((catName) => (
+            <div key={catName} className="space-y-4">
+              <h3 className="sticky top-[76px] bg-[#fdfbf7] z-10 text-sm font-extrabold text-[#384401] uppercase tracking-wider font-jakarta border-b border-[#eeddb9]/45 py-2">
+                {catName} ({groupedProducts[catName].length})
+              </h3>
+              <div className="border border-[#eeddb9]/50 rounded-2xl overflow-hidden bg-stone-50/10">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm border border-[#eeddb9] border-collapse font-jakarta">
+                    <thead>
+                      <tr className="bg-stone-50 border-b border-[#eeddb9] text-stone-500 font-extrabold uppercase tracking-wider">
+                        <th className="p-3.5 pl-5 border border-[#eeddb9]">S.No</th>
+                        <th className="p-3.5 border border-[#eeddb9]">Product Name</th>
+                        <th className="p-3.5 border border-[#eeddb9]">Price</th>
+                        <th className="p-3.5 border border-[#eeddb9]">Stock</th>
+                        <th className="p-3.5 pr-5 border border-[#eeddb9] text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#eeddb9]">
+                      {groupedProducts[catName].map((p, idx) => (
+                        <tr
+                          key={p.id}
+                          onClick={() => {
+                            setShowAddProduct(false);
+                            setShowAddCategory(false);
+                            setEditingProduct(p);
+                          }}
+                          className="hover:bg-stone-50/60 font-semibold cursor-pointer transition-colors"
+                        >
+                          <td className="p-3.5 pl-5 text-stone-900 border border-[#eeddb9]">{idx + 1}</td>
+                          <td className="p-3.5 text-[#384401] font-bold border border-[#eeddb9]">{p.name}</td>
+                          <td className="p-3.5 text-stone-900 border border-[#eeddb9]">₹{p.price}</td>
+                          <td className="p-3.5 border border-[#eeddb9]">
+                            <span className={`px-2 py-0.5 rounded-full text-sm font-bold ${p.stock < 10 ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-700'}`}>
+                              {p.stock} units
+                            </span>
+                          </td>
+                          <td className="p-3.5 pr-5 border border-[#eeddb9] text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-end gap-3.5">
+                              <button
+                                onClick={() => {
+                                  setShowAddProduct(false);
+                                  setEditingProduct(p);
+                                }}
+                                className="text-stone-600 hover:text-[#384401] font-bold flex items-center gap-1 cursor-pointer"
+                              >
+                                <Edit className="w-3.5 h-3.5" /> Modify
+                              </button>
+                              <button
+                                onClick={() => handleDeleteProduct(p.id)}
+                                className="text-red-600 hover:text-red-800 font-bold flex items-center gap-1 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -30,6 +30,11 @@ export default function AccountPage() {
   const [profileEmail, setProfileEmail] = useState('');
   const [profilePhone, setProfilePhone] = useState('');
 
+  // Password change form
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+
   // Address forms
   const [showAddAddress, setShowAddAddress] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
@@ -101,6 +106,43 @@ export default function AccountPage() {
       phone: profilePhone,
     });
     triggerNotification('Profile updated successfully!');
+  };
+
+  const handlePasswordSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.trim().length < 6) {
+      triggerNotification('Password must be at least 6 characters long.', true);
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      triggerNotification('Passwords do not match.', true);
+      return;
+    }
+
+    setUpdatingPassword(true);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/auth/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mobile: user.mobile,
+          password: newPassword.trim(),
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerNotification('Password updated successfully!');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        triggerNotification(data.error || 'Failed to update password.', true);
+      }
+    } catch (err) {
+      triggerNotification('Connection error updating password.', true);
+    } finally {
+      setUpdatingPassword(false);
+    }
   };
 
   const handleAddAddressSubmit = (e: React.FormEvent) => {
@@ -191,7 +233,7 @@ export default function AccountPage() {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard Overview', icon: Home },
-    { id: 'profile', label: 'My Profile', icon: UserIcon },
+    { id: 'profile', label: 'Profile & Security', icon: UserIcon },
     { id: 'addresses', label: 'Address Book', icon: MapPin },
     { id: 'orders', label: 'My Orders', icon: ShoppingBag },
     { id: 'reviews', label: 'Product Reviews', icon: MessageSquare },
@@ -246,8 +288,8 @@ export default function AccountPage() {
                   key={item.id}
                   onClick={() => { setActiveTab(item.id as AccountTab); setSuccessMsg(''); setErrorMsg(''); }}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold font-jakarta transition-colors cursor-pointer ${activeTab === item.id
-                      ? 'bg-[#384401] text-white font-bold'
-                      : 'text-stone-700 hover:bg-stone-50 hover:text-stone-950'
+                    ? 'bg-[#384401] text-white font-bold'
+                    : 'text-stone-700 hover:bg-stone-50 hover:text-stone-950'
                     }`}
                 >
                   <div className="flex items-center gap-3">
@@ -328,10 +370,10 @@ export default function AccountPage() {
 
             {/* TAB: PROFILE */}
             {activeTab === 'profile' && (
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-5">
                 <div>
-                  <h2 className="text-xl md:text-2xl font-bold font-jakarta text-stone-950 mb-1">My Profile</h2>
-                  <p className="text-stone-600 text-xs leading-relaxed">Update your contact information below. Mobile number cannot be changed.</p>
+                  <h2 className="text-xl md:text-2xl font-bold font-jakarta text-stone-955 mb-1">Profile & Security</h2>
+                  <p className="text-stone-600 text-xs leading-relaxed">Update your contact details and change password credentials below. Mobile number cannot be changed.</p>
                 </div>
 
                 <form onSubmit={handleProfileSave} className="flex flex-col gap-4 max-w-lg">
@@ -385,6 +427,46 @@ export default function AccountPage() {
                     Save Changes
                   </button>
                 </form>
+
+                {/* Change Password Sub-section */}
+                <div className="border-t border-[#eeddb9]/100 pt-3 mt-2">
+                  <h3 className="text-lg font-bold font-jakarta text-stone-950 mb-1">Change Password</h3>
+                  <p className="text-stone-600 text-xs leading-relaxed mb-5">Set a new password for logging in to your member account.</p>
+
+                  <form onSubmit={handlePasswordSave} className="flex flex-col gap-4 max-w-lg">
+                    <div>
+                      <label className="text-xs sm:text-sm font-extrabold text-[#3E2C1C] uppercase tracking-wider block mb-2 font-jakarta">New Password</label>
+                      <input
+                        type="password"
+                        required
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full h-11 px-3.5 bg-white border border-[#eeddb9] focus:border-[#384401] rounded-xl text-xs sm:text-sm text-stone-900 focus:outline-hidden font-jakarta"
+                        placeholder="At least 6 characters"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs sm:text-sm font-extrabold text-[#3E2C1C] uppercase tracking-wider block mb-2 font-jakarta">Confirm New Password</label>
+                      <input
+                        type="password"
+                        required
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full h-11 px-3.5 bg-white border border-[#eeddb9] focus:border-[#384401] rounded-xl text-xs sm:text-sm text-stone-900 focus:outline-hidden font-jakarta"
+                        placeholder="Re-enter new password"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={updatingPassword}
+                      className="w-fit px-6 h-11 bg-[#384401] hover:bg-[#252d00] disabled:bg-[#384401]/55 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-xs cursor-pointer text-xs sm:text-sm mt-2"
+                    >
+                      {updatingPassword ? 'Updating...' : 'Update Password'}
+                    </button>
+                  </form>
+                </div>
               </div>
             )}
 
@@ -626,10 +708,10 @@ export default function AccountPage() {
 
                               <div className="flex items-center gap-3">
                                 <span className={`text-[9px] sm:text-[10px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider ${order.status === 'Delivered'
-                                    ? 'bg-[#e2edd3] text-[#384401]'
-                                    : order.status === 'Cancelled'
-                                      ? 'bg-red-50 text-red-650'
-                                      : 'bg-[#FFECCB] text-[#5C4018]'
+                                  ? 'bg-[#e2edd3] text-[#384401]'
+                                  : order.status === 'Cancelled'
+                                    ? 'bg-red-50 text-red-650'
+                                    : 'bg-[#FFECCB] text-[#5C4018]'
                                   }`}>
                                   {order.status}
                                 </span>

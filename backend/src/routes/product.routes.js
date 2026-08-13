@@ -37,7 +37,8 @@ productRouter.get('/', async (req, res, next) => {
       video: row.video_url || undefined,
       benefits: typeof row.benefits === 'string' ? JSON.parse(row.benefits) : row.benefits,
       ingredients: typeof row.ingredients === 'string' ? JSON.parse(row.ingredients) : row.ingredients,
-      features: typeof row.features === 'string' ? JSON.parse(row.features) : row.features
+      features: typeof row.features === 'string' ? JSON.parse(row.features) : row.features,
+      faqs: typeof row.faqs === 'string' ? JSON.parse(row.faqs) : (row.faqs || [])
     }));
 
     return res.status(200).json({
@@ -72,7 +73,7 @@ productRouter.get('/categories', async (req, res, next) => {
 productRouter.post('/', async (req, res, next) => {
   const {
     id, categoryId, name, description, price, originalPrice, discount,
-    weights, badge, stock, purchasePrice, imageUrl, videoUrl, benefits, ingredients, features
+    weights, badge, stock, purchasePrice, imageUrl, videoUrl, benefits, ingredients, features, faqs
   } = req.body;
 
   if (!id || !categoryId || !name || !price) {
@@ -88,8 +89,8 @@ productRouter.post('/', async (req, res, next) => {
     await query(
       `INSERT INTO products (
         id, category_id, name, description, price, original_price, discount,
-        weights, badge, stock, purchase_price, image_url, video_url, benefits, ingredients, features
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+        weights, badge, stock, purchase_price, image_url, video_url, benefits, ingredients, features, faqs
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
       [
         id,
         categoryId,
@@ -106,7 +107,8 @@ productRouter.post('/', async (req, res, next) => {
         videoUrl || null,
         JSON.stringify(benefits || []),
         JSON.stringify(ingredients || []),
-        JSON.stringify(features || {})
+        JSON.stringify(features || {}),
+        JSON.stringify(faqs || [])
       ]
     );
 
@@ -124,7 +126,7 @@ productRouter.put('/:id', async (req, res, next) => {
   const productId = req.params.id;
   const {
     categoryId, name, description, price, originalPrice, discount,
-    weights, badge, stock, purchasePrice, imageUrl, videoUrl, benefits, ingredients, features
+    weights, badge, stock, purchasePrice, imageUrl, videoUrl, benefits, ingredients, features, faqs
   } = req.body;
 
   try {
@@ -137,8 +139,8 @@ productRouter.put('/:id', async (req, res, next) => {
       `UPDATE products 
        SET category_id = $1, name = $2, description = $3, price = $4, original_price = $5, discount = $6,
            weights = $7, badge = $8, stock = $9, purchase_price = $10, image_url = $11, video_url = $12,
-           benefits = $13, ingredients = $14, features = $15
-       WHERE id = $16`,
+           benefits = $13, ingredients = $14, features = $15, faqs = $16
+       WHERE id = $17`,
       [
         categoryId,
         name,
@@ -155,6 +157,7 @@ productRouter.put('/:id', async (req, res, next) => {
         JSON.stringify(benefits || []),
         JSON.stringify(ingredients || []),
         JSON.stringify(features || {}),
+        JSON.stringify(faqs || []),
         productId
       ]
     );
@@ -254,6 +257,79 @@ productRouter.post('/categories', async (req, res, next) => {
     );
 
     return res.status(201).json({ success: true, message: 'Category added successfully.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/products/:id/reviews
+ * Fetch all reviews for a product
+ */
+productRouter.get('/:id/reviews', async (req, res, next) => {
+  const productId = req.params.id;
+  try {
+    const result = await query(`
+      SELECT r.id, r.user_id, r.product_id, r.product_name, r.rating, r.comment, r.date, r.title, r.helpful, u.name as author
+      FROM reviews r
+      JOIN users u ON r.user_id = u.id
+      WHERE r.product_id = $1
+      ORDER BY r.id DESC
+    `, [productId]);
+
+    const reviews = result.rows.map(row => ({
+      id: row.id,
+      userId: row.user_id,
+      productId: row.product_id,
+      productName: row.product_name,
+      rating: Number(row.rating),
+      comment: row.comment,
+      date: row.date,
+      title: row.title || 'Verified Purchase Review',
+      helpful: Number(row.helpful || 0),
+      author: row.author || 'Anonymous'
+    }));
+
+    return res.status(200).json({ success: true, reviews });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/products/:id/reviews
+ * Add a review for a product (gated by auth/login via body mobile check)
+ */
+productRouter.post('/:id/reviews', async (req, res, next) => {
+  const productId = req.params.id;
+  const { author, rating, title, comment, mobile } = req.body;
+
+  if (!comment || rating === undefined) {
+    return res.status(400).json({ success: false, error: 'Rating and comment are required.' });
+  }
+
+  try {
+    // Check if user exists by mobile
+    const userRes = await query('SELECT id, name FROM users WHERE mobile = $1', [mobile]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User session not found. Please log in first.' });
+    }
+    const userId = userRes.rows[0].id;
+    const authorName = author || userRes.rows[0].name || 'Anonymous';
+
+    const prodRes = await query('SELECT name FROM products WHERE id = $1', [productId]);
+    const productName = prodRes.rows.length > 0 ? prodRes.rows[0].name : 'Product';
+
+    const reviewId = `rev-${Math.random().toString(36).substring(2, 11)}`;
+    const dateStr = new Date().toLocaleDateString('en-IN');
+
+    await query(
+      `INSERT INTO reviews (id, user_id, product_id, product_name, rating, comment, date, title, helpful)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0)`,
+      [reviewId, userId, productId, productName, rating, comment, dateStr, title || 'Verified Purchase Review']
+    );
+
+    return res.status(201).json({ success: true, message: 'Review saved successfully.' });
   } catch (error) {
     next(error);
   }

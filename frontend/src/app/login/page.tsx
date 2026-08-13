@@ -14,7 +14,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('login');
-  const { user, loginUser, registerUser, resetPassword } = useApp();
+  const { user, loginUser, registerUser, resetPassword, isHydrated } = useApp();
   const [mounted, setMounted] = useState(false);
 
   // Form states
@@ -49,12 +49,12 @@ export default function LoginPage() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (mounted && user) {
+    if (mounted && isHydrated && user) {
       router.push(redirectTo);
     }
-  }, [user, mounted, redirectTo, router]);
+  }, [user, mounted, isHydrated, redirectTo, router]);
 
-  if (!mounted) {
+  if (!mounted || !isHydrated) {
     return (
       <div className="min-h-screen bg-[#FDFBF7] text-[#3E2C1C] flex flex-col justify-between">
         <Navbar />

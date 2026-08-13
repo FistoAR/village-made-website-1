@@ -122,19 +122,38 @@ export default function ProductDetailPage({
   const [newReviewComment, setNewReviewComment] = useState('');
   const [newReviewRating, setNewReviewRating] = useState(5.0);
 
-  useEffect(() => {
+  const getDefaultReviews = () => [
+    { author: 'Priya S.', rating: 5, time: '2 days ago', title: 'My baby loves the taste!', comment: 'My baby loves the taste and it mixes easily without lumps. Very healthy and natural product.', helpful: 12 },
+    { author: 'Rahul K.', rating: 5, time: '1 week ago', title: 'Good quality and packing', comment: 'Good quality product. Packing is also good and delivery was on time.', helpful: 8 },
+    { author: 'Anitha N.', rating: 5, time: '2 weeks ago', title: 'Healthy and easy to prepare', comment: 'Healthy and easy to prepare. My child drinks it daily. Highly recommend it.', helpful: 15 },
+    { author: 'Deepa M.', rating: 4, time: '3 weeks ago', title: 'Great nutritional product', comment: 'Really impressed with the quality. My toddler enjoys the taste and I feel good knowing it is made from natural ingredients.', helpful: 6 },
+    { author: 'Suresh P.', rating: 5, time: '1 month ago', title: 'Best baby malt we have tried', comment: 'We have tried many brands but this one is the best. Mixes smoothly and has a great natural flavour.', helpful: 21 },
+    { author: 'Kavitha R.', rating: 5, time: '1 month ago', title: 'Excellent product, pure and natural', comment: 'No artificial taste at all. My daughter finished the entire pack and is asking for more. Will definitely order again.', helpful: 18 },
+  ];
+
+  const fetchProductReviewsFromDb = async () => {
     if (!product) return;
-    const allReviews = JSON.parse(localStorage.getItem('village_made_global_reviews') || '{}');
-    const customReviews = allReviews[product.id] || [];
-    const defaultReviews = [
-      { author: 'Priya S.', rating: 5, time: '2 days ago', title: 'My baby loves the taste!', comment: 'My baby loves the taste and it mixes easily without lumps. Very healthy and natural product.', helpful: 12 },
-      { author: 'Rahul K.', rating: 5, time: '1 week ago', title: 'Good quality and packing', comment: 'Good quality product. Packing is also good and delivery was on time.', helpful: 8 },
-      { author: 'Anitha N.', rating: 5, time: '2 weeks ago', title: 'Healthy and easy to prepare', comment: 'Healthy and easy to prepare. My child drinks it daily. Highly recommend it.', helpful: 15 },
-      { author: 'Deepa M.', rating: 4, time: '3 weeks ago', title: 'Great nutritional product', comment: 'Really impressed with the quality. My toddler enjoys the taste and I feel good knowing it is made from natural ingredients.', helpful: 6 },
-      { author: 'Suresh P.', rating: 5, time: '1 month ago', title: 'Best baby malt we have tried', comment: 'We have tried many brands but this one is the best. Mixes smoothly and has a great natural flavour.', helpful: 21 },
-      { author: 'Kavitha R.', rating: 5, time: '1 month ago', title: 'Excellent product, pure and natural', comment: 'No artificial taste at all. My daughter finished the entire pack and is asking for more. Will definitely order again.', helpful: 18 },
-    ];
-    setProductReviews([...customReviews, ...defaultReviews]);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products/${product.id}/reviews`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.reviews)) {
+        setProductReviews(data.reviews);
+      } else {
+        const allReviews = JSON.parse(localStorage.getItem('village_made_global_reviews') || '{}');
+        const customReviews = allReviews[product.id] || [];
+        setProductReviews([...customReviews, ...getDefaultReviews()]);
+      }
+    } catch (e) {
+      console.warn("Failed to load reviews from API, falling back:", e);
+      const allReviews = JSON.parse(localStorage.getItem('village_made_global_reviews') || '{}');
+      const customReviews = allReviews[product.id] || [];
+      setProductReviews([...customReviews, ...getDefaultReviews()]);
+    }
+  };
+
+  useEffect(() => {
+    fetchProductReviewsFromDb();
   }, [product]);
 
   // Set default author name if user is logged in
@@ -148,11 +167,11 @@ export default function ProductDetailPage({
     setNewReviewRating(ratingValue);
   };
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product || !newReviewComment.trim()) return;
 
-    addProductReview(
+    const res = await addProductReview(
       product.id,
       newReviewAuthor || user?.name || 'Anonymous',
       newReviewRating,
@@ -160,18 +179,9 @@ export default function ProductDetailPage({
       newReviewComment
     );
 
-    // Reload from storage
-    const allReviews = JSON.parse(localStorage.getItem('village_made_global_reviews') || '{}');
-    const customReviews = allReviews[product.id] || [];
-    const defaultReviews = [
-      { author: 'Priya S.', rating: 5, time: '2 days ago', title: 'My baby loves the taste!', comment: 'My baby loves the taste and it mixes easily without lumps. Very healthy and natural product.', helpful: 12 },
-      { author: 'Rahul K.', rating: 5, time: '1 week ago', title: 'Good quality and packing', comment: 'Good quality product. Packing is also good and delivery was on time.', helpful: 8 },
-      { author: 'Anitha N.', rating: 5, time: '2 weeks ago', title: 'Healthy and easy to prepare', comment: 'Healthy and easy to prepare. My child drinks it daily. Highly recommend it.', helpful: 15 },
-      { author: 'Deepa M.', rating: 4, time: '3 weeks ago', title: 'Great nutritional product', comment: 'Really impressed with the quality. My toddler enjoys the taste and I feel good knowing it is made from natural ingredients.', helpful: 6 },
-      { author: 'Suresh P.', rating: 5, time: '1 month ago', title: 'Best baby malt we have tried', comment: 'We have tried many brands but this one is the best. Mixes smoothly and has a great natural flavour.', helpful: 21 },
-      { author: 'Kavitha R.', rating: 5, time: '1 month ago', title: 'Excellent product, pure and natural', comment: 'No artificial taste at all. My daughter finished the entire pack and is asking for more. Will definitely order again.', helpful: 18 },
-    ];
-    setProductReviews([...customReviews, ...defaultReviews]);
+    if (res && res.success) {
+      fetchProductReviewsFromDb();
+    }
 
     // Clear form
     setNewReviewTitle('');
@@ -589,24 +599,55 @@ export default function ProductDetailPage({
           {/* TAB 2: INGREDIENTS */}
           {activeTab === 'ingredients' && (
             <div className="w-full font-jakarta text-sm font-semibold text-stone-850 p-6 bg-[#FAF4E6]/25 border border-[#eeddb9]/30 rounded-[24px]">
-              {product.ingredients && product.ingredients.length > 0 ? (
-                <div className="flex flex-col gap-3">
-                  <span className="text-[#384401] font-black uppercase text-xs sm:text-sm tracking-wider mb-2 block">Catalog Ingredients</span>
-                  <div className="flex flex-wrap gap-2.5">
-                    {product.ingredients.map((ingredient: string, idx: number) => (
-                      <span key={idx} className="bg-white border border-[#eeddb9] text-[#704632] px-4.5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold shadow-2xs">
-                        {ingredient}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <img
-                  src="/images/products/details-page/ingredients-image.webp"
-                  alt="Ingredients infographics"
-                  className="w-full h-auto rounded-2xl"
-                />
-              )}
+              {(() => {
+                const ing = product.ingredients;
+                if (ing && !Array.isArray(ing) && typeof ing === 'object') {
+                  const ingObj = ing as any;
+                  const desktopUrl = ingObj.desktop || "/images/products/details-page/ingredients-image.webp";
+                  let tabletUrl = desktopUrl;
+                  if (!ingObj.useSameForTab) {
+                    tabletUrl = ingObj.tablet || desktopUrl;
+                  }
+                  let mobileUrl = desktopUrl;
+                  if (ingObj.useSameForMobile === 'tablet') {
+                    mobileUrl = tabletUrl;
+                  } else if (ingObj.useSameForMobile === 'none') {
+                    mobileUrl = ingObj.mobile || desktopUrl;
+                  }
+                  return (
+                    <picture className="w-full">
+                      <source media="(max-width: 639px)" srcSet={mobileUrl} />
+                      <source media="(max-width: 1023px)" srcSet={tabletUrl} />
+                      <img
+                        src={desktopUrl}
+                        alt="Ingredients infographics"
+                        className="w-full h-auto rounded-2xl object-cover"
+                      />
+                    </picture>
+                  );
+                } else if (Array.isArray(ing) && ing.length > 0) {
+                  return (
+                    <div className="flex flex-col gap-3">
+                      <span className="text-[#384401] font-black uppercase text-xs sm:text-sm tracking-wider mb-2 block">Catalog Ingredients</span>
+                      <div className="flex flex-wrap gap-2.5">
+                        {ing.map((ingredient: string, idx: number) => (
+                          <span key={idx} className="bg-white border border-[#eeddb9] text-[#704632] px-4.5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold shadow-2xs">
+                            {ingredient}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <img
+                      src="/images/products/details-page/ingredients-image.webp"
+                      alt="Ingredients infographics"
+                      className="w-full h-auto rounded-2xl"
+                    />
+                  );
+                }
+              })()}
             </div>
           )}
 
@@ -662,7 +703,17 @@ export default function ProductDetailPage({
                   <span className="text-stone-900 font-bold text-sm block mb-1 font-jakarta">Share your experience</span>
                   <span className="text-stone-900 text-xs block mb-5 font-jakarta">Your review helps other parents make the right choice.</span>
                   
-                  {!showReviewForm ? (
+                  {!user ? (
+                    <div className="text-center py-2">
+                      <p className="text-xs text-stone-500 font-semibold mb-3 font-jakarta">Please log in to share your experience with this provision.</p>
+                      <button
+                        onClick={() => router.push(`/login?redirect=/products/${product.id}`)}
+                        className="w-full py-2.5 bg-[#704632] hover:bg-[#5b3827] text-white text-xs font-bold uppercase rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs font-jakarta"
+                      >
+                        Log In to Write Review
+                      </button>
+                    </div>
+                  ) : !showReviewForm ? (
                     <button
                       onClick={() => setShowReviewForm(true)}
                       className="w-full py-2.5 bg-[#384401] hover:bg-[#252d00] text-white font-bold text-xs uppercase rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs font-jakarta"
@@ -906,13 +957,16 @@ export default function ProductDetailPage({
 
                 {/* Right Accordion Questions list */}
                 <div className="lg:col-span-8 flex flex-col gap-4">
-                  {[
-                    { q: `What is ${formatTitleCase(product.name)}?`, a: `${formatTitleCase(product.name)} is a nutritional health mix specially made for babies and toddlers. It is prepared using carefully selected natural ingredients such as banana, cereals, millets, pulses, and nuts to support healthy growth and daily nutrition.` },
-                    { q: `From what age can my baby have ${formatTitleCase(product.name)}?`, a: 'Suitable for babies 6 months and above after starting solid foods.' },
-                    { q: `How do I prepare ${formatTitleCase(product.name)}?`, a: 'Mix with water or milk, cook for 5-7 minutes, and serve warm.' },
-                    { q: `Can I give ${formatTitleCase(product.name)} every day?`, a: 'Yes, it can be included in your baby\'s daily balanced diet.' },
-                    { q: `Does it contain sugar or preservatives?`, a: 'No. It contains no artificial preservatives, colours, or flavours.' }
-                  ].map((faq, idx) => {
+                  {(product.faqs && product.faqs.length > 0
+                    ? product.faqs
+                    : [
+                        { q: `What is ${formatTitleCase(product.name)}?`, a: `${formatTitleCase(product.name)} is a nutritional health mix specially made for babies and toddlers. It is prepared using carefully selected natural ingredients such as banana, cereals, millets, pulses, and nuts to support healthy growth and daily nutrition.` },
+                        { q: `From what age can my baby have ${formatTitleCase(product.name)}?`, a: 'Suitable for babies 6 months and above after starting solid foods.' },
+                        { q: `How do I prepare ${formatTitleCase(product.name)}?`, a: 'Mix with water or milk, cook for 5-7 minutes, and serve warm.' },
+                        { q: `Can I give ${formatTitleCase(product.name)} every day?`, a: 'Yes, it can be included in your baby\'s daily balanced diet.' },
+                        { q: `Does it contain sugar or preservatives?`, a: 'No. It contains no artificial preservatives, colours, or flavours.' }
+                      ]
+                  ).map((faq: { q: string; a: string }, idx: number) => {
                     const isOpen = faqOpenIndex === idx;
                     return (
                       <div 

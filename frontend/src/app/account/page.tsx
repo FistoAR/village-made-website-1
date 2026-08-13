@@ -17,7 +17,7 @@ type AccountTab = 'dashboard' | 'profile' | 'addresses' | 'orders' | 'wishlist' 
 export default function AccountPage() {
   const router = useRouter();
   const {
-    user, logoutUser, updateUserProfile, addAddress, deleteAddress, addReview, showConfirm
+    user, logoutUser, updateUserProfile, addAddress, deleteAddress, addReview, showConfirm, isHydrated
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<AccountTab>('dashboard');
@@ -66,12 +66,12 @@ export default function AccountPage() {
 
   // Auth Guard: Redirect to login if user session doesn't exist
   useEffect(() => {
-    if (mounted && !user) {
+    if (mounted && isHydrated && !user) {
       router.push('/login?redirect=/account');
     }
-  }, [user, mounted, router]);
+  }, [user, mounted, isHydrated, router]);
 
-  if (!mounted || !user) {
+  if (!mounted || !isHydrated || !user) {
     return (
       <div className="min-h-screen bg-[#FDFBF7] text-[#3E2C1C] flex flex-col justify-between">
         <Navbar />

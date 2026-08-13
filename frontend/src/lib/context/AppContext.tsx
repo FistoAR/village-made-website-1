@@ -95,7 +95,7 @@ interface AppContextType {
   deleteAddress: (id: string) => void;
   addNotification: (title: string, message: string) => void;
   addReview: (productId: string, productName: string, rating: number, comment: string) => void;
-  addProductReview: (productId: string, author: string, rating: number, title: string, comment: string) => void;
+  addProductReview: (productId: string, author: string, rating: number, title: string, comment: string) => Promise<{ success: boolean; error?: string }>;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   showAlert: (title: string, message: string, type?: 'success' | 'error' | 'info') => void;
   showConfirm: (title: string, message: string, onConfirm: () => void, onCancel?: () => void) => void;
@@ -103,6 +103,7 @@ interface AppContextType {
   categories: any[];
   fetchProducts: () => Promise<void>;
   fetchCategories: () => Promise<void>;
+  isHydrated: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -522,40 +523,86 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const addProductReview = (productId: string, author: string, rating: number, title: string, comment: string) => {
+  const addProductReview = async (productId: string, author: string, rating: number, title: string, comment: string) => {
     const cleanAuthor = author.trim() || 'Anonymous';
-    const newProductReview = {
-      id: Math.random().toString(36).substr(2, 9),
-      author: cleanAuthor,
-      rating,
-      title: title.trim() || 'Verified Purchase Review',
-      comment: comment.trim(),
-      time: 'Just now',
-      helpful: 0
-    };
-
-    // Save to global storage database
-    const allReviews = JSON.parse(localStorage.getItem('village_made_global_reviews') || '{}');
-    if (!allReviews[productId]) {
-      allReviews[productId] = [];
+    
+    if (!user) {
+      showToast('You must be logged in to submit a review.', 'error');
+      return { success: false, error: 'Not logged in' };
     }
-    allReviews[productId] = [newProductReview, ...allReviews[productId]];
-    localStorage.setItem('village_made_global_reviews', JSON.stringify(allReviews));
 
-    // Link to user session review log if active
-    if (user) {
-      const userReview: UserReview = {
-        id: newProductReview.id,
-        productId,
-        productName: title || 'Product Review',
-        rating,
-        comment,
-        date: new Date().toLocaleDateString('en-IN')
-      };
-      setUser(prev => {
-        if (!prev) return null;
-        return { ...prev, reviews: [userReview, ...prev.reviews] };
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products/${productId}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          author: cleanAuthor,
+          rating,
+          title: title.trim() || 'Verified Purchase Review',
+          comment: comment.trim(),
+          mobile: user.mobile
+        })
       });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Review submitted successfully!', 'success');
+        
+        // Link to user session review log if active
+        const userReview: UserReview = {
+          id: Math.random().toString(36).substr(2, 9),
+          productId,
+          productName: title || 'Product Review',
+          rating,
+          comment,
+          date: new Date().toLocaleDateString('en-IN')
+        };
+        setUser(prev => {
+          if (!prev) return null;
+          return { ...prev, reviews: [userReview, ...prev.reviews] };
+        });
+
+        return { success: true };
+      } else {
+        showToast(data.error || 'Failed to save review.', 'error');
+        return { success: false, error: data.error };
+      }
+    } catch (err) {
+      console.warn('⚠️ Connection error, saving review locally:', err);
+      showToast('Offline: Review saved locally.', 'info');
+
+      const newProductReview = {
+        id: Math.random().toString(36).substr(2, 9),
+        author: cleanAuthor,
+        rating,
+        title: title.trim() || 'Verified Purchase Review',
+        comment: comment.trim(),
+        time: 'Just now',
+        helpful: 0
+      };
+
+      const allReviews = JSON.parse(localStorage.getItem('village_made_global_reviews') || '{}');
+      if (!allReviews[productId]) {
+        allReviews[productId] = [];
+      }
+      allReviews[productId] = [newProductReview, ...allReviews[productId]];
+      localStorage.setItem('village_made_global_reviews', JSON.stringify(allReviews));
+
+      if (user) {
+        const userReview: UserReview = {
+          id: newProductReview.id,
+          productId,
+          productName: title || 'Product Review',
+          rating,
+          comment,
+          date: new Date().toLocaleDateString('en-IN')
+        };
+        setUser(prev => {
+          if (!prev) return null;
+          return { ...prev, reviews: [userReview, ...prev.reviews] };
+        });
+      }
+      return { success: true };
     }
   };
 
@@ -622,6 +669,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         categories,
         fetchProducts,
         fetchCategories,
+        isHydrated,
       }}
     >
       {children}

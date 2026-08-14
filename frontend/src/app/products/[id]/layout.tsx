@@ -10,7 +10,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const resolvedParams = await params;
   const product = PRODUCTS.find((p) => p.id === resolvedParams.id);
-  
+
   if (!product) {
     return {
       title: 'Product Not Found',

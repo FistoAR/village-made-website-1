@@ -811,6 +811,7 @@ export default function ProductDetailPage({
                           required
                           value={newReviewAuthor}
                           onChange={(e) => setNewReviewAuthor(e.target.value)}
+                          readOnly={true}
                           placeholder="e.g. Priyan"
                           className="w-full h-9 px-3 bg-white border border-[#eeddb9]/80 focus:border-[#384401] rounded-lg text-xs"
                         />

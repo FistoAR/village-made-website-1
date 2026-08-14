@@ -74,12 +74,9 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
       const allReviews = JSON.parse(localStorage.getItem('village_made_global_reviews') || '{}');
       const customReviews = allReviews[product.id] || [];
       if (customReviews.length > 0) {
-        const defaultRating = product.rating || 4.7;
-        const defaultReviews = product.reviews || 128;
-        const totalRating = defaultRating * defaultReviews + customReviews.reduce((sum: number, r: any) => sum + r.rating, 0);
-        const totalCount = defaultReviews + customReviews.length;
-        setRating(parseFloat((totalRating / totalCount).toFixed(1)));
-        setReviews(totalCount);
+        const avg = customReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / customReviews.length;
+        setRating(parseFloat(avg.toFixed(1)));
+        setReviews(customReviews.length);
       } else {
         setRating(product.rating || 4.7);
         setReviews(product.reviews || 128);

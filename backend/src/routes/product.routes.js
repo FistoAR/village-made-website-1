@@ -14,14 +14,12 @@ productRouter.get('/', async (req, res, next) => {
   try {
     const result = await query(`
       SELECT p.*, c.name as category_name,
-             COALESCE(
-               (SELECT (SUM(r.rating) + (p.rating * p.reviews)) / (COUNT(r.id) + p.reviews) 
-                FROM reviews r 
-                WHERE r.product_id = p.id), 
+             ROUND(CAST(COALESCE(
+               (SELECT AVG(r.rating) FROM reviews r WHERE r.product_id = p.id), 
                p.rating
-             ) as aggregated_rating,
+             ) AS NUMERIC), 1) as aggregated_rating,
              COALESCE(
-               (SELECT COUNT(r.id) + p.reviews FROM reviews r WHERE r.product_id = p.id), 
+               (SELECT COUNT(r.id) FROM reviews r WHERE r.product_id = p.id HAVING COUNT(r.id) > 0), 
                p.reviews
              ) as aggregated_reviews
       FROM products p

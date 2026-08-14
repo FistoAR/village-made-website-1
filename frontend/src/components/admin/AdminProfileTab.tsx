@@ -1,5 +1,4 @@
-import React from 'react';
-import { Settings, Eye, EyeOff } from 'lucide-react';
+import { Settings, Eye, EyeOff, Sparkles } from 'lucide-react';
 
 interface AdminProfileTabProps {
   profName: string;
@@ -38,6 +37,20 @@ export default function AdminProfileTab({
   profileSaving,
   handleProfileUpdateSubmit,
 }: AdminProfileTabProps) {
+  const comingSoon = true; // Set to false to enable profile tab
+
+  if (comingSoon) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center bg-stone-50/10 border border-dashed border-[#d3c099] rounded-2xl p-8 font-jakarta">
+        <div className="w-16 h-16 rounded-full bg-[#FAF4EE] flex items-center justify-center text-[#C56C4F] mb-4">
+          <Sparkles className="w-8 h-8 animate-pulse" />
+        </div>
+        <h3 className="text-base font-extrabold text-stone-900 uppercase tracking-wider mb-1">Coming Soon</h3>
+        <p className="text-xs text-stone-500 max-w-sm">Admin security profile attributes configuration will be active in the coming weeks.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <h3 className="text-sm font-extrabold uppercase tracking-wider text-stone-955 font-jakarta flex items-center gap-2">

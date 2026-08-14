@@ -419,6 +419,7 @@ export default function ProductsClientContainer({ initialProducts }: { initialPr
             src="/images/products/top-right-image.webp"
             alt="Top Right Header Graphic"
             fill
+            sizes="(max-width: 640px) 220vw, (max-width: 768px) 320vw, 420vw"
             className="object-contain object-right-top"
             priority
           />

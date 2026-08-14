@@ -1,0 +1,18 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Help & Support',
+  description: 'Find answers to frequently asked questions and get support for your Village Made orders.',
+  keywords: ['help', 'support', 'FAQ', 'village made help', 'order support'],
+  alternates: {
+    canonical: '/help',
+  },
+};
+
+export default function HelpLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return children;
+}

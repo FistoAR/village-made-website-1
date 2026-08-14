@@ -42,8 +42,30 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Village Made | Premium Organic Village Goods",
-  description: "An immersive cinematic e-commerce experience showcasing authentic village products.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  title: {
+    default: "Village Made | Premium Organic Village Goods",
+    template: "%s | Village Made",
+  },
+  description: "An immersive cinematic e-commerce experience showcasing authentic village products, millets, natural health mixes, and organic snacks.",
+  keywords: ["organic", "village made", "millets", "health mix", "natural products", "ecommerce"],
+  authors: [{ name: "Village Made Team" }],
+  openGraph: {
+    title: "Village Made | Premium Organic Village Goods",
+    description: "An immersive cinematic e-commerce experience showcasing authentic village products.",
+    url: "/",
+    siteName: "Village Made",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Village Made | Premium Organic Village Goods",
+    description: "An immersive cinematic e-commerce experience showcasing authentic village products.",
+  },
+  alternates: {
+    canonical: '/',
+  },
 };
 
 export default function RootLayout({

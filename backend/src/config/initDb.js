@@ -131,6 +131,10 @@ export async function initDb() {
     ALTER TABLE users DROP COLUMN IF EXISTS wishlist;
     ALTER TABLE users DROP COLUMN IF EXISTS reviews;
     ALTER TABLE users DROP COLUMN IF EXISTS notifications;
+
+    -- Indexing for Optimization
+    CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews(product_id);
+    CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);
   `;
 
   try {

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Compass, ArrowLeft, Home } from 'lucide-react';
+import { MapPinOff, ArrowLeft, Home } from 'lucide-react';
 
 export default function NotFound() {
   return (
@@ -17,7 +17,7 @@ export default function NotFound() {
 
         <div className="bg-white/60 backdrop-blur-xl border border-white p-6 md:p-10 rounded-[32px] shadow-2xl max-w-lg w-full">
           <div className="w-16 h-16 bg-[#384401]/10 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
-            <Compass className="w-8 h-8 text-[#384401]" />
+            <MapPinOff className="w-8 h-8 text-[#384401]" />
           </div>
           
           <h1 className="text-6xl md:text-8xl font-black font-poetsen text-transparent bg-clip-text bg-gradient-to-br from-[#384401] to-[#607317] leading-none mb-3 drop-shadow-sm">

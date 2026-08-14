@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -12,7 +12,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useApp } from '@/lib/context/AppContext';
 
-export default function HelpCenterPage() {
+function HelpCenterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, raiseTicket } = useApp();
@@ -424,5 +424,13 @@ export default function HelpCenterPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function HelpCenterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#384401]/30 border-t-[#384401] rounded-full animate-spin"></div></div>}>
+      <HelpCenterContent />
+    </Suspense>
   );
 }

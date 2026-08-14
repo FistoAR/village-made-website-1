@@ -56,6 +56,7 @@ export interface UserNotification {
 }
 
 export interface User {
+  id?: number;
   mobile: string;
   name?: string;
   email?: string;
@@ -66,6 +67,19 @@ export interface User {
   wishlist: string[];
   reviews: UserReview[];
   notifications: UserNotification[];
+}
+
+export interface Ticket {
+  id: string;
+  user_id?: number;
+  subject: string;
+  description: string;
+  category: string;
+  order_id?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  order_ref_id?: string;
 }
 
 interface AppContextType {
@@ -130,6 +144,9 @@ interface AppContextType {
   fetchProducts: () => Promise<void>;
   fetchCategories: () => Promise<void>;
   isHydrated: boolean;
+  tickets: Ticket[];
+  raiseTicket: (subject: string, description: string, category: string, orderId?: string) => Promise<{ success: boolean; ticket?: Ticket; error?: string }>;
+  fetchUserTickets: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -142,6 +159,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // User auth state
   const [user, setUser] = useState<User | null>(null);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
 
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -949,6 +967,61 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setConfirmData({ title, message, show: true, onConfirm, onCancel });
     };
 
+    const fetchUserTickets = async () => {
+      if (!user || !user.id) return;
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+        const res = await fetch(`${baseUrl}/tickets/user/${user.id}`);
+        const data = await res.json();
+        if (res.ok && data.success && Array.isArray(data.tickets)) {
+          setTickets(data.tickets);
+        }
+      } catch (err) {
+        console.error('Failed to fetch user support tickets:', err);
+      }
+    };
+
+    const raiseTicket = async (subject: string, description: string, category: string, orderId?: string) => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+        const res = await fetch(`${baseUrl}/tickets`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user?.id || null,
+            subject,
+            description,
+            category,
+            orderId
+          })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast('Support ticket raised successfully!', 'success');
+          if (user) {
+            fetchUserTickets();
+          }
+          return { success: true, ticket: data.ticket };
+        } else {
+          showToast(data.error || 'Failed to raise support ticket.', 'error');
+          return { success: false, error: data.error };
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Network error submitting support ticket.', 'error');
+        return { success: false, error: 'Network error submitting support ticket.' };
+      }
+    };
+
+    // Load tickets when user changes
+    useEffect(() => {
+      if (isHydrated && user) {
+        fetchUserTickets();
+      } else {
+        setTickets([]);
+      }
+    }, [user, isHydrated]);
+
   return (
     <AppContext.Provider
       value={{
@@ -996,6 +1069,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         fetchProducts,
         fetchCategories,
         isHydrated,
+        tickets,
+        raiseTicket,
+        fetchUserTickets,
       }}
     >
       {children}

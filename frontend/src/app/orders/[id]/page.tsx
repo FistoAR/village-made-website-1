@@ -16,8 +16,34 @@ import { PRODUCTS } from '@/data/products-list';
 export default function OrderTrackingPage() {
   const { id } = useParams() as { id: string };
   const router = useRouter();
-  const { user } = useApp();
+  const { user, updateOrderStatus, showToast, showConfirm } = useApp();
   const [mounted, setMounted] = useState(false);
+
+  const handleRequestReturn = () => {
+    showConfirm(
+      'Request Return?',
+      'Are you sure you want to request a return for this order? Our admin team will verify details and approve/process the refund shortly.',
+      async () => {
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+          const res = await fetch(`${baseUrl}/auth/orders/${order.id}/return`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            updateOrderStatus(order.id, 'Return Requested');
+            showToast('Return requested successfully!', 'success');
+          } else {
+            showToast(data.error || 'Failed to submit return request.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Failed to connect to backend server.', 'error');
+        }
+      }
+    );
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -70,7 +96,10 @@ export default function OrderTrackingPage() {
   // Helper to determine status step indexes
   const getActiveStepIndex = () => {
     switch (order.status) {
-      case 'Delivered': return 3;
+      case 'Delivered': 
+      case 'Return Requested':
+      case 'Returned':
+        return 3;
       case 'Shipped': return 2;
       case 'Cancelled': return -1;
       case 'Processing':
@@ -111,7 +140,7 @@ export default function OrderTrackingPage() {
           
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0 relative z-10 w-full md:w-auto">
             <span className={`text-xs font-black px-4.5 py-2 rounded-xl uppercase tracking-wider select-none ${
-              order.status === 'Delivered' 
+              order.status === 'Delivered' || order.status === 'Returned'
                 ? 'bg-[#e2edd3] text-[#384401]'
                 : order.status === 'Cancelled'
                   ? 'bg-red-100 text-red-700'
@@ -119,6 +148,20 @@ export default function OrderTrackingPage() {
             }`}>
               Status: {order.status}
             </span>
+            {order.status === 'Delivered' && (
+              <button
+                onClick={handleRequestReturn}
+                className="px-4.5 py-2 bg-[#C56C4F] hover:bg-[#a85237] text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs uppercase tracking-wide"
+              >
+                Request Return
+              </button>
+            )}
+            <Link
+              href={`/help?orderId=${order.id}`}
+              className="px-4.5 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs uppercase tracking-wide flex items-center gap-1.5"
+            >
+              <MessageSquare className="w-3.5 h-3.5" /> Support Desk
+            </Link>
           </div>
         </div>
 
@@ -190,6 +233,71 @@ export default function OrderTrackingPage() {
                 </div>
               )}
             </div>
+
+            {/* Refund Status Section */}
+            {(order.status === 'Return Requested' || order.status === 'Returned') && (
+              <div className="bg-white border border-[#eeddb9] rounded-2xl p-6 sm:p-8 shadow-2xs font-jakarta">
+                <h2 className="text-base sm:text-lg font-black text-stone-900 border-b border-[#eeddb9]/30 pb-3.5 mb-6 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-[#C56C4F]" /> Return & Refund Status
+                </h2>
+                
+                <div className="relative flex flex-col md:flex-row justify-between items-start md:items-start gap-8 md:gap-4 md:pt-4">
+                  {/* Connect Line */}
+                  <div className="hidden md:block absolute left-[16.5%] right-[16.5%] top-10 h-[3px] bg-stone-150 -z-0" />
+                  <div 
+                    className="hidden md:block absolute left-[16.5%] top-10 h-[3px] bg-[#C56C4F] -z-0 transition-all duration-500" 
+                    style={{ width: order.status === 'Returned' ? '67%' : '0%' }}
+                  />
+
+                  {/* Step 1: Return Requested */}
+                  <div className="relative z-10 flex md:flex-col items-center md:items-center gap-4 w-full md:w-1/3">
+                    <div className="w-12 h-12 rounded-full bg-[#C56C4F] text-white flex items-center justify-center font-bold shadow-xs">
+                      <Check className="w-5 h-5 stroke-[3]" />
+                    </div>
+                    <div className="flex flex-col items-start md:items-center min-w-0 md:mt-2.5 text-left md:text-center w-full">
+                      <p className="font-extrabold text-xs sm:text-sm text-stone-950">Return Requested</p>
+                      <p className="text-[11px] text-stone-500 font-semibold mt-1 leading-relaxed max-w-[160px]">
+                        Return request submitted. Verification in progress.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 2: Refund Processing */}
+                  <div className="relative z-10 flex md:flex-col items-center md:items-center gap-4 w-full md:w-1/3">
+                    <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center font-bold ${
+                      order.status === 'Return Requested' 
+                        ? 'bg-white border-[#C56C4F] text-[#C56C4F] ring-4 ring-[#C56C4F]/10 animate-pulse'
+                        : 'bg-[#C56C4F] text-white border-[#C56C4F]'
+                    }`}>
+                      {order.status === 'Returned' ? <Check className="w-5 h-5 stroke-[3]" /> : <Clock className="w-5 h-5" />}
+                    </div>
+                    <div className="flex flex-col items-start md:items-center min-w-0 md:mt-2.5 text-left md:text-center w-full">
+                      <p className="font-extrabold text-xs sm:text-sm text-stone-950">Processing Refund</p>
+                      <p className="text-[11px] text-stone-500 font-semibold mt-1 leading-relaxed max-w-[160px]">
+                        Verification approved. Preparing credit transaction.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 3: Refund Credited */}
+                  <div className="relative z-10 flex md:flex-col items-center md:items-center gap-4 w-full md:w-1/3">
+                    <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center font-bold ${
+                      order.status === 'Returned'
+                        ? 'bg-[#384401] border-[#384401] text-white shadow-xs'
+                        : 'bg-white border-stone-250 text-stone-400'
+                    }`}>
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                    <div className="flex flex-col items-start md:items-center min-w-0 md:mt-2.5 text-left md:text-center w-full">
+                      <p className={`font-extrabold text-xs sm:text-sm ${order.status === 'Returned' ? 'text-stone-955' : 'text-stone-400'}`}>Refund Credited</p>
+                      <p className="text-[11px] text-stone-500 font-semibold mt-1 leading-relaxed max-w-[160px]">
+                        Credit transferred back to original payment mode.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Product Cards Listing */}
             <div className="bg-white border border-[#eeddb9] rounded-2xl p-6 shadow-2xs">

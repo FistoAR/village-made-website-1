@@ -143,7 +143,7 @@ export default function Footer() {
                   { label: 'Return & Refund', href: '/policies/return-policy' },
                   { label: 'Terms & Conditions', href: '/policies/terms-conditions' },
                   { label: 'Privacy Policy', href: '/policies/privacy-policy' },
-                  { label: 'FAQ', href: '/products/m-1' },
+                  { label: 'Help Center & Support', href: '/help' },
                 ].map((link) => (
                   <li key={link.label}>
                     <Link href={link.href} className="flex items-center gap-1.5 text-[#6d5e50] font-body text-sm font-semibold hover:text-[#384401] transition-colors group">

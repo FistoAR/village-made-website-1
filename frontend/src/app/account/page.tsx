@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   User as UserIcon, ShoppingBag, MapPin, Heart, MessageSquare,
   Bell, LogOut, ChevronRight, CheckCircle2, AlertCircle, Plus, Trash2, Home, Edit,
-  CheckCheck, Package, Shield, Inbox, BellOff, Download
+  CheckCheck, Package, Shield, Inbox, BellOff, Download, LifeBuoy
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -14,14 +14,14 @@ import { useApp, UserAddress, UserOrder } from '@/lib/context/AppContext';
 import { PRODUCTS } from '@/data/products-list';
 import { jsPDF } from 'jspdf';
 
-type AccountTab = 'dashboard' | 'profile' | 'addresses' | 'orders' | 'wishlist' | 'reviews' | 'notifications';
+type AccountTab = 'dashboard' | 'profile' | 'addresses' | 'orders' | 'wishlist' | 'reviews' | 'notifications' | 'tickets';
 
 export default function AccountPage() {
   const router = useRouter();
   const {
     user, logoutUser, updateUserProfile, addAddress, deleteAddress, addReview, showConfirm, isHydrated,
     markAllNotificationsAsRead, markNotificationAsRead, deleteNotification, clearAllNotifications,
-    updateOrderStatus, showToast, fetchProducts
+    updateOrderStatus, showToast, fetchProducts, tickets
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<AccountTab>('dashboard');
@@ -420,6 +420,7 @@ export default function AccountPage() {
     { id: 'orders', label: 'My Orders', icon: ShoppingBag },
     { id: 'reviews', label: 'Product Reviews', icon: MessageSquare },
     { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'tickets', label: 'Support Tickets', icon: LifeBuoy },
   ];
 
   return (
@@ -1338,6 +1339,71 @@ export default function AccountPage() {
                         </div>
                       );
                     })
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB: SUPPORT TICKETS */}
+            {activeTab === 'tickets' && (
+              <div className="flex flex-col gap-6">
+                <div className="flex justify-between items-center flex-wrap gap-2">
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-bold font-jakarta text-stone-955 mb-1">Support Tickets</h2>
+                    <p className="text-stone-600 text-xs leading-relaxed">Track status and updates of support tickets raised by you.</p>
+                  </div>
+                  <Link
+                    href="/help"
+                    className="px-4 py-2.5 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold rounded-xl transition-all shadow-2xs font-jakarta cursor-pointer"
+                  >
+                    Raise Support Ticket
+                  </Link>
+                </div>
+
+                <div className="flex flex-col gap-4 font-jakarta">
+                  {tickets.length === 0 ? (
+                    <div className="text-center py-16 border-2 border-dashed border-stone-200 rounded-[24px] text-stone-400 text-xs sm:text-sm">
+                      <LifeBuoy className="w-10 h-10 text-stone-300 mx-auto mb-3" />
+                      No support tickets raised yet.
+                    </div>
+                  ) : (
+                    tickets.map((t) => (
+                      <div
+                        key={t.id}
+                        className="border border-[#eeddb9] rounded-2xl overflow-hidden shadow-xs bg-white"
+                      >
+                        <div className="p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                              <span className="font-bold text-stone-900 text-sm sm:text-base">{t.id}</span>
+                              <span className="text-stone-500 text-xs">• {t.category}</span>
+                            </div>
+                            <h4 className="font-extrabold text-stone-955 text-xs sm:text-sm mb-1">{t.subject}</h4>
+                            <p className="text-stone-600 text-xs leading-relaxed font-semibold">{t.description}</p>
+                            {t.order_id && (
+                              <span className="text-[10px] bg-stone-100 text-stone-600 px-2 py-0.5 rounded-md font-bold mt-2 inline-block">
+                                Associated Order: #{t.order_id}
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="text-right shrink-0 flex flex-col items-end gap-1.5 w-full sm:w-auto">
+                            <span className={`text-[10px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider ${
+                              t.status === 'Resolved'
+                                ? 'bg-green-50 text-green-700'
+                                : t.status === 'In Progress'
+                                  ? 'bg-blue-50 text-blue-700'
+                                  : 'bg-amber-50 text-amber-700 animate-pulse'
+                            }`}>
+                              {t.status}
+                            </span>
+                            <span className="text-[10px] text-stone-400 font-semibold">
+                              Created: {new Date(t.created_at).toLocaleDateString('en-IN')}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
                   )}
                 </div>
               </div>

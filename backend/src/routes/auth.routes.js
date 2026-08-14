@@ -14,6 +14,7 @@ const fetchUserData = async (dbUser) => {
   const ordersRes = await query('SELECT * FROM orders WHERE user_id = $1', [userId]);
 
   return {
+    id: dbUser.id,
     mobile: dbUser.mobile,
     name: dbUser.name || '',
     email: dbUser.email || '',

@@ -65,6 +65,19 @@ export async function initDb() {
       items JSONB NOT NULL
     );
 
+    -- Tickets Table
+    CREATE TABLE IF NOT EXISTS tickets (
+      id VARCHAR(50) PRIMARY KEY,
+      user_id INT REFERENCES users(id) ON DELETE CASCADE,
+      subject VARCHAR(255) NOT NULL,
+      description TEXT NOT NULL,
+      category VARCHAR(50) NOT NULL,
+      order_id VARCHAR(50) REFERENCES orders(id) ON DELETE SET NULL,
+      status VARCHAR(50) DEFAULT 'Open',
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+
     -- Coupons Table
     CREATE TABLE IF NOT EXISTS coupons (
       code VARCHAR(50) PRIMARY KEY,

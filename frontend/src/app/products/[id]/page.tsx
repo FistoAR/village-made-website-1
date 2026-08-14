@@ -252,6 +252,25 @@ export default function ProductDetailPage({
     router.push('/cart');
   };
 
+  const handleShare = async () => {
+    if (!product) return;
+    const shareData = {
+      title: `Village Made - ${product.name}`,
+      text: `Check out ${product.name} on Village Made!`,
+      url: window.location.href
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard!');
+      }
+    } catch (err) {
+      console.log('Error sharing:', err);
+    }
+  };
+
   // Fallback default details if JSON doesn't provide them
   const displayReviews = productReviews.length;
   const displayRating = productReviews.length > 0
@@ -343,7 +362,7 @@ export default function ProductDetailPage({
                     Kids Favourite
                   </span>
                 </div>
-                <button className="p-2 text-stone-500 hover:text-stone-800 transition-colors cursor-pointer">
+                <button onClick={handleShare} className="p-2 text-stone-500 hover:text-stone-800 transition-colors cursor-pointer">
                   <Share2 className="w-5 h-5" />
                 </button>
               </div>

@@ -785,6 +785,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return { ...prev, reviews: [userReview, ...prev.reviews] };
         });
 
+        fetchProducts();
+
         return { success: true };
       } else {
         showToast(data.error || 'Failed to save review.', 'error');
@@ -860,6 +862,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return { ...prev, reviews };
         });
 
+        fetchProducts();
+
         return { success: true };
       } else {
         showToast(data.error || 'Failed to update review.', 'error');
@@ -915,6 +919,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const reviews = prev.reviews.filter(r => r.id !== reviewId);
           return { ...prev, reviews };
         });
+
+        fetchProducts();
 
         return { success: true };
       } else {

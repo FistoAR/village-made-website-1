@@ -13,7 +13,17 @@ const upload = multer({ storage: multer.memoryStorage() });
 productRouter.get('/', async (req, res, next) => {
   try {
     const result = await query(`
-      SELECT p.*, c.name as category_name 
+      SELECT p.*, c.name as category_name,
+             COALESCE(
+               (SELECT (SUM(r.rating) + (p.rating * p.reviews)) / (COUNT(r.id) + p.reviews) 
+                FROM reviews r 
+                WHERE r.product_id = p.id), 
+               p.rating
+             ) as aggregated_rating,
+             COALESCE(
+               (SELECT COUNT(r.id) + p.reviews FROM reviews r WHERE r.product_id = p.id), 
+               p.reviews
+             ) as aggregated_reviews
       FROM products p
       JOIN categories c ON p.category_id = c.id
       ORDER BY p.id ASC
@@ -28,8 +38,8 @@ productRouter.get('/', async (req, res, next) => {
       price: Number(row.price),
       originalPrice: row.original_price ? Number(row.original_price) : undefined,
       discount: row.discount || undefined,
-      rating: Number(row.rating),
-      reviews: Number(row.reviews),
+      rating: Number(row.aggregated_rating),
+      reviews: Number(row.aggregated_reviews),
       weights: typeof row.weights === 'string' ? JSON.parse(row.weights) : row.weights,
       badge: row.badge || undefined,
       stock: Number(row.stock),

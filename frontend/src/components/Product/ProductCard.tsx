@@ -70,50 +70,24 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
   const [reviews, setReviews] = useState(product.reviews || 128);
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchReviews = async () => {
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-        const res = await fetch(`${baseUrl}/products/${product.id}/reviews`);
-        const data = await res.json();
-        
-        if (!isMounted) return;
-
-        if (data.success && Array.isArray(data.reviews) && data.reviews.length > 0) {
-           const avg = data.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / data.reviews.length;
-           setRating(parseFloat(avg.toFixed(1)));
-           setReviews(data.reviews.length);
-        } else {
-           const allReviews = JSON.parse(localStorage.getItem('village_made_global_reviews') || '{}');
-           const customReviews = allReviews[product.id] || [];
-           if (customReviews.length > 0) {
-             const defaultRating = product.rating || 4.7;
-             const defaultReviews = product.reviews || 128;
-             const totalRating = defaultRating * defaultReviews + customReviews.reduce((sum: number, r: any) => sum + r.rating, 0);
-             const totalCount = defaultReviews + customReviews.length;
-             setRating(parseFloat((totalRating / totalCount).toFixed(1)));
-             setReviews(totalCount);
-           }
-        }
-      } catch (e) {
-        if (!isMounted) return;
-        try {
-          const allReviews = JSON.parse(localStorage.getItem('village_made_global_reviews') || '{}');
-          const customReviews = allReviews[product.id] || [];
-          if (customReviews.length > 0) {
-            const defaultRating = product.rating || 4.7;
-            const defaultReviews = product.reviews || 128;
-            const totalRating = defaultRating * defaultReviews + customReviews.reduce((sum: number, r: any) => sum + r.rating, 0);
-            const totalCount = defaultReviews + customReviews.length;
-            setRating(parseFloat((totalRating / totalCount).toFixed(1)));
-            setReviews(totalCount);
-          }
-        } catch (err) {}
+    try {
+      const allReviews = JSON.parse(localStorage.getItem('village_made_global_reviews') || '{}');
+      const customReviews = allReviews[product.id] || [];
+      if (customReviews.length > 0) {
+        const defaultRating = product.rating || 4.7;
+        const defaultReviews = product.reviews || 128;
+        const totalRating = defaultRating * defaultReviews + customReviews.reduce((sum: number, r: any) => sum + r.rating, 0);
+        const totalCount = defaultReviews + customReviews.length;
+        setRating(parseFloat((totalRating / totalCount).toFixed(1)));
+        setReviews(totalCount);
+      } else {
+        setRating(product.rating || 4.7);
+        setReviews(product.reviews || 128);
       }
-    };
-    
-    fetchReviews();
-    return () => { isMounted = false; };
+    } catch (e) {
+      setRating(product.rating || 4.7);
+      setReviews(product.reviews || 128);
+    }
   }, [product.id, product.rating, product.reviews]);
   const originalPrice = product.originalPrice || Math.round(product.price * 1.3);
   const discount = product.discount || '20% OFF';

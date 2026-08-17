@@ -140,6 +140,8 @@ export async function initDb() {
   try {
     console.log('🔄  Checking/creating normalized relational database tables...');
     await query(createTablesQuery);
+    await query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS remarks TEXT;');
+    await query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS status_history JSONB DEFAULT '[]'::jsonb;");
     console.log('✅  Relational database tables initialized.');
 
     // Seed/Update categories

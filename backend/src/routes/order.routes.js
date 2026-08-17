@@ -25,9 +25,10 @@ orderRouter.post('/', async (req, res, next) => {
       }
     }
 
+    const initialHistory = [{ status: 'Processing', date: date || new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN'), remarks: 'Order placed' }];
     await query(
-      `INSERT INTO orders (id, user_id, date, subtotal, shipping, tax, total, status, address, items)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'Processing', $8, $9)
+      `INSERT INTO orders (id, user_id, date, subtotal, shipping, tax, total, status, address, items, status_history)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'Processing', $8, $9, $10)
        ON CONFLICT (id) DO NOTHING`,
       [
         id,
@@ -38,7 +39,8 @@ orderRouter.post('/', async (req, res, next) => {
         tax,
         total,
         JSON.stringify(address),
-        JSON.stringify(items)
+        JSON.stringify(items),
+        JSON.stringify(initialHistory)
       ]
     );
 
@@ -72,6 +74,40 @@ orderRouter.post('/', async (req, res, next) => {
     broadcastOrderPlaced(id, orderData);
 
     return res.status(201).json({ success: true, message: 'Order placed successfully.', orderId: id });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/orders/:id
+ * Retrieve a single order by its ID (public/guest-friendly tracking)
+ */
+orderRouter.get('/:id', async (req, res, next) => {
+  const orderId = req.params.id;
+
+  try {
+    const orderRes = await query('SELECT * FROM orders WHERE id = $1', [orderId]);
+    if (orderRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Order not found.' });
+    }
+
+    const o = orderRes.rows[0];
+    const orderData = {
+      id: o.id,
+      date: o.date,
+      subtotal: Number(o.subtotal),
+      shipping: Number(o.shipping),
+      tax: Number(o.tax),
+      total: Number(o.total),
+      status: o.status,
+      remarks: o.remarks || null,
+      status_history: typeof o.status_history === 'string' ? JSON.parse(o.status_history) : (o.status_history || []),
+      address: typeof o.address === 'string' ? JSON.parse(o.address) : o.address,
+      items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items
+    };
+
+    return res.status(200).json({ success: true, order: orderData });
   } catch (error) {
     next(error);
   }

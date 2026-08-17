@@ -108,7 +108,7 @@ adminRouter.get('/orders', async (req, res, next) => {
  */
 adminRouter.put('/orders/:id', async (req, res, next) => {
   const orderId = req.params.id;
-  const { status } = req.body;
+  const { status, remarks } = req.body;
 
   if (!status) {
     return res.status(400).json({ success: false, error: 'Status parameter is required.' });
@@ -123,11 +123,25 @@ adminRouter.put('/orders/:id', async (req, res, next) => {
     const order = orderRes.rows[0];
     const oldStatus = order.status;
 
+    // Parse current history
+    let history = [];
+    if (order.status_history) {
+      history = typeof order.status_history === 'string' ? JSON.parse(order.status_history) : order.status_history;
+    }
+    if (!Array.isArray(history)) {
+      history = [];
+    }
+    history.push({
+      status,
+      date: new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN'),
+      remarks: remarks || 'Status updated by administrator'
+    });
+
     // Begin SQL Transaction to ensure stock matches status transitions
     await query('BEGIN');
 
-    // Update order status
-    await query('UPDATE orders SET status = $1 WHERE id = $2', [status, orderId]);
+    // Update order status, remarks, and history
+    await query('UPDATE orders SET status = $1, remarks = $2, status_history = $3 WHERE id = $4', [status, remarks || null, JSON.stringify(history), orderId]);
 
     // Handle stock changes
     const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
@@ -187,7 +201,7 @@ adminRouter.put('/orders/:id', async (req, res, next) => {
           notifId,
           order.user_id,
           'Order Status Update',
-          `Your order ${orderId} is now ${status}. Check the tracker page for updates.`,
+          `Your order ${orderId} is now ${status}.${remarks ? ` Remarks: ${remarks}` : ''} Check the tracker page for updates.`,
           new Date().toLocaleDateString('en-IN')
         ]
       );
@@ -199,9 +213,9 @@ adminRouter.put('/orders/:id', async (req, res, next) => {
       broadcastInventoryUpdate(p.id, p.stock);
     }
 
-    broadcastOrderUpdate(orderId, status);
+    broadcastOrderUpdate(orderId, status, { remarks: remarks || null });
 
-    return res.status(200).json({ success: true, message: 'Order status updated successfully.' });
+    return res.status(200).json({ success: true, message: 'Order status updated successfully.', remarks: remarks || null });
   } catch (error) {
     await query('ROLLBACK');
     next(error);

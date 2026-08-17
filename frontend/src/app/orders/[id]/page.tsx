@@ -11,6 +11,7 @@ import {
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useApp } from '@/lib/context/AppContext';
+import { io } from 'socket.io-client';
 import { PRODUCTS } from '@/data/products-list';
 
 export default function OrderTrackingPage() {
@@ -18,41 +19,8 @@ export default function OrderTrackingPage() {
   const router = useRouter();
   const { user, updateOrderStatus, showToast, showConfirm } = useApp();
   const [mounted, setMounted] = useState(false);
-
-  const handleRequestReturn = () => {
-    showConfirm(
-      'Request Return?',
-      'Are you sure you want to request a return for this order? Our admin team will verify details and approve/process the refund shortly.',
-      async () => {
-        try {
-          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-          const res = await fetch(`${baseUrl}/auth/orders/${order.id}/return`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          });
-          const data = await res.json();
-          if (res.ok && data.success) {
-            updateOrderStatus(order.id, 'Return Requested');
-            showToast('Return requested successfully!', 'success');
-          } else {
-            showToast(data.error || 'Failed to submit return request.', 'error');
-          }
-        } catch (err) {
-          console.error(err);
-          showToast('Failed to connect to backend server.', 'error');
-        }
-      }
-    );
-  };
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  // Find order in user profile, fallback to simulated mock order if not found
-  const orderFromContext = user?.orders?.find(o => o.id === id);
+  const [fetchedOrder, setFetchedOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const fallbackOrder = {
     id: id || 'VM-630591',
@@ -83,7 +51,98 @@ export default function OrderTrackingPage() {
     }
   };
 
-  const order = orderFromContext || fallbackOrder;
+  const handleRequestReturn = () => {
+    showConfirm(
+      'Request Return?',
+      'Are you sure you want to request a return for this order? Our admin team will verify details and approve/process the refund shortly.',
+      async () => {
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+          const res = await fetch(`${baseUrl}/auth/orders/${(fetchedOrder || fallbackOrder).id}/return`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            updateOrderStatus((fetchedOrder || fallbackOrder).id, 'Return Requested');
+            setFetchedOrder((prev: any) => prev ? { ...prev, status: 'Return Requested' } : null);
+            showToast('Return requested successfully!', 'success');
+          } else {
+            showToast(data.error || 'Failed to submit return request.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Failed to connect to backend server.', 'error');
+        }
+      }
+    );
+  };
+
+  useEffect(() => {
+    setMounted(true);
+
+    const fetchOrder = async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+        const res = await fetch(`${baseUrl}/orders/${id}`);
+        const data = await res.json();
+        if (data.success) {
+          setFetchedOrder(data.order);
+        }
+      } catch (err) {
+        console.error('Failed to fetch order details:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
+
+    // Setup live websocket tracking
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5001';
+    const socket = io(socketUrl, { transports: ['websocket'] });
+
+    socket.on('connect', () => {
+      console.log('🔌 Order tracking page connected to real-time updates socket');
+    });
+
+    socket.on('order-update', (data: { orderId: string; status: string; remarks?: string }) => {
+      if (data.orderId === id) {
+        console.log('📡 Real-time tracking status update received:', data);
+        setFetchedOrder((prev: any) => {
+          if (!prev) return prev;
+          const oldHistory = Array.isArray(prev.status_history) ? prev.status_history : [];
+          const hasUpdate = oldHistory.some((h: any) => h.status === data.status && h.remarks === data.remarks);
+          let newHistory = oldHistory;
+          if (!hasUpdate) {
+            newHistory = [
+              ...oldHistory,
+              {
+                status: data.status,
+                date: new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN'),
+                remarks: data.remarks || 'Status updated by administrator'
+              }
+            ];
+          }
+          return {
+            ...prev,
+            status: data.status,
+            remarks: data.remarks || prev.remarks,
+            status_history: newHistory
+          };
+        });
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [id]);
+
+  if (!mounted) return null;
+
+  const order = fetchedOrder || fallbackOrder;
+  const orderObj = order; // support legacy naming if any
 
   // Track steps status map
   const statusSteps = [

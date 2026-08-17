@@ -38,6 +38,8 @@ const fetchUserData = async (dbUser) => {
       tax: Number(o.tax),
       total: Number(o.total),
       status: o.status,
+      remarks: o.remarks || null,
+      status_history: typeof o.status_history === 'string' ? JSON.parse(o.status_history) : (o.status_history || []),
       address: typeof o.address === 'string' ? JSON.parse(o.address) : o.address,
       items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items
     })),
@@ -289,13 +291,25 @@ authRouter.put('/profile', async (req, res, next) => {
 
     // Sync Orders
     if (orders !== undefined) {
-      await query('DELETE FROM orders WHERE user_id = $1', [userId]);
       for (const ord of orders) {
+        const initialHistory = [{ status: ord.status || 'Processing', date: ord.date || new Date().toLocaleDateString('en-IN'), remarks: 'Order placed' }];
         await query(
-          `INSERT INTO orders (id, user_id, date, subtotal, shipping, tax, total, status, address, items)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          `INSERT INTO orders (id, user_id, date, subtotal, shipping, tax, total, status, address, items, status_history)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
            ON CONFLICT (id) DO NOTHING`,
-          [ord.id, userId, ord.date, ord.subtotal, ord.shipping, ord.tax, ord.total, ord.status, JSON.stringify(ord.address), JSON.stringify(ord.items)]
+          [
+            ord.id, 
+            userId, 
+            ord.date, 
+            ord.subtotal, 
+            ord.shipping, 
+            ord.tax, 
+            ord.total, 
+            ord.status || 'Processing', 
+            JSON.stringify(ord.address), 
+            JSON.stringify(ord.items),
+            JSON.stringify(initialHistory)
+          ]
         );
       }
     }
@@ -334,7 +348,20 @@ authRouter.post('/orders/:id/cancel', async (req, res, next) => {
     // Begin SQL Transaction to update status and restore stock
     await query('BEGIN');
 
-    await query("UPDATE orders SET status = 'Cancelled' WHERE id = $1", [orderId]);
+    let history = [];
+    if (order.status_history) {
+      history = typeof order.status_history === 'string' ? JSON.parse(order.status_history) : order.status_history;
+    }
+    if (!Array.isArray(history)) {
+      history = [];
+    }
+    history.push({
+      status: 'Cancelled',
+      date: new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN'),
+      remarks: 'Order cancelled by customer'
+    });
+
+    await query("UPDATE orders SET status = 'Cancelled', status_history = $1 WHERE id = $2", [JSON.stringify(history), orderId]);
 
     // Restore stock
     const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
@@ -398,7 +425,20 @@ authRouter.post('/orders/:id/return', async (req, res, next) => {
       });
     }
 
-    await query("UPDATE orders SET status = 'Return Requested' WHERE id = $1", [orderId]);
+    let history = [];
+    if (order.status_history) {
+      history = typeof order.status_history === 'string' ? JSON.parse(order.status_history) : order.status_history;
+    }
+    if (!Array.isArray(history)) {
+      history = [];
+    }
+    history.push({
+      status: 'Return Requested',
+      date: new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN'),
+      remarks: 'Return request submitted by customer'
+    });
+
+    await query("UPDATE orders SET status = 'Return Requested', status_history = $1 WHERE id = $2", [JSON.stringify(history), orderId]);
 
     // Insert user notification
     const notifId = `notif-${Math.random().toString(36).substring(2, 11)}`;

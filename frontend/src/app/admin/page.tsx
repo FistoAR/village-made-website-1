@@ -464,26 +464,76 @@ export default function AdminPage() {
   };
 
   // Change Shipping Status
-  const handleOrderStatusUpdate = async (orderId: string, newStatus: string) => {
+  const handleOrderStatusUpdate = async (orderId: string, newStatus: string, remarks?: string) => {
+    const timestamp = new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN');
+    const newHistoryEntry = {
+      status: newStatus,
+      date: timestamp,
+      remarks: remarks || 'Status updated by administrator'
+    };
+
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
       const res = await fetch(`${baseUrl}/admin/orders/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: newStatus, remarks: remarks || undefined })
       });
       const data = await res.json();
       if (data.success) {
         triggerAlert(`Order ${orderId} updated to ${newStatus}`);
-        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+        setOrders(prev => prev.map(o => {
+          if (o.id === orderId) {
+            const oldHistory = Array.isArray(o.status_history) ? o.status_history : [];
+            return {
+              ...o,
+              status: newStatus,
+              remarks: remarks || o.remarks,
+              status_history: [...oldHistory, newHistoryEntry]
+            };
+          }
+          return o;
+        }));
         if (selectedOrder && selectedOrder.id === orderId) {
-          setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
+          setSelectedOrder(prev => {
+            if (!prev) return null;
+            const oldHistory = Array.isArray(prev.status_history) ? prev.status_history : [];
+            return {
+              ...prev,
+              status: newStatus,
+              remarks: remarks || prev.remarks,
+              status_history: [...oldHistory, newHistoryEntry]
+            };
+          });
         }
       } else {
         triggerAlert(data.error || 'Failed to update order status', true);
       }
     } catch (err) {
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+      setOrders(prev => prev.map(o => {
+        if (o.id === orderId) {
+          const oldHistory = Array.isArray(o.status_history) ? o.status_history : [];
+          return {
+            ...o,
+            status: newStatus,
+            remarks: remarks || o.remarks,
+            status_history: [...oldHistory, newHistoryEntry]
+          };
+        }
+        return o;
+      }));
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(prev => {
+          if (!prev) return null;
+          const oldHistory = Array.isArray(prev.status_history) ? prev.status_history : [];
+          return {
+            ...prev,
+            status: newStatus,
+            remarks: remarks || prev.remarks,
+            status_history: [...oldHistory, newHistoryEntry]
+          };
+        });
+      }
       triggerAlert(`Simulation: Order ${orderId} status changed to ${newStatus}`);
     }
   };

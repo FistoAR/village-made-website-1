@@ -7,7 +7,7 @@ interface AdminOrdersTabProps {
   orders: AdminOrder[];
   selectedOrder: AdminOrder | null;
   setSelectedOrder: React.Dispatch<React.SetStateAction<AdminOrder | null>>;
-  handleOrderStatusUpdate: (orderId: string, newStatus: string) => void;
+  handleOrderStatusUpdate: (orderId: string, newStatus: string, remarks?: string) => void;
 }
 
 export default function AdminOrdersTab({
@@ -26,6 +26,21 @@ export default function AdminOrdersTab({
   const [paymentFilter, setPaymentFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('All');
   const [sortBy, setSortBy] = useState('newest');
+
+  // Status & Remarks update state
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [remarksText, setRemarksText] = useState('');
+
+  // Sync state whenever selectedOrder changes
+  useEffect(() => {
+    if (selectedOrder) {
+      setSelectedStatus(selectedOrder.status);
+      setRemarksText(selectedOrder.remarks || '');
+    } else {
+      setSelectedStatus('');
+      setRemarksText('');
+    }
+  }, [selectedOrder]);
 
   // Parse order date helper ("DD/MM/YYYY" -> Date object)
   const parseOrderDate = (dateStr: string): Date => {
@@ -621,47 +636,32 @@ export default function AdminOrdersTab({
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-              {/* Status controls */}
-              <div className="border border-[#d3c099] rounded-2xl p-4 bg-stone-50/20 font-jakarta">
-                <span className="text-xs font-extrabold uppercase tracking-wide text-stone-455 block mb-2">Change Shipping Status</span>
-                <select
-                  value={selectedOrder.status}
-                  onChange={(e) => handleOrderStatusUpdate(selectedOrder.id, e.target.value)}
-                  className="h-10.5 px-3 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-800 focus:outline-hidden font-bold w-full"
-                >
-                  <option value="Processing">Processing</option>
-                  <option value="Shipped">Shipped</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="Cancelled">Cancelled</option>
-                  <option value="Return Requested">Return Requested</option>
-                  <option value="Returned">Returned</option>
-                </select>
+            {/* 1. Customer details and Payment Audit - Side by Side */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+              {/* Address details */}
+              <div className="border border-[#d3c099] rounded-2xl p-4 bg-stone-50/15 font-jakarta text-sm">
+                <span className="text-xs font-black uppercase tracking-wider text-[#704632] block mb-3">Customer & Delivery Details</span>
+                <div className="space-y-2 text-stone-700">
+                  <div className="flex items-start"><span className="font-bold text-stone-900 w-[90px] shrink-0">Name:</span> <span className="font-bold text-stone-855">{selectedOrder.address?.name}</span></div>
+                  <div className="flex items-start"><span className="font-bold text-stone-900 w-[90px] shrink-0">Address:</span> <span className="break-all text-stone-600 leading-normal">{selectedOrder.address?.address}</span></div>
+                  <div className="flex items-start"><span className="font-bold text-stone-900 w-[90px] shrink-0">City/State:</span> <span className="text-stone-600">{selectedOrder.address?.city}, {selectedOrder.address?.state} - {selectedOrder.address?.pincode}</span></div>
+                  <div className="flex items-start"><span className="font-bold text-stone-900 w-[90px] shrink-0">Phone:</span> <span className="font-bold text-[#384401]">{selectedOrder.address?.phone}</span></div>
+                </div>
               </div>
-              
-              {/* Address controls */}
-              <div className="space-y-1.5 text-stone-700 text-sm">
-                <div className="flex items-start"><span className="font-bold text-stone-900 w-[90px] shrink-0">Name:</span> <span className="font-bold text-stone-855">{selectedOrder.address?.name}</span></div>
-                <div className="flex items-start"><span className="font-bold text-stone-900 w-[90px] shrink-0">Address:</span> <span className="break-all text-stone-600">{selectedOrder.address?.address}</span></div>
-                <div className="flex items-start"><span className="font-bold text-stone-900 w-[90px] shrink-0">City/State:</span> <span className="text-stone-600">{selectedOrder.address?.city}, {selectedOrder.address?.state} - {selectedOrder.address?.pincode}</span></div>
-                <div className="flex items-start mt-0.5"><span className="font-bold text-stone-900 w-[90px] shrink-0">Phone:</span> <span className="font-bold text-[#384401]">{selectedOrder.address?.phone}</span></div>
-              </div>
-            </div>
 
-            {/* Payment & Refund Audit */}
-            <div className="border border-[#d3c099] rounded-2xl p-4 mb-6 bg-stone-50/10 font-jakarta text-sm">
-              <span className="text-xs font-extrabold uppercase tracking-wide text-stone-455 block mb-3">Payment & Transaction Audit</span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-stone-700">
-                <div className="space-y-1.5">
+              {/* Payment & Refund Audit */}
+              <div className="border border-[#d3c099] rounded-2xl p-4 bg-stone-50/15 font-jakarta text-sm">
+                <span className="text-xs font-black uppercase tracking-wider text-[#704632] block mb-3">Payment & Transaction Audit</span>
+                <div className="space-y-2 text-stone-700">
                   <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-stone-900 w-[120px] shrink-0">Payment Method:</span>
-                    <span className="uppercase text-xs font-bold px-2 py-0.5 rounded-md bg-stone-100 border border-stone-250 text-stone-700">
+                    <span className="uppercase text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-100 border border-stone-250 text-stone-700">
                       {selectedOrder.paymentMethod || 'Razorpay (UPI)'}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-stone-900 w-[120px] shrink-0">Payment Status:</span>
-                    <span className={`text-xs font-extrabold px-2 py-0.5 rounded-md border ${
+                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border ${
                       (selectedOrder.paymentStatus || (selectedOrder.status === 'Returned' ? 'refunded' : 'captured')) === 'captured' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
                       (selectedOrder.paymentStatus || (selectedOrder.status === 'Returned' ? 'refunded' : 'captured')) === 'refunded' ? 'bg-blue-50 text-blue-800 border-blue-200' :
                       'bg-stone-50 text-stone-600 border-stone-200'
@@ -669,25 +669,98 @@ export default function AdminOrdersTab({
                       {selectedOrder.paymentStatus || (selectedOrder.status === 'Returned' ? 'refunded' : 'captured')}
                     </span>
                   </div>
-                </div>
-                <div className="space-y-1.5 font-mono text-xs">
-                  <div>
-                    <span className="font-sans font-semibold text-stone-900 w-[120px] inline-block">Razorpay Order ID:</span>
-                    <span className="text-stone-600">{selectedOrder.razorpayOrderId || `order_VM_${selectedOrder.id.replace('VM-', '')}`}</span>
-                  </div>
-                  <div>
-                    <span className="font-sans font-semibold text-stone-900 w-[120px] inline-block">Payment ID:</span>
-                    <span className="text-stone-600">{selectedOrder.razorpayPaymentId || `pay_VM_98327103`}</span>
-                  </div>
-                  {(selectedOrder.status === 'Returned' || selectedOrder.refundId) && (
+                  <div className="text-[11px] font-mono leading-tight space-y-1">
                     <div>
-                      <span className="font-sans font-semibold text-stone-900 w-[120px] inline-block">Refund ID:</span>
-                      <span className="text-[#384401] font-bold">{selectedOrder.refundId || `rfnd_VM_49103859`}</span>
+                      <span className="font-sans font-semibold text-stone-900 w-[120px] inline-block">Razorpay Order ID:</span>
+                      <span className="text-stone-600">{selectedOrder.razorpayOrderId || `order_VM_${selectedOrder.id.replace('VM-', '')}`}</span>
                     </div>
-                  )}
+                    <div>
+                      <span className="font-sans font-semibold text-stone-900 w-[120px] inline-block">Payment ID:</span>
+                      <span className="text-stone-600">{selectedOrder.razorpayPaymentId || `pay_VM_98327103`}</span>
+                    </div>
+                    {(selectedOrder.status === 'Returned' || selectedOrder.refundId) && (
+                      <div>
+                        <span className="font-sans font-semibold text-stone-900 w-[120px] inline-block">Refund ID:</span>
+                        <span className="text-[#384401] font-bold">{selectedOrder.refundId || `rfnd_VM_49103859`}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* 2. DEDICATED STATUS & REMARKS MANAGEMENT BOX */}
+            <div className="border border-[#eeddb9] rounded-2xl p-5 bg-[#FAF4E6]/20 font-jakarta mb-6">
+              <span className="text-xs font-black uppercase tracking-wider text-[#384401] block mb-3.5">Update Dispatch Status & Audit Remarks</span>
+              <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end">
+                <div className="flex-1 space-y-1.5">
+                  <label className="text-[10px] font-extrabold uppercase text-stone-500 tracking-wider">Select New Status</label>
+                  <select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    className="h-10 px-3 bg-white border border-[#d3c099] rounded-xl text-xs text-stone-855 focus:outline-hidden font-bold w-full"
+                  >
+                    <option value="Processing">Processing</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                    <option value="Return Requested">Return Requested</option>
+                    <option value="Returned">Returned</option>
+                  </select>
+                </div>
+                
+                <div className="flex-[2] space-y-1.5">
+                  <label className="text-[10px] font-extrabold uppercase text-stone-500 tracking-wider">Remarks / Audit Note (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Shipped via SpeedPost AWB: IN1039, or refund processed"
+                    value={remarksText}
+                    onChange={(e) => setRemarksText(e.target.value)}
+                    className="w-full h-10 px-3 bg-white border border-[#d3c099] rounded-xl text-xs text-stone-855 placeholder-stone-400 focus:outline-hidden"
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    handleOrderStatusUpdate(selectedOrder.id, selectedStatus, remarksText);
+                    setRemarksText('');
+                  }}
+                  className="h-10 px-5 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-black rounded-xl uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center justify-center shrink-0"
+                >
+                  Save Status
+                </button>
+              </div>
+              {selectedOrder.remarks && (
+                <div className="mt-3.5 bg-stone-100/60 border border-stone-200/50 rounded-xl p-3 text-xs">
+                  <span className="font-extrabold text-stone-600 block mb-0.5">Active Audit Remark:</span>
+                  <p className="text-stone-755 font-medium leading-relaxed italic">"{selectedOrder.remarks}"</p>
+                </div>
+              )}
+            </div>
+
+            {/* 3. STATUS LOG & TIMELINE HISTORY */}
+            {selectedOrder.status_history && Array.isArray(selectedOrder.status_history) && selectedOrder.status_history.length > 0 && (
+              <div className="border border-[#d3c099] rounded-2xl p-4 bg-stone-50/5 font-jakarta mb-6 text-sm">
+                <span className="text-xs font-black uppercase tracking-wider text-[#704632] block mb-3">Status Transit History Log</span>
+                <div className="relative pl-5 border-l-2 border-[#eeddb9]/70 space-y-4 ml-1">
+                  {selectedOrder.status_history.map((h: any, hIdx: number) => (
+                    <div key={hIdx} className="relative">
+                      {/* Timeline dot */}
+                      <span className="absolute -left-[27px] top-1 w-3 h-3 rounded-full bg-[#384401] border-2 border-white shadow-xs"></span>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-extrabold text-[#384401] uppercase text-xs">{h.status}</span>
+                          <span className="text-[10px] text-stone-450 font-semibold">{h.date}</span>
+                        </div>
+                        {h.remarks && (
+                          <p className="text-xs text-stone-600 font-medium mt-0.5">{h.remarks}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Items */}
             <div className="border border-[#d3c099] rounded-2xl overflow-hidden bg-stone-50/10 font-jakarta">

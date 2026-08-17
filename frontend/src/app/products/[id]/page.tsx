@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ProductCard from '@/components/Product/ProductCard';
 import { PRODUCTS, Product } from '@/data/products-list';
 import categoriesData from '@/data/categories.json';
 import { Star, Minus, Plus, ArrowLeft, Heart, Share2, Calendar, MessageSquare, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, ShieldCheck, Pencil, Trash2 } from 'lucide-react';
@@ -102,6 +103,27 @@ export default function ProductDetailPage({
     const baseOriginal = product.originalPrice || Math.round(product.price * 1.3);
     return getVariantPrice(baseOriginal, selectedWeight, product.weights);
   }, [product, selectedWeight]);
+
+  const currentStock = useMemo(() => {
+    if (!product) return 0;
+    if (!product.weights || !Array.isArray(product.weights)) return product.stock;
+    const cleanWeight = selectedWeight.toLowerCase().replace(/\s+/g, '');
+    const variant = product.weights.find((w: any) => {
+      const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+      return typeof wName === 'string' && wName.toLowerCase().replace(/\s+/g, '') === cleanWeight;
+    });
+    if (typeof variant === 'object' && variant !== null && typeof variant.stock === 'number') {
+      return variant.stock;
+    }
+    return product.stock;
+  }, [product, selectedWeight]);
+
+  const similarProducts = useMemo(() => {
+    if (!product) return [];
+    return products
+      .filter((p) => p.category === product.category && p.id !== product.id)
+      .slice(0, 4);
+  }, [products, product]);
 
   const [activeTab, setActiveTab] = useState('description');
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(0);
@@ -417,10 +439,10 @@ export default function ProductDetailPage({
 
               {/* Stock Status Badge */}
               <div className="mb-5 flex items-center animate-fade-in">
-                {product && product.stock > 0 ? (
+                {product && currentStock > 0 ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-full border border-emerald-200">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    In Stock ({product.stock} units left)
+                    In Stock ({currentStock} units left)
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-800 text-xs font-bold rounded-full border border-red-250 animate-pulse">
@@ -483,17 +505,17 @@ export default function ProductDetailPage({
                 {/* Quantity Counter */}
                 <div className="flex flex-col gap-1.5 min-w-[130px]">
                   <span className="text-stone-900 text-xs font-bold font-jakarta">Quantity</span>
-                  <div className={`flex items-center justify-between border border-[#eeddb9] rounded-xl h-11 px-4 w-full ${product && product.stock <= 0 ? 'bg-stone-100 opacity-60' : 'bg-white'}`}>
+                  <div className={`flex items-center justify-between border border-[#eeddb9] rounded-xl h-11 px-4 w-full ${product && currentStock <= 0 ? 'bg-stone-100 opacity-60' : 'bg-white'}`}>
                     <button
-                      disabled={!product || product.stock <= 0}
+                      disabled={!product || currentStock <= 0}
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
                       className="p-1 text-stone-600 hover:text-stone-900 transition-colors cursor-pointer disabled:cursor-not-allowed"
                     >
                       <Minus className="w-4 h-4" />
                     </button>
-                    <span className="text-stone-850 font-bold font-jakarta">{product && product.stock <= 0 ? 0 : quantity}</span>
+                    <span className="text-stone-855 font-bold font-jakarta">{product && currentStock <= 0 ? 0 : quantity}</span>
                     <button
-                      disabled={!product || product.stock <= 0 || quantity >= product.stock}
+                      disabled={!product || currentStock <= 0 || quantity >= currentStock}
                       onClick={() => setQuantity(quantity + 1)}
                       className="p-1 text-stone-600 hover:text-stone-900 transition-colors cursor-pointer disabled:cursor-not-allowed"
                     >
@@ -506,30 +528,30 @@ export default function ProductDetailPage({
               {/* Actions Buttons Row */}
               <div className="flex flex-row gap-4 mb-8">
                 <button 
-                  disabled={!product || product.stock <= 0}
+                  disabled={!product || currentStock <= 0}
                   onClick={handleAddToCart}
                   className={`flex-1 h-12 text-sm font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-white shadow-xs ${
-                    !product || product.stock <= 0
+                    !product || currentStock <= 0
                       ? 'bg-stone-300 text-stone-505 cursor-not-allowed'
                       : added 
                         ? 'bg-[#C56C4F] scale-[0.98] cursor-pointer' 
                         : 'bg-[#704632] hover:bg-[#5b3827] cursor-pointer'
                   }`}
                 >
-                  {!product || product.stock <= 0 ? 'Out of Stock' : added ? 'Added to Cart! ✓' : 'Add to Cart'}
+                  {!product || currentStock <= 0 ? 'Out of Stock' : added ? 'Added to Cart! ✓' : 'Add to Cart'}
                 </button>
                 <button 
-                  disabled={!product || product.stock <= 0}
+                  disabled={!product || currentStock <= 0}
                   onClick={isItemInCart ? () => router.push('/cart') : handleBuyNow}
                   className={`flex-1 h-12 text-sm font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 text-white ${
-                    !product || product.stock <= 0
+                    !product || currentStock <= 0
                       ? 'bg-stone-300 text-stone-505 cursor-not-allowed'
                       : isItemInCart 
                         ? 'bg-[#56701b] hover:bg-[#435714] cursor-pointer' 
                         : 'bg-[#384401] hover:bg-[#252d00] cursor-pointer'
                   }`}
                 >
-                  {!product || product.stock <= 0 ? 'Out of Stock' : isItemInCart ? 'View in Cart ✓' : 'Buy Now'}
+                  {!product || currentStock <= 0 ? 'Out of Stock' : isItemInCart ? 'View in Cart ✓' : 'Buy Now'}
                 </button>
               </div>
 
@@ -1275,6 +1297,25 @@ export default function ProductDetailPage({
           )}
 
         </div>
+
+        {/* Similar Products */}
+        {similarProducts.length > 0 && (
+          <div className="w-full mt-16 mb-8 font-jakarta">
+            <div className="border-t border-[#eeddb9]/60 pt-12">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-black text-stone-900 uppercase tracking-tight">You May Also Like</h2>
+                  <p className="text-xs sm:text-sm text-stone-500 font-semibold mt-1">Discover other hand-crafted, nutrient-rich provisions from our {product?.category} range.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {similarProducts.map((p) => (
+                  <ProductCard key={p.id} product={p as any} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
       </main>
 

@@ -1372,12 +1372,8 @@ export default function AdminProductsTab({
                       <p className="text-sm text-stone-500 font-jakarta mt-1 line-clamp-2 leading-relaxed">{p.description}</p>
                     </div>
                     <div className="flex flex-col gap-3 pt-3 border-t border-stone-150">
-                      <div className="flex flex-col gap-1.5 w-full font-jakarta">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-bold text-stone-955 text-sm">₹{p.price} (Base)</span>
-                        </div>
-                        {p.weights && p.weights.length > 0 && (
-                          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-stone-600">
+                      {p.weights && p.weights.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-stone-600 font-jakarta">
                             {((p.weights || []) as any[]).map((w: any, idx: number) => {
                               const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
                               const wPrice = typeof w === 'object' && w !== null && typeof w.price === 'number' ? w.price : (
@@ -1392,7 +1388,6 @@ export default function AdminProductsTab({
                             })}
                           </div>
                         )}
-                      </div>
                       <div className="flex justify-between items-center w-full">
                         {p.weights && p.weights.length > 0 ? (
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-stone-500">

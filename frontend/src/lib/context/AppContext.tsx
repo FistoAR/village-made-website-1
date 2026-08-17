@@ -186,6 +186,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
       );
     });
 
+    socket.on('order-update', (data: { orderId: string; status: string; remarks?: string }) => {
+      console.log('📡 Real-time order update received:', data);
+      setUser((prevUser) => {
+        if (!prevUser || !prevUser.orders) return prevUser;
+        return {
+          ...prevUser,
+          orders: prevUser.orders.map((o) => {
+            if (o.id === data.orderId) {
+              const oldHistory = Array.isArray(o.status_history) ? o.status_history : [];
+              const hasUpdate = oldHistory.some((h: any) => h.status === data.status && h.remarks === data.remarks);
+              let newHistory = oldHistory;
+              if (!hasUpdate) {
+                newHistory = [
+                  ...oldHistory,
+                  {
+                    status: data.status,
+                    date: new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN'),
+                    remarks: data.remarks || 'Status updated by administrator'
+                  }
+                ];
+              }
+              return {
+                ...o,
+                status: data.status,
+                remarks: data.remarks || o.remarks,
+                status_history: newHistory
+              };
+            }
+            return o;
+          })
+        };
+      });
+    });
+
     socket.on('disconnect', () => {
       console.log('🔌 Disconnected from real-time inventory socket');
     });

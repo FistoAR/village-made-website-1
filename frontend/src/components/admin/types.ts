@@ -38,6 +38,8 @@ export interface AdminOrder {
   paymentStatus?: string;
   refundId?: string;
   refundStatus?: string;
+  remarks?: string;
+  status_history?: any[];
 }
 
 export interface AdminCustomer {

@@ -32,6 +32,12 @@ export interface AdminOrder {
   items: OrderItem[];
   customerName: string;
   customerMobile: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  refundId?: string;
+  refundStatus?: string;
 }
 
 export interface AdminCustomer {

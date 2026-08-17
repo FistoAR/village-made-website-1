@@ -87,6 +87,7 @@ export default function AdminOrdersTab({
                 <th className="p-3.5 pl-5 border border-[#d3c099] w-[60px] text-center">S.No</th>
                 <th className="p-3.5 border border-[#d3c099]">Order ID</th>
                 <th className="p-3.5 border border-[#d3c099]">Order Date</th>
+                <th className="p-3.5 border border-[#d3c099]">Customer Name</th>
                 <th className="p-3.5 border border-[#d3c099]">Customer Mobile</th>
                 <th className="p-3.5 border border-[#d3c099]">Total Amount</th>
                 <th className="p-3.5 border border-[#d3c099]">Status</th>
@@ -96,7 +97,7 @@ export default function AdminOrdersTab({
             <tbody className="divide-y divide-[#d3c099]">
               {paginatedOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-stone-455 font-medium border border-[#d3c099]">No matching orders found.</td>
+                  <td colSpan={8} className="p-8 text-center text-stone-455 font-medium border border-[#d3c099]">No matching orders found.</td>
                 </tr>
               ) : (
                 paginatedOrders.map((o, index) => (
@@ -104,6 +105,7 @@ export default function AdminOrdersTab({
                     <td className="p-3.5 pl-5 text-center font-bold text-stone-550 border border-[#d3c099]">{startIndex + index + 1}</td>
                     <td className="p-3.5 font-bold text-stone-850 border border-[#d3c099]">{o.id}</td>
                     <td className="p-3.5 text-stone-600 border border-[#d3c099]">{o.date}</td>
+                    <td className="p-3.5 text-stone-800 border border-[#d3c099]">{o.customerName || o.address?.name || 'Guest'}</td>
                     <td className="p-3.5 font-bold text-[#384401] border border-[#d3c099]">{o.customerMobile}</td>
                     <td className="p-3.5 font-bold text-stone-900 border border-[#d3c099]">₹{o.total}</td>
                     <td className="p-3.5 border border-[#d3c099]">

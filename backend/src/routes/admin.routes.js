@@ -93,7 +93,16 @@ adminRouter.get('/orders', async (req, res, next) => {
           address: addrObj,
           items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items,
           customerName: o.customer_name || addrObj?.name || 'Guest Customer',
-          customerMobile: o.customer_mobile || addrObj?.phone || 'Guest Phone'
+          customerMobile: o.customer_mobile || addrObj?.phone || 'Guest Phone',
+          remarks: o.remarks || null,
+          appeal_submitted: o.appeal_submitted || false,
+          status_history: typeof o.status_history === 'string' ? JSON.parse(o.status_history) : (o.status_history || []),
+          paymentMethod: o.payment_method || null,
+          paymentStatus: o.payment_status || null,
+          razorpayOrderId: o.razorpay_order_id || null,
+          razorpayPaymentId: o.razorpay_payment_id || null,
+          refundId: o.refund_id || null,
+          refundStatus: o.refund_status || null
         };
       })
     });

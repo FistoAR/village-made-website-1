@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../config/db.js';
-import { broadcastInventoryUpdate, broadcastOrderUpdate } from '../config/socket.js';
+import { broadcastInventoryUpdate, broadcastOrderUpdate, broadcastNewNotification } from '../config/socket.js';
 
 export const adminRouter = Router();
 
@@ -194,17 +194,20 @@ adminRouter.put('/orders/:id', async (req, res, next) => {
     // Push alert notification to the user's notifications table list if they are registered
     if (order.user_id) {
       const notifId = Math.random().toString(36).substring(2, 11);
+      const userNotif = {
+        id: notifId,
+        user_id: order.user_id,
+        title: status === 'Returned' ? 'Return Request Approved' : (status === 'Return Rejected' ? 'Return Request Rejected' : 'Order Status Update'),
+        message: `Your order ${orderId} status is updated to ${status}.${remarks ? ` Remarks: ${remarks}` : ''} Check the tracker page for updates.`,
+        date: new Date().toLocaleDateString('en-IN'),
+        read: false
+      };
       await query(
         `INSERT INTO notifications (id, user_id, title, message, date, read)
          VALUES ($1, $2, $3, $4, $5, false)`,
-        [
-          notifId,
-          order.user_id,
-          'Order Status Update',
-          `Your order ${orderId} is now ${status}.${remarks ? ` Remarks: ${remarks}` : ''} Check the tracker page for updates.`,
-          new Date().toLocaleDateString('en-IN')
-        ]
+        [userNotif.id, userNotif.user_id, userNotif.title, userNotif.message, userNotif.date]
       );
+      broadcastNewNotification(order.user_id, userNotif);
     }
 
     await query('COMMIT');

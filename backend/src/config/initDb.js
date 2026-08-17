@@ -142,6 +142,7 @@ export async function initDb() {
     await query(createTablesQuery);
     await query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS remarks TEXT;');
     await query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS status_history JSONB DEFAULT '[]'::jsonb;");
+    await query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS appeal_submitted BOOLEAN DEFAULT false;");
     console.log('✅  Relational database tables initialized.');
 
     // Seed/Update categories

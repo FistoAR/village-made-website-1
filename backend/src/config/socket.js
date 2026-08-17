@@ -48,3 +48,10 @@ export function broadcastOrderPlaced(orderId, orderData) {
     io.emit('order-placed', { orderId, order: orderData });
   }
 }
+
+export function broadcastNewNotification(userId, notification) {
+  if (io) {
+    console.log(`📡 Broadcasting new notification to user ${userId}`);
+    io.emit('new-notification', { userId, notification });
+  }
+}

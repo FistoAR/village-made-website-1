@@ -317,14 +317,51 @@ export default function AdminPage() {
       }));
     });
 
-    socket.on('order-update', (data: { orderId: string; status: string }) => {
+    socket.on('order-update', (data: { orderId: string; status: string; remarks?: string }) => {
       console.log('📡 Admin: Real-time order update received:', data);
+      const timestamp = new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN');
+      const newHistoryEntry = {
+        status: data.status,
+        date: timestamp,
+        remarks: data.remarks || 'Status updated'
+      };
+
       setOrders((prev) =>
-        prev.map((o) => (o.id === data.orderId ? { ...o, status: data.status } : o))
+        prev.map((o) => {
+          if (o.id === data.orderId) {
+            const oldHistory = Array.isArray(o.status_history) ? o.status_history : [];
+            const hasUpdate = oldHistory.some((h: any) => h.status === data.status && h.remarks === data.remarks);
+            let newHistory = oldHistory;
+            if (!hasUpdate) {
+              newHistory = [...oldHistory, newHistoryEntry];
+            }
+            return {
+              ...o,
+              status: data.status,
+              remarks: data.remarks || o.remarks,
+              status_history: newHistory
+            };
+          }
+          return o;
+        })
       );
-      setSelectedOrder((prev) =>
-        prev && prev.id === data.orderId ? { ...prev, status: data.status } : prev
-      );
+      setSelectedOrder((prev) => {
+        if (prev && prev.id === data.orderId) {
+          const oldHistory = Array.isArray(prev.status_history) ? prev.status_history : [];
+          const hasUpdate = oldHistory.some((h: any) => h.status === data.status && h.remarks === data.remarks);
+          let newHistory = oldHistory;
+          if (!hasUpdate) {
+            newHistory = [...oldHistory, newHistoryEntry];
+          }
+          return {
+            ...prev,
+            status: data.status,
+            remarks: data.remarks || prev.remarks,
+            status_history: newHistory
+          };
+        }
+        return prev;
+      });
     });
 
     socket.on('disconnect', () => {

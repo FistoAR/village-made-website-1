@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { query } from '../config/db.js';
-import { broadcastInventoryUpdate } from '../config/socket.js';
+import { broadcastInventoryUpdate, broadcastOrderUpdate, broadcastNewNotification } from '../config/socket.js';
 
 export const authRouter = Router();
 
@@ -39,6 +39,7 @@ const fetchUserData = async (dbUser) => {
       total: Number(o.total),
       status: o.status,
       remarks: o.remarks || null,
+      appeal_submitted: o.appeal_submitted || false,
       status_history: typeof o.status_history === 'string' ? JSON.parse(o.status_history) : (o.status_history || []),
       address: typeof o.address === 'string' ? JSON.parse(o.address) : o.address,
       items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items
@@ -191,6 +192,26 @@ authRouter.post('/reset-password', async (req, res, next) => {
 
     await query('UPDATE users SET password = $1 WHERE mobile = $2', [hashedPassword, cleanMobile]);
     return res.status(200).json({ success: true, message: 'Password reset successful.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/auth/profile/:mobile
+ * Retrieve user profile including database orders and notifications
+ */
+authRouter.get('/profile/:mobile', async (req, res, next) => {
+  const mobile = req.params.mobile;
+
+  try {
+    const userRes = await query('SELECT * FROM users WHERE mobile = $1', [mobile]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User not found.' });
+    }
+
+    const userPayload = await fetchUserData(userRes.rows[0]);
+    return res.status(200).json({ success: true, user: userPayload });
   } catch (error) {
     next(error);
   }
@@ -375,23 +396,55 @@ authRouter.post('/orders/:id/cancel', async (req, res, next) => {
 
     // Insert user notification
     const notifId = `notif-${Math.random().toString(36).substring(2, 11)}`;
+    const userNotif = {
+      id: notifId,
+      user_id: order.user_id,
+      title: 'Order Cancelled',
+      message: `Your order ${orderId} has been successfully cancelled and your payment has been queued for refund.`,
+      date: new Date().toLocaleDateString('en-IN'),
+      read: false
+    };
     await query(
       `INSERT INTO notifications (id, user_id, title, message, date, read)
        VALUES ($1, $2, $3, $4, $5, false)`,
-      [
-        notifId,
-        order.user_id,
-        'Order Cancelled',
-        `Your order ${orderId} has been successfully cancelled and your payment has been queued for refund.`,
-        new Date().toLocaleDateString('en-IN')
-      ]
+      [userNotif.id, userNotif.user_id, userNotif.title, userNotif.message, userNotif.date]
     );
+
+    // Notify all admins
+    const adminRes = await query("SELECT id FROM users WHERE role = 'admin'");
+    const adminNotifs = [];
+    for (const adminRow of adminRes.rows) {
+      const adminNotifId = `notif-${Math.random().toString(36).substring(2, 11)}`;
+      const adminNotif = {
+        id: adminNotifId,
+        user_id: adminRow.id,
+        title: 'Order Cancelled',
+        message: `Order ${orderId} has been cancelled by the customer.`,
+        date: new Date().toLocaleDateString('en-IN'),
+        read: false
+      };
+      await query(
+        `INSERT INTO notifications (id, user_id, title, message, date, read)
+         VALUES ($1, $2, $3, $4, $5, false)`,
+        [adminNotif.id, adminNotif.user_id, adminNotif.title, adminNotif.message, adminNotif.date]
+      );
+      adminNotifs.push(adminNotif);
+    }
 
     await query('COMMIT');
 
     for (const p of updatedProducts) {
       broadcastInventoryUpdate(p.id, p.stock);
     }
+
+    // Broadcast user notification
+    broadcastNewNotification(order.user_id, userNotif);
+    // Broadcast admin notifications
+    for (const an of adminNotifs) {
+      broadcastNewNotification(an.user_id, an);
+    }
+
+    broadcastOrderUpdate(orderId, 'Cancelled', { remarks: 'Order cancelled by customer' });
 
     return res.status(200).json({ 
       success: true, 
@@ -410,6 +463,7 @@ authRouter.post('/orders/:id/cancel', async (req, res, next) => {
  */
 authRouter.post('/orders/:id/return', async (req, res, next) => {
   const orderId = req.params.id;
+  const { remarks } = req.body;
 
   try {
     const orderRes = await query('SELECT * FROM orders WHERE id = $1', [orderId]);
@@ -435,29 +489,151 @@ authRouter.post('/orders/:id/return', async (req, res, next) => {
     history.push({
       status: 'Return Requested',
       date: new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN'),
-      remarks: 'Return request submitted by customer'
+      remarks: remarks || 'Return request submitted by customer'
     });
 
     await query("UPDATE orders SET status = 'Return Requested', status_history = $1 WHERE id = $2", [JSON.stringify(history), orderId]);
 
     // Insert user notification
     const notifId = `notif-${Math.random().toString(36).substring(2, 11)}`;
+    const userNotif = {
+      id: notifId,
+      user_id: order.user_id,
+      title: 'Return Requested',
+      message: `Your return request for order ${orderId} has been received. Our team will verify and approve the return shortly.`,
+      date: new Date().toLocaleDateString('en-IN'),
+      read: false
+    };
     await query(
       `INSERT INTO notifications (id, user_id, title, message, date, read)
        VALUES ($1, $2, $3, $4, $5, false)`,
-      [
-        notifId,
-        order.user_id,
-        'Return Requested',
-        `Your return request for order ${orderId} has been received. Our team will verify and approve the return shortly.`,
-        new Date().toLocaleDateString('en-IN')
-      ]
+      [userNotif.id, userNotif.user_id, userNotif.title, userNotif.message, userNotif.date]
     );
+
+    // Notify all admins
+    const adminRes = await query("SELECT id FROM users WHERE role = 'admin'");
+    const adminNotifs = [];
+    for (const adminRow of adminRes.rows) {
+      const adminNotifId = `notif-${Math.random().toString(36).substring(2, 11)}`;
+      const adminNotif = {
+        id: adminNotifId,
+        user_id: adminRow.id,
+        title: 'Return Requested',
+        message: `Customer has requested a return for order ${orderId}. Please review and approve.`,
+        date: new Date().toLocaleDateString('en-IN'),
+        read: false
+      };
+      await query(
+        `INSERT INTO notifications (id, user_id, title, message, date, read)
+         VALUES ($1, $2, $3, $4, $5, false)`,
+        [adminNotif.id, adminNotif.user_id, adminNotif.title, adminNotif.message, adminNotif.date]
+      );
+      adminNotifs.push(adminNotif);
+    }
+
+    // Broadcast user notification
+    broadcastNewNotification(order.user_id, userNotif);
+    // Broadcast admin notifications
+    for (const an of adminNotifs) {
+      broadcastNewNotification(an.user_id, an);
+    }
+
+    broadcastOrderUpdate(orderId, 'Return Requested', { remarks: remarks || 'Return request submitted by customer' });
 
     return res.status(200).json({ 
       success: true, 
       message: 'Return request submitted successfully.',
       status: 'Return Requested' 
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/auth/orders/:id/appeal
+ * Appeal a rejected return request (allowed once)
+ */
+authRouter.post('/orders/:id/appeal', async (req, res, next) => {
+  const orderId = req.params.id;
+  const { remarks } = req.body;
+
+  if (!remarks || !remarks.trim()) {
+    return res.status(400).json({ success: false, error: 'Appeal remarks/reason is required.' });
+  }
+
+  try {
+    const orderRes = await query('SELECT * FROM orders WHERE id = $1', [orderId]);
+    if (orderRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Order not found.' });
+    }
+
+    const order = orderRes.rows[0];
+    if (order.status !== 'Return Rejected') {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Only orders with "Return Rejected" status can be appealed. Current status: ${order.status}` 
+      });
+    }
+
+    if (order.appeal_submitted) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'You have already appealed the rejection for this order once.' 
+      });
+    }
+
+    let history = [];
+    if (order.status_history) {
+      history = typeof order.status_history === 'string' ? JSON.parse(order.status_history) : order.status_history;
+    }
+    if (!Array.isArray(history)) {
+      history = [];
+    }
+    const timestamp = new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN');
+    history.push({
+      status: 'Return Requested',
+      date: timestamp,
+      remarks: `Rejection appealed by customer: ${remarks.trim()}`
+    });
+
+    await query(
+      "UPDATE orders SET status = 'Return Requested', appeal_submitted = true, status_history = $1 WHERE id = $2",
+      [JSON.stringify(history), orderId]
+    );
+
+    // Notify all admins
+    const adminRes = await query("SELECT id FROM users WHERE role = 'admin'");
+    const adminNotifs = [];
+    for (const adminRow of adminRes.rows) {
+      const adminNotifId = `notif-${Math.random().toString(36).substring(2, 11)}`;
+      const adminNotif = {
+        id: adminNotifId,
+        user_id: adminRow.id,
+        title: 'Return Appeal Submitted',
+        message: `Customer has appealed return rejection for order ${orderId}. Reason: ${remarks.trim()}`,
+        date: new Date().toLocaleDateString('en-IN'),
+        read: false
+      };
+      await query(
+        `INSERT INTO notifications (id, user_id, title, message, date, read)
+         VALUES ($1, $2, $3, $4, $5, false)`,
+        [adminNotif.id, adminNotif.user_id, adminNotif.title, adminNotif.message, adminNotif.date]
+      );
+      adminNotifs.push(adminNotif);
+    }
+
+    // Broadcast admin notifications
+    for (const an of adminNotifs) {
+      broadcastNewNotification(an.user_id, an);
+    }
+
+    broadcastOrderUpdate(orderId, 'Return Requested', { remarks: `Rejection appealed by customer: ${remarks.trim()}` });
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Appeal submitted successfully.',
+      status: 'Return Requested'
     });
   } catch (error) {
     next(error);

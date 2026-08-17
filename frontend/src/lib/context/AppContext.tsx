@@ -34,8 +34,15 @@ export interface UserOrder {
   shipping: number;
   tax: number;
   total: number;
-  status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled' | 'Return Requested' | 'Returned';
+  status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled' | 'Return Requested' | 'Returned' | 'Return Rejected';
   address: UserAddress;
+  remarks?: string;
+  appeal_submitted?: boolean;
+  status_history?: Array<{
+    status: string;
+    date: string;
+    remarks?: string;
+  }>;
 }
 
 export interface UserReview {
@@ -104,6 +111,7 @@ interface AppContextType {
   resetPassword: (mobile: string, otp: string, newPassword?: string) => Promise<{ success: boolean; error?: string }>;
   logoutUser: () => void;
   updateUserProfile: (data: Partial<User>) => void;
+  refreshUserProfile: () => Promise<void>;
   toggleWishlist: (productId: string) => void;
   addOrder: (items: CartItem[], totalDetails: { subtotal: number; shipping: number; tax: number; total: number }, address: UserAddress) => void;
   createOrder: (orderData: {
@@ -186,7 +194,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       );
     });
 
-    socket.on('order-update', (data: { orderId: string; status: string; remarks?: string }) => {
+    socket.on('order-update', (data: { orderId: string; status: any; remarks?: string }) => {
       console.log('📡 Real-time order update received:', data);
       setUser((prevUser) => {
         if (!prevUser || !prevUser.orders) return prevUser;
@@ -216,6 +224,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
             }
             return o;
           })
+        };
+      });
+    });
+
+    socket.on('new-notification', (data: { userId: number; notification: any }) => {
+      console.log('📡 Real-time notification received:', data);
+      setUser((prevUser) => {
+        if (!prevUser || prevUser.id !== data.userId) return prevUser;
+        const oldNotifs = Array.isArray(prevUser.notifications) ? prevUser.notifications : [];
+        if (oldNotifs.some((n: any) => n.id === data.notification.id)) return prevUser;
+        return {
+          ...prevUser,
+          notifications: [data.notification, ...oldNotifs]
         };
       });
     });
@@ -552,6 +573,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!prev) return null;
       return { ...prev, ...data };
     });
+  };
+
+  const refreshUserProfile = async () => {
+    if (!user) return;
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/auth/profile/${user.mobile}`);
+      const data = await res.json();
+      if (data.success && data.user) {
+        setUser(data.user);
+      }
+    } catch (e) {
+      console.error('Failed to refresh user profile:', e);
+    }
   };
 
   const toggleWishlist = (productId: string) => {
@@ -1089,6 +1124,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         resetPassword,
         logoutUser,
         updateUserProfile,
+        refreshUserProfile,
         toggleWishlist,
         addOrder,
         createOrder,

@@ -616,8 +616,19 @@ export default function AdminOrdersTab({
                 <div className="flex gap-2.5 mt-2 flex-wrap">
                   <button
                     onClick={() => {
-                      handleOrderStatusUpdate(selectedOrder.id, 'Returned');
-                      setSelectedOrder(prev => prev ? { ...prev, status: 'Returned' } : null);
+                      let remarks = remarksText;
+                      if (!remarks.trim()) {
+                        const reason = prompt("Please enter the reason/remarks for accepting this return:");
+                        if (reason === null) return;
+                        if (!reason.trim()) {
+                          alert("Remarks are required to process the return.");
+                          return;
+                        }
+                        remarks = reason;
+                      }
+                      handleOrderStatusUpdate(selectedOrder.id, 'Returned', remarks.trim());
+                      setRemarksText('');
+                      setSelectedOrder(prev => prev ? { ...prev, status: 'Returned', remarks: remarks.trim() } : null);
                     }}
                     className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-black rounded-xl transition-all cursor-pointer shadow-3xs uppercase tracking-wide"
                   >
@@ -625,12 +636,23 @@ export default function AdminOrdersTab({
                   </button>
                   <button
                     onClick={() => {
-                      handleOrderStatusUpdate(selectedOrder.id, 'Delivered');
-                      setSelectedOrder(prev => prev ? { ...prev, status: 'Delivered' } : null);
+                      let remarks = remarksText;
+                      if (!remarks.trim()) {
+                        const reason = prompt("Please enter the reason/remarks for rejecting this return:");
+                        if (reason === null) return;
+                        if (!reason.trim()) {
+                          alert("Remarks are required to process the rejection.");
+                          return;
+                        }
+                        remarks = reason;
+                      }
+                      handleOrderStatusUpdate(selectedOrder.id, 'Return Rejected', remarks.trim());
+                      setRemarksText('');
+                      setSelectedOrder(prev => prev ? { ...prev, status: 'Return Rejected', remarks: remarks.trim() } : null);
                     }}
-                    className="px-4 py-2 bg-red-650 hover:bg-red-700 text-white text-sm font-black rounded-xl transition-all cursor-pointer shadow-3xs uppercase tracking-wide"
+                    className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white text-sm font-black rounded-xl transition-all cursor-pointer shadow-3xs uppercase tracking-wide"
                   >
-                    Reject Request
+                    Reject Request / Cancel Request
                   </button>
                 </div>
               </div>

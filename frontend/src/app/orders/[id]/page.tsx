@@ -21,6 +21,11 @@ export default function OrderTrackingPage() {
   const [mounted, setMounted] = useState(false);
   const [fetchedOrder, setFetchedOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnReason, setReturnReason] = useState('');
+  const [returnReasonCategory, setReturnReasonCategory] = useState('');
+  const [showAppealModal, setShowAppealModal] = useState(false);
+  const [appealReason, setAppealReason] = useState('');
 
   const fallbackOrder = {
     id: id || 'VM-630591',
@@ -52,30 +57,81 @@ export default function OrderTrackingPage() {
   };
 
   const handleRequestReturn = () => {
-    showConfirm(
-      'Request Return?',
-      'Are you sure you want to request a return for this order? Our admin team will verify details and approve/process the refund shortly.',
-      async () => {
-        try {
-          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-          const res = await fetch(`${baseUrl}/auth/orders/${(fetchedOrder || fallbackOrder).id}/return`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          });
-          const data = await res.json();
-          if (res.ok && data.success) {
-            updateOrderStatus((fetchedOrder || fallbackOrder).id, 'Return Requested');
-            setFetchedOrder((prev: any) => prev ? { ...prev, status: 'Return Requested' } : null);
-            showToast('Return requested successfully!', 'success');
-          } else {
-            showToast(data.error || 'Failed to submit return request.', 'error');
-          }
-        } catch (err) {
-          console.error(err);
-          showToast('Failed to connect to backend server.', 'error');
-        }
+    setReturnReason('');
+    setReturnReasonCategory('');
+    setShowReturnModal(true);
+  };
+
+  const submitReturnRequest = async () => {
+    if (!returnReasonCategory) {
+      showToast('Please select a return reason category.', 'error');
+      return;
+    }
+    if (returnReasonCategory === 'Others' && !returnReason.trim()) {
+      showToast('Remarks are mandatory when "Others" category is selected.', 'error');
+      return;
+    }
+
+    const finalRemarks = returnReasonCategory === 'Others'
+      ? `Others: ${returnReason.trim()}`
+      : `${returnReasonCategory}${returnReason.trim() ? ` - ${returnReason.trim()}` : ''}`;
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/auth/orders/${(fetchedOrder || fallbackOrder).id}/return`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ remarks: finalRemarks })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        updateOrderStatus((fetchedOrder || fallbackOrder).id, 'Return Requested');
+        setFetchedOrder((prev: any) => prev ? { ...prev, status: 'Return Requested' } : null);
+        setShowReturnModal(false);
+        showToast('Return requested successfully!', 'success');
+      } else {
+        showToast(data.error || 'Failed to submit return request.', 'error');
       }
-    );
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to connect to backend server.', 'error');
+    }
+  };
+
+  const handleRequestAppeal = () => {
+    setAppealReason('');
+    setShowAppealModal(true);
+  };
+
+  const submitAppealRequest = async () => {
+    if (!appealReason.trim()) {
+      showToast('Please provide a reason for appealing the rejection.', 'error');
+      return;
+    }
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/auth/orders/${(fetchedOrder || fallbackOrder).id}/appeal`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ remarks: appealReason.trim() })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        updateOrderStatus((fetchedOrder || fallbackOrder).id, 'Return Requested');
+        setFetchedOrder((prev: any) => prev ? { ...prev, status: 'Return Requested', appeal_submitted: true } : null);
+        setShowAppealModal(false);
+        showToast('Rejection appeal submitted successfully!', 'success');
+      } else {
+        showToast(data.error || 'Failed to submit appeal.', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to connect to backend server.', 'error');
+    }
   };
 
   useEffect(() => {
@@ -158,6 +214,7 @@ export default function OrderTrackingPage() {
       case 'Delivered': 
       case 'Return Requested':
       case 'Returned':
+      case 'Return Rejected':
         return 3;
       case 'Shipped': return 2;
       case 'Cancelled': return -1;
@@ -201,7 +258,7 @@ export default function OrderTrackingPage() {
             <span className={`text-xs font-black px-4.5 py-2 rounded-xl uppercase tracking-wider select-none ${
               order.status === 'Delivered' || order.status === 'Returned'
                 ? 'bg-[#e2edd3] text-[#384401]'
-                : order.status === 'Cancelled'
+                : order.status === 'Cancelled' || order.status === 'Return Rejected'
                   ? 'bg-red-100 text-red-700'
                   : 'bg-[#C56C4F] text-white animate-pulse'
             }`}>
@@ -213,6 +270,14 @@ export default function OrderTrackingPage() {
                 className="px-4.5 py-2 bg-[#C56C4F] hover:bg-[#a85237] text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs uppercase tracking-wide"
               >
                 Request Return
+              </button>
+            )}
+            {order.status === 'Return Rejected' && !order.appeal_submitted && (
+              <button
+                onClick={handleRequestAppeal}
+                className="px-4.5 py-2 bg-[#C56C4F] hover:bg-[#a85237] text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs uppercase tracking-wide"
+              >
+                Appeal Rejection
               </button>
             )}
             <Link
@@ -293,6 +358,34 @@ export default function OrderTrackingPage() {
               )}
             </div>
 
+            {/* Detailed Transit History Log */}
+            {order.status_history && Array.isArray(order.status_history) && order.status_history.length > 0 && (
+              <div className="bg-white border border-[#eeddb9] rounded-2xl p-6 sm:p-8 shadow-2xs font-jakarta">
+                <h2 className="text-base sm:text-lg font-black text-stone-900 border-b border-[#eeddb9]/30 pb-3 mb-6 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-[#C56C4F]" /> Detailed Status History Logs
+                </h2>
+                <div className="relative pl-5 border-l-2 border-[#eeddb9]/70 space-y-5 ml-1">
+                  {order.status_history.map((h: any, hIdx: number) => (
+                    <div key={hIdx} className="relative">
+                      {/* Timeline dot */}
+                      <span className="absolute -left-[27px] top-1 w-3 h-3 rounded-full bg-[#384401] border-2 border-white shadow-xs"></span>
+                      <div>
+                        <div className="flex flex-wrap items-baseline gap-2.5">
+                          <span className="font-black text-[#384401] uppercase text-sm sm:text-base tracking-wide">{h.status}</span>
+                          <span className="text-xs sm:text-sm text-stone-500 font-semibold">{h.date}</span>
+                        </div>
+                        {h.remarks && (
+                          <p className="text-sm text-stone-800 font-bold mt-1.5 leading-relaxed bg-stone-50 p-3 rounded-xl border border-stone-200/40">
+                            {h.remarks}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Refund Status Section */}
             {(order.status === 'Return Requested' || order.status === 'Returned') && (
               <div className="bg-white border border-[#eeddb9] rounded-2xl p-6 sm:p-8 shadow-2xs font-jakarta">
@@ -365,7 +458,7 @@ export default function OrderTrackingPage() {
               </h2>
 
               <div className="flex flex-col gap-1">
-                {order.items.map((item) => {
+                {order.items.map((item: any) => {
                   const productObj = PRODUCTS.find(p => p.id === item.id || p.name.toLowerCase() === item.name.toLowerCase());
                   return (
                     <div 
@@ -458,6 +551,110 @@ export default function OrderTrackingPage() {
 
         </div>
       </main>
+
+      {/* Return Reason Modal Dialog */}
+      {showReturnModal && (
+        <div className="fixed inset-0 bg-[#3E2C1C]/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white border border-[#eeddb9] rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative animate-scaleUp font-jakarta">
+            <h3 className="font-poetsen text-xl sm:text-2xl text-[#3E2C1C] mb-2 flex items-center gap-2">
+              <Package className="w-6 h-6 text-[#C56C4F]" /> Request Return
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-600 font-medium mb-5 leading-relaxed">
+              We are sorry to hear that you are requesting a return. Please provide a clear reason or remarks below. Our admin team will review and approve the refund shortly.
+            </p>
+
+            <div className="mb-4">
+              <label className="block text-xs font-black uppercase tracking-wider text-stone-700 mb-2">
+                Select Return Reason
+              </label>
+              <select
+                value={returnReasonCategory}
+                onChange={(e) => setReturnReasonCategory(e.target.value)}
+                className="w-full bg-stone-50 border border-stone-250 rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#384401]/20 focus:border-[#384401] font-medium"
+              >
+                <option value="">-- Choose Category --</option>
+                <option value="Damaged package">Damaged package</option>
+                <option value="Wrong product delivered">Wrong product delivered</option>
+                <option value="Missing product">Missing product</option>
+                <option value="Expired product">Expired product</option>
+                <option value="Product received in unacceptable condition">Product received in unacceptable condition</option>
+                <option value="Manufacturing/quality issue">Manufacturing/quality issue</option>
+                <option value="Others">Others (Remarks Mandatory)</option>
+              </select>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-xs font-black uppercase tracking-wider text-stone-700 mb-2">
+                Remarks {returnReasonCategory === 'Others' ? <span className="text-red-700 font-bold">*</span> : <span className="text-stone-400 font-bold">(Optional)</span>}
+              </label>
+              <textarea
+                value={returnReason}
+                onChange={(e) => setReturnReason(e.target.value)}
+                placeholder={returnReasonCategory === 'Others' ? "Please type in your mandatory return reason details here..." : "Describe additional details here (optional)..."}
+                rows={3}
+                className="w-full bg-stone-50 border border-stone-250 rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#384401]/20 focus:border-[#384401] placeholder-stone-400 font-medium leading-relaxed resize-none"
+              />
+            </div>
+
+            <div className="flex justify-end items-center gap-3">
+              <button
+                onClick={() => setShowReturnModal(false)}
+                className="h-11 px-6 border border-stone-250 text-stone-700 hover:bg-stone-50 text-xs font-black rounded-xl uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitReturnRequest}
+                className="h-11 px-6 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+              >
+                Submit Return
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Appeal Rejection Modal Dialog */}
+      {showAppealModal && (
+        <div className="fixed inset-0 bg-[#3E2C1C]/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white border border-[#eeddb9] rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative animate-scaleUp font-jakarta">
+            <h3 className="font-poetsen text-xl sm:text-2xl text-[#3E2C1C] mb-2 flex items-center gap-2">
+              <MessageSquare className="w-6 h-6 text-[#C56C4F]" /> Appeal Return Rejection
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-600 font-medium mb-5 leading-relaxed">
+              You are allowed to appeal this return rejection <strong>once</strong>. Please state your appeal grounds or provide additional context below:
+            </p>
+
+            <div className="mb-6">
+              <label className="block text-xs font-black uppercase tracking-wider text-stone-700 mb-2">
+                Appeal Reason / Remarks *
+              </label>
+              <textarea
+                value={appealReason}
+                onChange={(e) => setAppealReason(e.target.value)}
+                placeholder="State your appeal reasons clearly..."
+                rows={4}
+                className="w-full bg-stone-50 border border-stone-250 rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#384401]/20 focus:border-[#384401] placeholder-stone-400 font-medium leading-relaxed resize-none"
+              />
+            </div>
+
+            <div className="flex justify-end items-center gap-3">
+              <button
+                onClick={() => setShowAppealModal(false)}
+                className="h-11 px-6 border border-stone-250 text-stone-700 hover:bg-stone-50 text-xs font-black rounded-xl uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitAppealRequest}
+                className="h-11 px-6 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+              >
+                Submit Appeal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

@@ -21,7 +21,7 @@ export default function AccountPage() {
   const {
     user, logoutUser, updateUserProfile, addAddress, deleteAddress, addReview, showConfirm, isHydrated,
     markAllNotificationsAsRead, markNotificationAsRead, deleteNotification, clearAllNotifications,
-    updateOrderStatus, showToast, fetchProducts, tickets
+    updateOrderStatus, showToast, fetchProducts, tickets, refreshUserProfile
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<AccountTab>('dashboard');
@@ -59,10 +59,21 @@ export default function AccountPage() {
 
   // Expanded order details tracker
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnOrderId, setReturnOrderId] = useState('');
+  const [returnReason, setReturnReason] = useState('');
+  const [returnReasonCategory, setReturnReasonCategory] = useState('');
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Fetch fresh profile state on mount to ensure order status syncs
+  useEffect(() => {
+    if (mounted && user) {
+      refreshUserProfile();
+    }
+  }, [mounted]);
 
   // Pre-fill profile forms when user object is loaded
   useEffect(() => {
@@ -108,29 +119,48 @@ export default function AccountPage() {
   };
 
   const handleRequestReturn = (orderId: string) => {
-    showConfirm(
-      'Request Return?',
-      'Are you sure you want to request a return for this order? Our admin team will verify details and approve/process the refund shortly.',
-      async () => {
-        try {
-          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-          const res = await fetch(`${baseUrl}/auth/orders/${orderId}/return`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          });
-          const data = await res.json();
-          if (res.ok && data.success) {
-            updateOrderStatus(orderId, 'Return Requested');
-            showToast('Return requested successfully!', 'success');
-          } else {
-            showToast(data.error || 'Failed to submit return request.', 'error');
-          }
-        } catch (err) {
-          console.error(err);
-          showToast('Failed to connect to backend server.', 'error');
-        }
+    setReturnOrderId(orderId);
+    setReturnReason('');
+    setReturnReasonCategory('');
+    setShowReturnModal(true);
+  };
+
+  const submitReturnRequest = async () => {
+    if (!returnReasonCategory) {
+      showToast('Please select a return reason category.', 'error');
+      return;
+    }
+    if (returnReasonCategory === 'Others' && !returnReason.trim()) {
+      showToast('Remarks are mandatory when "Others" category is selected.', 'error');
+      return;
+    }
+
+    const finalRemarks = returnReasonCategory === 'Others'
+      ? `Others: ${returnReason.trim()}`
+      : `${returnReasonCategory}${returnReason.trim() ? ` - ${returnReason.trim()}` : ''}`;
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/auth/orders/${returnOrderId}/return`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ remarks: finalRemarks })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        updateOrderStatus(returnOrderId, 'Return Requested');
+        setShowReturnModal(false);
+        showToast('Return requested successfully!', 'success');
+        await refreshUserProfile();
+      } else {
+        showToast(data.error || 'Failed to submit return request.', 'error');
       }
-    );
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to connect to backend server.', 'error');
+    }
   };
 
   const handleDownloadInvoice = (order: UserOrder) => {
@@ -1412,6 +1442,68 @@ export default function AccountPage() {
           </section>
         </div>
       </main>
+
+      {/* Return Reason Modal Dialog */}
+      {showReturnModal && (
+        <div className="fixed inset-0 bg-[#3E2C1C]/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white border border-[#eeddb9] rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative animate-scaleUp font-jakarta">
+            <h3 className="font-poetsen text-xl sm:text-2xl text-[#3E2C1C] mb-2 flex items-center gap-2">
+              <Package className="w-6 h-6 text-[#C56C4F]" /> Request Return
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-600 font-medium mb-5 leading-relaxed">
+              We are sorry to hear that you are requesting a return. Please provide a clear reason or remarks below. Our admin team will verify and approve the refund shortly.
+            </p>
+
+            <div className="mb-4">
+              <label className="block text-xs font-black uppercase tracking-wider text-stone-700 mb-2">
+                Select Return Reason
+              </label>
+              <select
+                value={returnReasonCategory}
+                onChange={(e) => setReturnReasonCategory(e.target.value)}
+                className="w-full bg-stone-50 border border-stone-250 rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#384401]/20 focus:border-[#384401] font-medium"
+              >
+                <option value="">-- Choose Category --</option>
+                <option value="Damaged package">Damaged package</option>
+                <option value="Wrong product delivered">Wrong product delivered</option>
+                <option value="Missing product">Missing product</option>
+                <option value="Expired product">Expired product</option>
+                <option value="Product received in unacceptable condition">Product received in unacceptable condition</option>
+                <option value="Manufacturing/quality issue">Manufacturing/quality issue</option>
+                <option value="Others">Others (Remarks Mandatory)</option>
+              </select>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-xs font-black uppercase tracking-wider text-stone-700 mb-2">
+                Remarks {returnReasonCategory === 'Others' ? <span className="text-red-700 font-bold text-sm">*</span> : <span className="text-stone-400 font-bold">(Optional)</span>}
+              </label>
+              <textarea
+                value={returnReason}
+                onChange={(e) => setReturnReason(e.target.value)}
+                placeholder={returnReasonCategory === 'Others' ? "Please type in your mandatory return reason details here..." : "Describe additional details here (optional)..."}
+                rows={3}
+                className="w-full bg-stone-50 border border-stone-250 rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#384401]/20 focus:border-[#384401] placeholder-stone-400 font-medium leading-relaxed resize-none"
+              />
+            </div>
+
+            <div className="flex justify-end items-center gap-3">
+              <button
+                onClick={() => setShowReturnModal(false)}
+                className="h-11 px-6 border border-stone-250 text-stone-700 hover:bg-stone-50 text-xs font-black rounded-xl uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitReturnRequest}
+                className="h-11 px-6 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+              >
+                Submit Return
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

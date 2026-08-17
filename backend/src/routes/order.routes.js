@@ -102,6 +102,7 @@ orderRouter.get('/:id', async (req, res, next) => {
       total: Number(o.total),
       status: o.status,
       remarks: o.remarks || null,
+      appeal_submitted: o.appeal_submitted || false,
       status_history: typeof o.status_history === 'string' ? JSON.parse(o.status_history) : (o.status_history || []),
       address: typeof o.address === 'string' ? JSON.parse(o.address) : o.address,
       items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items

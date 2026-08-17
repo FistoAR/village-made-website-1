@@ -15,7 +15,8 @@ interface ProductCardProps {
     discount?: string;
     rating?: number;
     reviews?: number;
-    weights?: string[];
+    weights?: any[];
+    stock?: number;
     image?: string;
     video?: string;
     category?: string;
@@ -38,6 +39,25 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
   // Calculate variant prices dynamically
   const currentPrice = getVariantPrice(product.price, selectedWeight, product.weights);
   const currentOriginalPrice = product.originalPrice ? getVariantPrice(product.originalPrice, selectedWeight, product.weights) : undefined;
+
+  const currentStock = useMemo(() => {
+    if (product.weights && Array.isArray(product.weights)) {
+      const cleanWeight = selectedWeight.toLowerCase().replace(/\s+/g, '');
+      const found = product.weights.find((w: any) => typeof w === 'object' && w !== null && w.weight && w.weight.toLowerCase().replace(/\s+/g, '') === cleanWeight);
+      if (found && typeof found.stock === 'number') {
+        return found.stock;
+      }
+    }
+    return product.stock !== undefined ? product.stock : 50;
+  }, [product.weights, product.stock, selectedWeight]);
+
+  useEffect(() => {
+    if (currentStock === 0) {
+      setQty(0);
+    } else {
+      setQty(prev => Math.min(Math.max(1, prev), currentStock));
+    }
+  }, [selectedWeight, currentStock]);
 
   // Lazy-load video: only autoplay when the card is visible in viewport
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -189,10 +209,10 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
         </div>
 
         {/* Weight selection and Qty Row */}
-        <div className="flex items-center justify-between gap-1.5 mb-4">
-          <div className="flex items-center gap-1">
-            <span className="text-[#1a110a] font-jakarta text-xs font-bold mr-1">Weight:</span>
-            <div className="flex gap-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 border-t border-stone-200/40 pt-3">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[#1a110a] font-jakarta text-xs font-bold mr-0.5">Weight:</span>
+            <div className="flex gap-1 flex-wrap">
               {weights.map((w) => (
                 <button
                   key={w}
@@ -213,51 +233,64 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
           </div>
 
           {/* Quantity selector */}
-          <div className="flex items-center bg-[#faf6eb] border border-[#d2c9b4] rounded-md h-6 px-1 shrink-0">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setQty(Math.max(1, qty - 1));
-              }}
-              className="w-4 h-4 flex items-center justify-center text-[#3e2c1c] hover:bg-[#ebdcc1]/40 rounded cursor-pointer"
-            >
-              <Minus className="w-2.5 h-2.5" />
-            </button>
-            <span className="font-jakarta text-[11px] font-bold text-[#1a110a] mx-1.5">{qty}</span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setQty(qty + 1);
-              }}
-              className="w-4 h-4 flex items-center justify-center text-[#3e2c1c] hover:bg-[#ebdcc1]/40 rounded cursor-pointer"
-            >
-              <Plus className="w-2.5 h-2.5" />
-            </button>
+          <div className="flex items-center justify-between sm:justify-start gap-2">
+            <span className="text-[#1a110a] font-jakarta text-xs font-bold sm:hidden">Qty:</span>
+            <div className="flex items-center bg-[#faf6eb] border border-[#d2c9b4] rounded-md h-6 px-1 shrink-0">
+              <button
+                disabled={currentStock === 0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setQty(Math.max(1, qty - 1));
+                }}
+                className="w-4 h-4 flex items-center justify-center text-[#3e2c1c] hover:bg-[#ebdcc1]/40 rounded cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Minus className="w-2.5 h-2.5" />
+              </button>
+              <span className="font-jakarta text-[11px] font-bold text-[#1a110a] mx-1.5">{qty}</span>
+              <button
+                disabled={qty >= currentStock || currentStock === 0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (qty < currentStock) setQty(qty + 1);
+                }}
+                className="w-4 h-4 flex items-center justify-center text-[#3e2c1c] hover:bg-[#ebdcc1]/40 rounded cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-2.5 h-2.5" />
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 mt-auto">
-          <button 
-            onClick={handleAddToCart}
-            className={`flex-1 text-xs font-jakarta font-bold py-2.5 rounded-lg transition-all duration-300 cursor-pointer text-center text-white shadow-xs ${
-              added 
-                ? 'bg-[#C56C4F] scale-[0.98]' 
-                : 'bg-[#704632] hover:bg-[#5b3827]'
-            }`}
-          >
-            {added ? 'Added! ✓' : 'Add to Cart'}
-          </button>
-          <button 
-            onClick={isItemInCart ? (e) => { e.stopPropagation(); router.push('/cart'); } : handleBuyNow}
-            className={`flex-1 text-xs font-jakarta font-bold py-2.5 rounded-lg transition-all cursor-pointer text-center text-white shadow-xs ${
-              isItemInCart 
-                ? 'bg-[#56701b] hover:bg-[#435714]' 
-                : 'bg-[#384401] hover:bg-[#252d00]'
-            }`}
-          >
-            {isItemInCart ? 'View in Cart ✓' : 'Buy Now'}
-          </button>
+        <div className="flex flex-col min-[380px]:flex-row lg:flex-col xl:flex-row gap-2 mt-auto">
+          {currentStock === 0 ? (
+            <div className="flex-1 bg-stone-200 border border-stone-300 text-stone-500 text-center font-jakarta font-bold text-xs py-2.5 rounded-lg select-none">
+              Out of Stock
+            </div>
+          ) : (
+            <>
+              <button 
+                onClick={handleAddToCart}
+                className={`flex-1 text-xs font-jakarta font-bold py-2.5 rounded-lg transition-all duration-300 cursor-pointer text-center text-white shadow-xs ${
+                  added 
+                    ? 'bg-[#C56C4F] scale-[0.98]' 
+                    : 'bg-[#704632] hover:bg-[#5b3827]'
+                }`}
+              >
+                {added ? 'Added! ✓' : 'Add to Cart'}
+              </button>
+              <button 
+                onClick={isItemInCart ? (e) => { e.stopPropagation(); router.push('/cart'); } : handleBuyNow}
+                className={`flex-1 text-xs font-jakarta font-bold py-2.5 rounded-lg transition-all cursor-pointer text-center text-white shadow-xs ${
+                  isItemInCart 
+                    ? 'bg-[#56701b] hover:bg-[#435714]' 
+                    : 'bg-[#384401] hover:bg-[#252d00]'
+                }`}
+              >
+                {isItemInCart ? 'View in Cart ✓' : 'Buy Now'}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -34,3 +34,17 @@ export function broadcastInventoryUpdate(productId, newStock) {
     io.emit('inventory-update', { productId, stock: newStock });
   }
 }
+
+export function broadcastOrderUpdate(orderId, status, details = {}) {
+  if (io) {
+    console.log(`📡 Broadcasting order update: Order ${orderId} -> Status ${status}`);
+    io.emit('order-update', { orderId, status, ...details });
+  }
+}
+
+export function broadcastOrderPlaced(orderId, orderData) {
+  if (io) {
+    console.log(`📡 Broadcasting order placed: Order ${orderId}`);
+    io.emit('order-placed', { orderId, order: orderData });
+  }
+}

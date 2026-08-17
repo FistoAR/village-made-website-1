@@ -271,7 +271,11 @@ export async function initDb() {
           p.name,
           p.description,
           p.price,
-          JSON.stringify(['250 g', '500 g', '1 kg']),
+          JSON.stringify([
+            { weight: '250 g', price: Math.round(p.price * 0.6), stock: p.stock },
+            { weight: '500 g', price: p.price, stock: p.stock },
+            { weight: '1 kg', price: Math.round(p.price * 1.8), stock: p.stock }
+          ]),
           p.badge || null,
           p.stock,
           p.purchase_price,

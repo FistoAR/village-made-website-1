@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import { getDictionary } from '@/lib/translations';
 import Script from 'next/script';
 import { X, CheckCircle, AlertTriangle, AlertCircle, Info, Check } from 'lucide-react';
@@ -150,6 +150,9 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+
+const generateRandomId = () => Math.random().toString(36).substring(2, 11);
+const generateAddressId = () => `VM-${Math.floor(100000 + Math.random() * 900000)}`;
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState('en');
@@ -535,7 +538,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addOrder = (items: CartItem[], totalDetails: { subtotal: number; shipping: number; tax: number; total: number }, address: UserAddress) => {
     if (!user) return;
     const newOrder: UserOrder = {
-      id: address.id || `VM-${Math.floor(100000 + Math.random() * 900000)}`,
+      id: address.id || generateAddressId(),
       date: new Date().toLocaleDateString('en-IN'),
       items,
       subtotal: totalDetails.subtotal,
@@ -551,7 +554,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const orders = [newOrder, ...prev.orders];
       const notifications = [
         {
-          id: Math.random().toString(36).substr(2, 9),
+          id: generateRandomId(),
           title: 'Order Placed!',
           message: `Your order ${newOrder.id} has been received and is being processed.`,
           date: new Date().toLocaleDateString('en-IN'),
@@ -616,7 +619,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             const orders = [newOrder, ...prev.orders];
             const notifications = [
               {
-                id: Math.random().toString(36).substr(2, 9),
+                id: generateRandomId(),
                 title: 'Order Placed!',
                 message: `Your order ${newOrder.id} has been received and is being processed.`,
                 date: orderData.date,
@@ -652,7 +655,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     const newAddress: UserAddress = {
       ...addressData,
-      id: Math.random().toString(36).substr(2, 9),
+      id: generateRandomId(),
       isDefault: user.addresses.length === 0 ? true : addressData.isDefault
     };
 
@@ -683,7 +686,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addNotification = (title: string, message: string) => {
     if (!user) return;
     const newNotification: UserNotification = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: generateRandomId(),
       title,
       message,
       date: new Date().toLocaleDateString('en-IN'),
@@ -773,7 +776,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         
         // Link to user session review log if active
         const userReview: UserReview = {
-          id: Math.random().toString(36).substr(2, 9),
+          id: generateRandomId(),
           productId,
           productName: title || 'Product Review',
           rating,
@@ -797,7 +800,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       showToast('Offline: Review saved locally.', 'info');
 
       const newProductReview = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: generateRandomId(),
         author: cleanAuthor,
         rating,
         title: title.trim() || 'Verified Purchase Review',
@@ -973,7 +976,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setConfirmData({ title, message, show: true, onConfirm, onCancel });
     };
 
-    const fetchUserTickets = async () => {
+    const fetchUserTickets = useCallback(async () => {
       if (!user || !user.id) return;
       try {
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
@@ -985,7 +988,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         console.error('Failed to fetch user support tickets:', err);
       }
-    };
+    }, [user]);
 
     const raiseTicket = async (subject: string, description: string, category: string, orderId?: string) => {
       try {
@@ -1026,7 +1029,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } else {
         setTickets([]);
       }
-    }, [user, isHydrated]);
+    }, [user, isHydrated, fetchUserTickets]);
 
   return (
     <AppContext.Provider

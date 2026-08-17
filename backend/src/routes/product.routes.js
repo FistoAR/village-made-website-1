@@ -440,22 +440,57 @@ productRouter.post('/decrement-stock', async (req, res, next) => {
 
     const updatedStocks = [];
     for (const item of items) {
-      const prodRes = await query('SELECT stock, name FROM products WHERE id = $1', [item.id]);
+      const prodRes = await query('SELECT weights, stock, name FROM products WHERE id = $1', [item.id]);
       if (prodRes.rows.length === 0) {
         await query('ROLLBACK');
         return res.status(404).json({ success: false, error: `Product with ID ${item.id} not found.` });
       }
-      const currentStock = prodRes.rows[0].stock;
-      if (currentStock < item.quantity) {
+
+      const product = prodRes.rows[0];
+      const weights = typeof product.weights === 'string' ? JSON.parse(product.weights) : product.weights;
+      let availableStock = Number(product.stock);
+      let variantFound = false;
+
+      if (Array.isArray(weights) && item.weight) {
+        const cleanWeight = item.weight.toLowerCase().replace(/\s+/g, '');
+        const variant = weights.find(w => typeof w === 'object' && w !== null && w.weight && w.weight.toLowerCase().replace(/\s+/g, '') === cleanWeight);
+        if (variant && typeof variant.stock === 'number') {
+          availableStock = variant.stock;
+          variantFound = true;
+        }
+      }
+
+      if (availableStock < item.quantity) {
         await query('ROLLBACK');
         return res.status(400).json({ 
           success: false, 
-          error: `Insufficient stock for "${prodRes.rows[0].name}". Available: ${currentStock}, requested: ${item.quantity}.` 
+          error: `Insufficient stock for "${product.name}" (${item.weight || 'Default'}). Available: ${availableStock}, requested: ${item.quantity}.` 
         });
       }
 
-      const nextStock = currentStock - item.quantity;
-      await query('UPDATE products SET stock = $1 WHERE id = $2', [nextStock, item.id]);
+      let nextWeights = weights;
+      let nextStock = Number(product.stock);
+
+      if (variantFound) {
+        const cleanWeight = item.weight.toLowerCase().replace(/\s+/g, '');
+        nextWeights = weights.map(w => {
+          if (typeof w === 'object' && w !== null && w.weight && w.weight.toLowerCase().replace(/\s+/g, '') === cleanWeight) {
+            return { ...w, stock: Math.max(0, w.stock - item.quantity) };
+          }
+          return w;
+        });
+        
+        const allHaveStock = nextWeights.every(w => typeof w === 'object' && w !== null && typeof w.stock === 'number');
+        if (allHaveStock) {
+          nextStock = nextWeights.reduce((sum, w) => sum + w.stock, 0);
+        } else {
+          nextStock = Math.max(0, nextStock - item.quantity);
+        }
+      } else {
+        nextStock = Math.max(0, nextStock - item.quantity);
+      }
+
+      await query('UPDATE products SET weights = $1, stock = $2 WHERE id = $3', [JSON.stringify(nextWeights), nextStock, item.id]);
       updatedStocks.push({ id: item.id, stock: nextStock });
     }
 

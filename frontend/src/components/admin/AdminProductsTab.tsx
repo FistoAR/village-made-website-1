@@ -293,7 +293,7 @@ export default function AdminProductsTab({
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_1fr] gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-stone-700">Category</label>
               <select
@@ -314,16 +314,6 @@ export default function AdminProductsTab({
                 value={newProdName}
                 onChange={(e) => setNewProdName(e.target.value)}
                 placeholder="e.g. MULTI GRAIN COOKIES"
-                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-stone-700">Base Price (₹)</label>
-              <input
-                type="number"
-                required
-                value={newProdPrice}
-                onChange={(e) => setNewProdPrice(Number(e.target.value))}
                 className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
@@ -407,8 +397,7 @@ export default function AdminProductsTab({
                 const currentNewProdWeights = newProdWeights as any[];
                 const existingNames = currentNewProdWeights.map((w: any) => typeof w === 'object' && w !== null && w.weight ? w.weight : w);
                 const allSizes = Array.from(new Set([...defaultSizes, ...existingNames]));
-                
-                return allSizes.map(weight => {
+                               return allSizes.map(weight => {
                   // Check if this weight is currently checked/active
                   const matchingItem = currentNewProdWeights.find((w: any) => {
                     const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
@@ -416,18 +405,22 @@ export default function AdminProductsTab({
                   });
                   const hasWeight = !!matchingItem;
                   
-                  // Get the current price value for this weight
+                  // Get the current price and stock value for this weight
                   let currentPriceValue = 0;
+                  let currentStockValue = 0;
                   if (hasWeight) {
-                    if (typeof matchingItem === 'object' && matchingItem !== null && typeof matchingItem.price === 'number') {
-                      currentPriceValue = matchingItem.price;
+                    if (typeof matchingItem === 'object' && matchingItem !== null) {
+                      currentPriceValue = typeof matchingItem.price === 'number' ? matchingItem.price : 0;
+                      currentStockValue = typeof matchingItem.stock === 'number' ? matchingItem.stock : (newProdStock || 50);
                     } else {
                       const basePrice = newProdPrice || 0;
                       currentPriceValue = weight === '250 g' ? Math.round(basePrice * 0.6) : weight === '1 kg' ? Math.round(basePrice * 1.8) : basePrice;
+                      currentStockValue = newProdStock || 50;
                     }
                   } else {
                     const basePrice = newProdPrice || 0;
                     currentPriceValue = weight === '250 g' ? Math.round(basePrice * 0.6) : weight === '1 kg' ? Math.round(basePrice * 1.8) : basePrice;
+                    currentStockValue = newProdStock || 50;
                   }
 
                   return (
@@ -439,7 +432,7 @@ export default function AdminProductsTab({
                           onChange={(e) => {
                             let newWeights = [...currentNewProdWeights];
                             if (e.target.checked) {
-                              newWeights.push({ weight, price: currentPriceValue });
+                              newWeights.push({ weight, price: currentPriceValue, stock: currentStockValue });
                             } else {
                               newWeights = newWeights.filter((w: any) => {
                                 const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
@@ -467,7 +460,7 @@ export default function AdminProductsTab({
                                 const updated = currentNewProdWeights.map((w: any) => {
                                   const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
                                   if (name === weight) {
-                                    return typeof w === 'object' && w !== null ? { ...w, weight: cleanRename } : { weight: cleanRename, price: newProdPrice };
+                                    return typeof w === 'object' && w !== null ? { ...w, weight: cleanRename } : { weight: cleanRename, price: newProdPrice, stock: newProdStock || 50 };
                                   }
                                   return w;
                                 });
@@ -523,25 +516,46 @@ export default function AdminProductsTab({
                       </div>
 
                       {hasWeight && (
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs text-stone-500 font-bold">Custom Price:</span>
-                          <div className="relative w-28">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-500">₹</span>
+                        <div className="flex flex-wrap items-center gap-4 shrink-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] text-stone-500 font-bold">Price:</span>
+                            <div className="relative w-20">
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-500">₹</span>
+                              <input
+                                type="number"
+                                value={currentPriceValue}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  const newWeights = currentNewProdWeights.map((w: any) => {
+                                    const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                                    if (name === weight) {
+                                      return { ...w, weight, price: val };
+                                    }
+                                    return w;
+                                  });
+                                  setNewProdWeights(newWeights);
+                                }}
+                                className="w-full h-7 pl-5 pr-1 bg-stone-50 border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401]"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] text-stone-500 font-bold">Stock:</span>
                             <input
                               type="number"
-                              value={currentPriceValue}
+                              value={currentStockValue}
                               onChange={(e) => {
                                 const val = Number(e.target.value);
                                 const newWeights = currentNewProdWeights.map((w: any) => {
                                   const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
                                   if (name === weight) {
-                                    return { weight, price: val };
+                                    return { ...w, weight, stock: val };
                                   }
                                   return w;
                                 });
                                 setNewProdWeights(newWeights);
                               }}
-                              className="w-full h-8 pl-6 pr-2 bg-stone-50 border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401]"
+                              className="w-16 h-7 px-1.5 bg-stone-50 border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401]"
                             />
                           </div>
                         </div>
@@ -787,7 +801,7 @@ export default function AdminProductsTab({
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_1fr] gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-stone-700">Category</label>
               <select
@@ -807,16 +821,6 @@ export default function AdminProductsTab({
                 required
                 value={editingProduct.name}
                 onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-stone-700">Base Price (₹)</label>
-              <input
-                type="number"
-                required
-                value={editingProduct.price}
-                onChange={(e) => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
                 className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
             </div>
@@ -902,8 +906,7 @@ export default function AdminProductsTab({
                 const currentWeights = (editingProduct.weights || []) as any[];
                 const existingNames = currentWeights.map((w: any) => typeof w === 'object' && w !== null && w.weight ? w.weight : w);
                 const allSizes = Array.from(new Set([...defaultSizes, ...existingNames]));
-                
-                return allSizes.map(weight => {
+                           return allSizes.map(weight => {
                   // Check if this weight is currently checked/active
                   const matchingItem = currentWeights.find((w: any) => {
                     const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
@@ -911,18 +914,22 @@ export default function AdminProductsTab({
                   });
                   const hasWeight = !!matchingItem;
                   
-                  // Get the current price value for this weight
+                  // Get the current price and stock value for this weight
                   let currentPriceValue = 0;
+                  let currentStockValue = 0;
                   if (hasWeight) {
-                    if (typeof matchingItem === 'object' && matchingItem !== null && typeof matchingItem.price === 'number') {
-                      currentPriceValue = matchingItem.price;
+                    if (typeof matchingItem === 'object' && matchingItem !== null) {
+                      currentPriceValue = typeof matchingItem.price === 'number' ? matchingItem.price : 0;
+                      currentStockValue = typeof matchingItem.stock === 'number' ? matchingItem.stock : (editingProduct.stock || 50);
                     } else {
                       const basePrice = editingProduct.price || 0;
                       currentPriceValue = weight === '250 g' ? Math.round(basePrice * 0.6) : weight === '1 kg' ? Math.round(basePrice * 1.8) : basePrice;
+                      currentStockValue = editingProduct.stock || 50;
                     }
                   } else {
                     const basePrice = editingProduct.price || 0;
                     currentPriceValue = weight === '250 g' ? Math.round(basePrice * 0.6) : weight === '1 kg' ? Math.round(basePrice * 1.8) : basePrice;
+                    currentStockValue = editingProduct.stock || 50;
                   }
 
                   return (
@@ -934,7 +941,7 @@ export default function AdminProductsTab({
                           onChange={(e) => {
                             let newWeights = [...currentWeights];
                             if (e.target.checked) {
-                              newWeights.push({ weight, price: currentPriceValue });
+                              newWeights.push({ weight, price: currentPriceValue, stock: currentStockValue });
                             } else {
                               newWeights = newWeights.filter((w: any) => {
                                 const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
@@ -962,7 +969,7 @@ export default function AdminProductsTab({
                                 const updated = currentWeights.map((w: any) => {
                                   const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
                                   if (name === weight) {
-                                    return typeof w === 'object' && w !== null ? { ...w, weight: cleanRename } : { weight: cleanRename, price: editingProduct.price };
+                                    return typeof w === 'object' && w !== null ? { ...w, weight: cleanRename } : { weight: cleanRename, price: editingProduct.price, stock: editingProduct.stock || 50 };
                                   }
                                   return w;
                                 });
@@ -983,7 +990,7 @@ export default function AdminProductsTab({
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-stone-750">{weight} Variant</span>
+                            <span className="text-xs font-bold text-stone-755">{weight} Variant</span>
                             {!defaultSizes.includes(weight) && (
                               <div className="flex items-center gap-1">
                                 <button
@@ -1018,25 +1025,46 @@ export default function AdminProductsTab({
                       </div>
 
                       {hasWeight && (
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs text-stone-500 font-bold">Custom Price:</span>
-                          <div className="relative w-28">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-500">₹</span>
+                        <div className="flex flex-wrap items-center gap-4 shrink-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] text-stone-500 font-bold">Price:</span>
+                            <div className="relative w-20">
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-500">₹</span>
+                              <input
+                                type="number"
+                                value={currentPriceValue}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  const newWeights = currentWeights.map((w: any) => {
+                                    const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                                    if (name === weight) {
+                                      return { ...w, weight, price: val };
+                                    }
+                                    return w;
+                                  });
+                                  setEditingProduct({ ...editingProduct, weights: newWeights });
+                                }}
+                                className="w-full h-7 pl-5 pr-1 bg-stone-50 border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401]"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] text-stone-500 font-bold">Stock:</span>
                             <input
                               type="number"
-                              value={currentPriceValue}
+                              value={currentStockValue}
                               onChange={(e) => {
                                 const val = Number(e.target.value);
                                 const newWeights = currentWeights.map((w: any) => {
                                   const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
                                   if (name === weight) {
-                                    return { weight, price: val };
+                                    return { ...w, weight, stock: val };
                                   }
                                   return w;
                                 });
                                 setEditingProduct({ ...editingProduct, weights: newWeights });
                               }}
-                              className="w-full h-8 pl-6 pr-2 bg-stone-50 border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401]"
+                              className="w-16 h-7 px-1.5 bg-stone-50 border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401]"
                             />
                           </div>
                         </div>
@@ -1366,7 +1394,23 @@ export default function AdminProductsTab({
                         )}
                       </div>
                       <div className="flex justify-between items-center w-full">
-                        <span className="text-xs text-stone-455 font-jakarta">Stock: {p.stock} units</span>
+                        {p.weights && p.weights.length > 0 ? (
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-stone-500">
+                            <span className="font-bold text-stone-700">Stock:</span>
+                            {((p.weights || []) as any[]).map((w: any, idx: number) => {
+                              const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                              const wStock = typeof w === 'object' && w !== null && typeof w.stock === 'number' ? w.stock : p.stock;
+                              return (
+                                <span key={idx} className="whitespace-nowrap font-medium text-stone-650">
+                                  {wName}: <span className="font-bold text-stone-850">{wStock}</span>
+                                  {idx < (p.weights?.length || 0) - 1 && <span className="mx-1 text-stone-300">|</span>}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-stone-455 font-jakarta">Stock: {p.stock} units</span>
+                        )}
                         <div className="flex gap-3 items-center" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => {
@@ -1409,74 +1453,76 @@ export default function AdminProductsTab({
                       <tr className="bg-stone-50 border-b border-[#eeddb9] text-stone-500 font-extrabold uppercase tracking-wider">
                         <th className="p-3.5 pl-5 border border-[#eeddb9]">S.No</th>
                         <th className="p-3.5 border border-[#eeddb9]">Product Name</th>
+                        <th className="p-3.5 border border-[#eeddb9]">Variant</th>
                         <th className="p-3.5 border border-[#eeddb9]">Price</th>
-                        <th className="p-3.5 border border-[#eeddb9]">Variants</th>
                         <th className="p-3.5 border border-[#eeddb9]">Stock</th>
                         <th className="p-3.5 pr-5 border border-[#eeddb9] text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#eeddb9]">
-                      {groupedProducts[catName].map((p, idx) => (
-                        <tr
-                          key={p.id}
-                          onClick={() => {
-                            setShowAddProduct(false);
-                            setShowAddCategory(false);
-                            setEditingProduct(p);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }}
-                          className="hover:bg-stone-50/60 font-semibold cursor-pointer transition-colors"
-                        >
-                          <td className="p-3.5 pl-5 text-stone-900 border border-[#eeddb9]">{idx + 1}</td>
-                          <td className="p-3.5 text-[#384401] font-bold border border-[#eeddb9]">{p.name}</td>
-                          <td className="p-3.5 text-stone-900 border border-[#eeddb9] font-bold">₹{p.price}</td>
-                          <td className="p-3.5 border border-[#eeddb9]">
-                            {p.weights && p.weights.length > 0 ? (
-                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-700 font-jakarta max-w-[340px]">
-                                {((p.weights || []) as any[]).map((w: any, idx: number) => {
-                                  const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
-                                  const wPrice = typeof w === 'object' && w !== null && typeof w.price === 'number' ? w.price : (
-                                    wName === '250 g' ? Math.round(p.price * 0.6) : wName === '1 kg' ? Math.round(p.price * 1.8) : p.price
-                                  );
-                                  return (
-                                    <span key={idx} className="flex items-center gap-2 whitespace-nowrap">
-                                      <span>{wName}: <span className="font-bold text-stone-900">₹{wPrice}</span></span>
-                                      {idx < (p.weights?.length ?? 0) - 1 && <span className="text-stone-300 font-normal">|</span>}
-                                    </span>
-                                  );
-                                })}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-stone-400 font-bold">—</span>
-                            )}
-                          </td>
-                          <td className="p-3.5 border border-[#eeddb9]">
-                            <span className={`px-2 py-0.5 rounded-full text-sm font-bold ${p.stock < 10 ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-700'}`}>
-                              {p.stock} units
-                            </span>
-                          </td>
-                          <td className="p-3.5 pr-5 border border-[#eeddb9] text-right" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex justify-end gap-3.5">
-                              <button
-                                onClick={() => {
-                                  setShowAddProduct(false);
-                                  setEditingProduct(p);
-                                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                                }}
-                                className="text-stone-600 hover:text-[#384401] font-bold flex items-center gap-1 cursor-pointer"
-                              >
-                                <Edit className="w-3.5 h-3.5" /> Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteProduct(p.id)}
-                                className="text-red-600 hover:text-red-800 font-bold flex items-center gap-1 cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" /> Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {groupedProducts[catName].flatMap((p, pIdx) => {
+                        const weightsList = (p.weights && p.weights.length > 0) ? p.weights : [{ weight: 'Default', price: p.price, stock: p.stock }];
+                        const rowSpan = weightsList.length;
+
+                        return weightsList.map((w: any, wIdx: number) => {
+                          const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                          const wPrice = typeof w === 'object' && w !== null && typeof w.price === 'number' ? w.price : (
+                            wName === '250 g' ? Math.round(p.price * 0.6) : wName === '1 kg' ? Math.round(p.price * 1.8) : p.price
+                          );
+                          const wStock = typeof w === 'object' && w !== null && typeof w.stock === 'number' ? w.stock : p.stock;
+
+                          return (
+                            <tr
+                              key={`${p.id}-${wName}`}
+                              onClick={() => {
+                                setShowAddProduct(false);
+                                setShowAddCategory(false);
+                                setEditingProduct(p);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className="hover:bg-stone-50/60 font-semibold cursor-pointer transition-colors"
+                            >
+                              {wIdx === 0 && (
+                                <>
+                                  <td rowSpan={rowSpan} className="p-3.5 pl-5 text-stone-900 border border-[#eeddb9] align-middle">{pIdx + 1}</td>
+                                  <td rowSpan={rowSpan} className="p-3.5 text-[#384401] font-bold border border-[#eeddb9] align-middle">{p.name}</td>
+                                </>
+                              )}
+                              
+                              <td className="p-3.5 text-stone-700 border border-[#eeddb9]">{wName}</td>
+                              <td className="p-3.5 text-stone-900 border border-[#eeddb9] font-bold">₹{wPrice}</td>
+                              <td className="p-3.5 border border-[#eeddb9]">
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${wStock < 10 ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-700'}`}>
+                                  {wStock} units
+                                </span>
+                              </td>
+
+                              {wIdx === 0 && (
+                                <td rowSpan={rowSpan} className="p-3.5 pr-5 border border-[#eeddb9] text-right align-middle" onClick={(e) => e.stopPropagation()}>
+                                  <div className="flex justify-end gap-3.5">
+                                    <button
+                                      onClick={() => {
+                                        setShowAddProduct(false);
+                                        setEditingProduct(p);
+                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                      }}
+                                      className="text-stone-600 hover:text-[#384401] font-bold flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <Edit className="w-3.5 h-3.5" /> Edit
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteProduct(p.id)}
+                                      className="text-red-600 hover:text-red-800 font-bold flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        });
+                      })}
                     </tbody>
                   </table>
                 </div>

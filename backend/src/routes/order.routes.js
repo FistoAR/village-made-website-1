@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query } from '../config/db.js';
+import { broadcastOrderPlaced } from '../config/socket.js';
 
 export const orderRouter = Router();
 
@@ -56,6 +57,19 @@ orderRouter.post('/', async (req, res, next) => {
         ]
       );
     }
+
+    const orderData = {
+      id,
+      date: date || new Date().toLocaleDateString('en-IN'),
+      subtotal: parseFloat(subtotal) || 0,
+      shipping: parseFloat(shipping) || 0,
+      tax: parseFloat(tax) || 0,
+      total: parseFloat(total) || 0,
+      status: 'Processing',
+      address,
+      items
+    };
+    broadcastOrderPlaced(id, orderData);
 
     return res.status(201).json({ success: true, message: 'Order placed successfully.', orderId: id });
   } catch (error) {

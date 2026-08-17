@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import { 
   BarChart3, Users, ShoppingBag, DollarSign, Package, 
   Check, AlertCircle, RefreshCw, ShieldCheck, Sparkles, FolderOpen,
@@ -148,52 +149,24 @@ export default function AdminPage() {
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
   const [orderSearch, setOrderSearch] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('All');
-  const [newProdWeights, setNewProdWeights] = useState<string[]>(['250 g', '500 g', '1 kg']);
+  const [newProdWeights, setNewProdWeights] = useState<any[]>(['250 g', '500 g', '1 kg']);
 
   // Sales State
   const [categorySales, setCategorySales] = useState<{ category: string; amount: number }[]>([]);
   const [leaderboard, setLeaderboard] = useState<{ name: string; quantity: number }[]>([]);
 
-  // Fetch admin dynamic data
-  const fetchAdminData = async () => {
-    setLoading(true);
-    setError('');
+  // Specialized fetch functions for individual tabs
+  const fetchDashboardData = async () => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-      
-      // Fetch Dashboard
       const dashRes = await fetch(`${baseUrl}/admin/dashboard`);
       const dashData = await dashRes.json();
       if (dashData.success) {
         setStats(dashData.stats);
         setRecentOrders(dashData.recentOrders);
       }
-
-      // Fetch Customers
-      const custRes = await fetch(`${baseUrl}/admin/customers`);
-      const custData = await custRes.json();
-      if (custData.success) {
-        setCustomers(custData.customers);
-      }
-
-      // Fetch Orders
-      const orderRes = await fetch(`${baseUrl}/admin/orders`);
-      const orderData = await orderRes.json();
-      if (orderData.success) {
-        setOrders(orderData.orders);
-      }
-
-      // Fetch Sales
-      const salesRes = await fetch(`${baseUrl}/admin/sales`);
-      const salesData = await salesRes.json();
-      if (salesData.success) {
-        setCategorySales(salesData.categorySales);
-        setLeaderboard(salesData.leaderboard);
-      }
-
     } catch (err) {
-      console.error(err);
-      setError('Unable to fetch live backend statistics. Running simulation values.');
+      console.warn('⚠️ Unable to fetch dashboard. Falling back to simulation.', err);
       setStats({
         totalCustomers: 8,
         totalOrders: 12,
@@ -205,20 +178,163 @@ export default function AdminPage() {
         { id: 'VM-291038', customerName: 'Priya Patel', customerMobile: '9123456789', date: '11/08/2026', total: 320, status: 'Shipped' },
         { id: 'VM-492019', customerName: 'Anand Kumar', customerMobile: '9234567890', date: '10/08/2026', total: 1250, status: 'Delivered' }
       ]);
+    }
+  };
+
+  const fetchCustomersData = async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const custRes = await fetch(`${baseUrl}/admin/customers`);
+      const custData = await custRes.json();
+      if (custData.success) {
+        setCustomers(custData.customers);
+      }
+    } catch (err) {
+      console.error('⚠️ Failed to load customers:', err);
+    }
+  };
+
+  const fetchOrdersData = async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const orderRes = await fetch(`${baseUrl}/admin/orders`);
+      const orderData = await orderRes.json();
+      if (orderData.success) {
+        setOrders(orderData.orders);
+      }
+    } catch (err) {
+      console.error('⚠️ Failed to load orders:', err);
+    }
+  };
+
+  const fetchSalesData = async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const salesRes = await fetch(`${baseUrl}/admin/sales`);
+      const salesData = await salesRes.json();
+      if (salesData.success) {
+        setCategorySales(salesData.categorySales);
+        setLeaderboard(salesData.leaderboard);
+      }
+    } catch (err) {
+      console.error('⚠️ Failed to load sales reports:', err);
+    }
+  };
+
+  // Initial Auth Check
+  useEffect(() => {
+    setMounted(true);
+    const isAuth = sessionStorage.getItem('is_admin_auth') === 'true';
+    if (isAuth) {
+      setIsAdminAuthenticated(true);
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleSync = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      if (activeTab === 'dashboard') {
+        await fetchDashboardData();
+      } else if (activeTab === 'customers') {
+        await fetchCustomersData();
+      } else if (activeTab === 'orders') {
+        await fetchOrdersData();
+      } else if (activeTab === 'sales') {
+        await fetchSalesData();
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Error syncing data.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch only active tab content when tab selection changes
   useEffect(() => {
-    setMounted(true);
-    // Check if admin is authenticated from session
-    const isAuth = sessionStorage.getItem('is_admin_auth') === 'true';
-    if (isAuth) {
-      setIsAdminAuthenticated(true);
-      fetchAdminData();
-    }
-  }, []);
+    if (!isAdminAuthenticated) return;
+
+    const loadTabContent = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        if (activeTab === 'dashboard') {
+          await fetchDashboardData();
+        } else if (activeTab === 'customers') {
+          await fetchCustomersData();
+        } else if (activeTab === 'orders') {
+          await fetchOrdersData();
+        } else if (activeTab === 'sales') {
+          await fetchSalesData();
+        }
+      } catch (err) {
+        console.error(err);
+        setError('Error loading tab content.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTabContent();
+  }, [activeTab, isAdminAuthenticated]);
+
+  // WebSocket Live Updates (Orders & Stocks)
+  useEffect(() => {
+    if (!isAdminAuthenticated) return;
+
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5001';
+    const socket = io(socketUrl, {
+      transports: ['websocket'],
+    });
+
+    socket.on('connect', () => {
+      console.log('🔌 Admin connected to real-time updates socket');
+    });
+
+    socket.on('inventory-update', (data: { productId: string; stock: number }) => {
+      console.log('📡 Admin: Real-time inventory update received:', data);
+      setLocalProducts((prev) =>
+        prev.map((p) => (p.id === data.productId ? { ...p, stock: data.stock } : p))
+      );
+    });
+
+    socket.on('order-placed', (data: { orderId: string; order: AdminOrder }) => {
+      console.log('📡 Admin: Real-time order placed received:', data);
+      setOrders((prev) => {
+        // Avoid duplicate entries
+        if (prev.some(o => o.id === data.orderId)) return prev;
+        return [data.order, ...prev];
+      });
+      // Increment dashboard stats if on dashboard
+      setStats((prev) => ({
+        ...prev,
+        totalOrders: prev.totalOrders + 1,
+        pendingOrders: prev.pendingOrders + 1,
+        totalSales: prev.totalSales + data.order.total
+      }));
+    });
+
+    socket.on('order-update', (data: { orderId: string; status: string }) => {
+      console.log('📡 Admin: Real-time order update received:', data);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === data.orderId ? { ...o, status: data.status } : o))
+      );
+      setSelectedOrder((prev) =>
+        prev && prev.id === data.orderId ? { ...prev, status: data.status } : prev
+      );
+    });
+
+    socket.on('disconnect', () => {
+      console.log('🔌 Admin disconnected from socket');
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [isAdminAuthenticated]);
 
   useEffect(() => {
     if (products && products.length > 0) {
@@ -270,7 +386,6 @@ export default function AdminPage() {
         if (res.user?.role === 'admin') {
           sessionStorage.setItem('is_admin_auth', 'true');
           setIsAdminAuthenticated(true);
-          fetchAdminData();
         } else {
           setAuthError('Access denied. This profile does not have admin permissions.');
         }
@@ -283,7 +398,6 @@ export default function AdminPage() {
       if (adminPhone === '9999999999' && adminPassword === 'admin123') {
         sessionStorage.setItem('is_admin_auth', 'true');
         setIsAdminAuthenticated(true);
-        fetchAdminData();
       } else {
         setAuthError('Could not verify credentials. Use fallback (Phone: 9999999999, Pass: admin123, Passcode: 1234)');
       }
@@ -472,10 +586,15 @@ export default function AdminPage() {
   // Add Product Submit
   const handleAddProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProdName || newProdPrice <= 0) {
+    if (!newProdName) {
       triggerAlert('Please enter valid product details', true);
       return;
     }
+
+    const firstVariantPrice = newProdWeights && newProdWeights.length > 0
+      ? (typeof newProdWeights[0] === 'object' ? newProdWeights[0].price : Number(newProdWeights[0]))
+      : 100;
+    const derivedPrice = firstVariantPrice || 100;
 
     const catMap: Record<string, string> = {
       'Malt': 'malt',
@@ -505,11 +624,11 @@ export default function AdminPage() {
           id: newId,
           categoryId,
           name: newProdName,
-          price: newProdPrice,
+          price: derivedPrice,
           description: newProdDesc,
           badge: newProdBadge || undefined,
           stock: newProdStock,
-          purchasePrice: Math.floor(newProdPrice * 0.65),
+          purchasePrice: Math.floor(derivedPrice * 0.65),
           weights: newProdWeights,
           imageUrl: newProdImage || null,
           videoUrl: newProdVideo || null,
@@ -525,7 +644,7 @@ export default function AdminPage() {
         await fetchProducts();
         setShowAddProduct(false);
         setNewProdName('');
-        setNewProdPrice(100);
+        setNewProdPrice(0);
         setNewProdDesc('');
         setNewProdBadge('');
         setNewProdStock(25);
@@ -566,6 +685,11 @@ export default function AdminPage() {
     e.preventDefault();
     if (!editingProduct) return;
 
+    const firstVariantPrice = editingProduct.weights && editingProduct.weights.length > 0
+      ? (typeof (editingProduct.weights as any[])[0] === 'object' ? (editingProduct.weights as any[])[0].price : Number(editingProduct.weights[0]))
+      : (editingProduct.price || 100);
+    const derivedPrice = firstVariantPrice || 100;
+
     const catMap: Record<string, string> = {
       'Malt': 'malt',
       'Natural Health Mix': 'natural-health-mix',
@@ -584,11 +708,11 @@ export default function AdminPage() {
         body: JSON.stringify({
           categoryId,
           name: editingProduct.name,
-          price: editingProduct.price,
+          price: derivedPrice,
           description: editingProduct.description,
           badge: editingProduct.badge || null,
           stock: editingProduct.stock,
-          purchasePrice: editingProduct.purchasePrice || Math.floor(editingProduct.price * 0.65),
+          purchasePrice: Math.floor(derivedPrice * 0.65),
           weights: editingProduct.weights || ['250 g', '500 g', '1 kg'],
           imageUrl: editingProduct.image || null,
           videoUrl: editingProduct.video || null,
@@ -741,7 +865,7 @@ export default function AdminPage() {
           
           <div className="flex gap-2">
             <button
-              onClick={fetchAdminData}
+              onClick={handleSync}
               className="flex items-center gap-2 bg-white border border-[#eeddb9] hover:bg-[#FAF4E6]/50 text-stone-850 text-xs font-bold py-2.5 px-4 rounded-xl shadow-2xs transition-colors cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -917,11 +1041,7 @@ export default function AdminPage() {
 
             {activeTab === 'orders' && (
               <AdminOrdersTab
-                orderStatusFilter={orderStatusFilter}
-                setOrderStatusFilter={setOrderStatusFilter}
-                orderSearch={orderSearch}
-                setOrderSearch={setOrderSearch}
-                filteredOrders={filteredOrders}
+                orders={orders}
                 selectedOrder={selectedOrder}
                 setSelectedOrder={setSelectedOrder}
                 handleOrderStatusUpdate={handleOrderStatusUpdate}

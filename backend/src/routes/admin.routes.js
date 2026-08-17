@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../config/db.js';
-import { broadcastInventoryUpdate } from '../config/socket.js';
+import { broadcastInventoryUpdate, broadcastOrderUpdate } from '../config/socket.js';
 
 export const adminRouter = Router();
 
@@ -133,21 +133,46 @@ adminRouter.put('/orders/:id', async (req, res, next) => {
     const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
     const updatedProducts = [];
     
-    // Transition INTO Cancelled/Returned -> Restore stock
-    if ((status === 'Cancelled' || status === 'Returned') && (oldStatus !== 'Cancelled' && oldStatus !== 'Returned')) {
+    const isRestoring = (status === 'Cancelled' || status === 'Returned') && (oldStatus !== 'Cancelled' && oldStatus !== 'Returned');
+    const isDeducting = (oldStatus === 'Cancelled' || oldStatus === 'Returned') && (status !== 'Cancelled' && status !== 'Returned');
+
+    if (isRestoring || isDeducting) {
+      const multiplier = isRestoring ? 1 : -1;
       for (const item of items) {
-        const prodRes = await query('UPDATE products SET stock = stock + $1 WHERE id = $2 RETURNING stock', [item.quantity, item.id]);
+        const prodRes = await query('SELECT weights, stock FROM products WHERE id = $1', [item.id]);
         if (prodRes.rows.length > 0) {
-          updatedProducts.push({ id: item.id, stock: Number(prodRes.rows[0].stock) });
-        }
-      }
-    }
-    // Transition OUT of Cancelled/Returned -> Deduct stock
-    else if ((oldStatus === 'Cancelled' || oldStatus === 'Returned') && (status !== 'Cancelled' && status !== 'Returned')) {
-      for (const item of items) {
-        const prodRes = await query('UPDATE products SET stock = GREATEST(0, stock - $1) WHERE id = $2 RETURNING stock', [item.quantity, item.id]);
-        if (prodRes.rows.length > 0) {
-          updatedProducts.push({ id: item.id, stock: Number(prodRes.rows[0].stock) });
+          const product = prodRes.rows[0];
+          const weights = typeof product.weights === 'string' ? JSON.parse(product.weights) : product.weights;
+          let stock = Number(product.stock);
+          let nextWeights = weights;
+          let nextStock = stock;
+          let variantFound = false;
+
+          if (Array.isArray(weights) && item.weight) {
+            const cleanWeight = item.weight.toLowerCase().replace(/\s+/g, '');
+            nextWeights = weights.map(w => {
+              if (typeof w === 'object' && w !== null && w.weight && w.weight.toLowerCase().replace(/\s+/g, '') === cleanWeight) {
+                variantFound = true;
+                const currentVarStock = typeof w.stock === 'number' ? w.stock : stock;
+                return { ...w, stock: Math.max(0, currentVarStock + (item.quantity * multiplier)) };
+              }
+              return w;
+            });
+          }
+
+          if (variantFound) {
+            const allHaveStock = nextWeights.every(w => typeof w === 'object' && w !== null && typeof w.stock === 'number');
+            if (allHaveStock) {
+              nextStock = nextWeights.reduce((sum, w) => sum + w.stock, 0);
+            } else {
+              nextStock = Math.max(0, stock + (item.quantity * multiplier));
+            }
+          } else {
+            nextStock = Math.max(0, stock + (item.quantity * multiplier));
+          }
+
+          await query('UPDATE products SET weights = $1, stock = $2 WHERE id = $3', [JSON.stringify(nextWeights), nextStock, item.id]);
+          updatedProducts.push({ id: item.id, stock: nextStock });
         }
       }
     }
@@ -173,6 +198,8 @@ adminRouter.put('/orders/:id', async (req, res, next) => {
     for (const p of updatedProducts) {
       broadcastInventoryUpdate(p.id, p.stock);
     }
+
+    broadcastOrderUpdate(orderId, status);
 
     return res.status(200).json({ success: true, message: 'Order status updated successfully.' });
   } catch (error) {

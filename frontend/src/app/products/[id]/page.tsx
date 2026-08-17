@@ -11,6 +11,7 @@ import categoriesData from '@/data/categories.json';
 import { Star, Minus, Plus, ArrowLeft, Heart, Share2, Calendar, MessageSquare, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, ShieldCheck, Pencil, Trash2 } from 'lucide-react';
 import { Category } from '@/types';
 import { useApp } from '@/lib/context/AppContext';
+import { getVariantPrice } from '@/lib/variantPrice';
 
 /** Renders N/5 stars with accurate partial fill using SVG linearGradient per star */
 function StarRating({ rating, size = 16, gap = 2 }: { rating: number; size?: number; gap?: number }) {
@@ -72,6 +73,36 @@ export default function ProductDetailPage({
   // Interactive State
   const [quantity, setQuantity] = useState(1);
   const [selectedWeight, setSelectedWeight] = useState('500 g');
+  
+  const weights = useMemo(() => {
+    if (!product || !product.weights) return ['250 g', '500 g', '1 kg'];
+    return product.weights.map((w: any) => (typeof w === 'object' && w !== null && w.weight) ? w.weight : w);
+  }, [product]);
+
+  useEffect(() => {
+    if (product?.weights && product.weights.length > 0) {
+      const has500g = product.weights.find((w: any) => {
+        const str = (typeof w === 'object' && w !== null && w.weight) ? w.weight : w;
+        return str.replace(/\s+/g, '') === '500g';
+      });
+      const resolvedHas500g = (typeof has500g === 'object' && has500g !== null && has500g.weight) ? has500g.weight : has500g;
+      const fallback = (typeof product.weights[0] === 'object' && product.weights[0] !== null && product.weights[0].weight) ? product.weights[0].weight : product.weights[0];
+      setSelectedWeight(resolvedHas500g || fallback);
+    }
+  }, [product]);
+  
+  // Calculate dynamic variant prices
+  const currentPrice = useMemo(() => {
+    if (!product) return 0;
+    return getVariantPrice(product.price, selectedWeight, product.weights);
+  }, [product, selectedWeight]);
+
+  const currentOriginalPrice = useMemo(() => {
+    if (!product) return 0;
+    const baseOriginal = product.originalPrice || Math.round(product.price * 1.3);
+    return getVariantPrice(baseOriginal, selectedWeight, product.weights);
+  }, [product, selectedWeight]);
+
   const [activeTab, setActiveTab] = useState('description');
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(0);
   
@@ -232,7 +263,7 @@ export default function ProductDetailPage({
     addToCart({
       id: product.id,
       name: product.name,
-      price: product.price,
+      price: currentPrice,
       weight: selectedWeight,
       category: product.category
     }, quantity);
@@ -245,7 +276,7 @@ export default function ProductDetailPage({
     addToCart({
       id: product.id,
       name: product.name,
-      price: product.price,
+      price: currentPrice,
       weight: selectedWeight,
       category: product.category
     }, quantity);
@@ -402,8 +433,8 @@ export default function ProductDetailPage({
               {/* Price Box */}
               <div className="mb-6">
                 <div className="flex items-baseline gap-2.5">
-                  <span className="text-3xl font-extrabold text-stone-950 font-jakarta">₹{product.price}</span>
-                  <span className="text-stone-400 line-through text-base">₹{displayOriginalPrice}</span>
+                  <span className="text-3xl font-extrabold text-stone-955 font-jakarta">₹{currentPrice}</span>
+                  <span className="text-stone-400 line-through text-base">₹{currentOriginalPrice}</span>
                   <span className="text-[#384401] font-extrabold text-base">{displayDiscount}</span>
                 </div>
                 <span className="text-stone-500 text-xs mt-1 block">Inclusive of all taxes</span>
@@ -434,7 +465,7 @@ export default function ProductDetailPage({
                 <div>
                   <span className="text-stone-900 text-sm font-bold block mb-3 font-jakarta">Select Size</span>
                   <div className="flex gap-3">
-                    {['250 g', '500 g', '1 kg'].map((size) => (
+                    {weights.map((size: string) => (
                       <button
                         key={size}
                         onClick={() => setSelectedWeight(size)}

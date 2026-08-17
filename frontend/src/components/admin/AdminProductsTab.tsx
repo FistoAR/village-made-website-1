@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Plus, Edit, Trash2, X } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, X, Check } from 'lucide-react';
 import { ExtendedProduct } from './types';
 
 interface AdminProductsTabProps {
@@ -65,6 +65,8 @@ interface AdminProductsTabProps {
   handleDeleteProduct: (productId: string) => void;
   filteredProducts: ExtendedProduct[];
   triggerAlert: (msg: string, isError?: boolean) => void;
+  newProdWeights: any[];
+  setNewProdWeights: (val: any[]) => void;
 }
 
 export default function AdminProductsTab({
@@ -130,7 +132,16 @@ export default function AdminProductsTab({
   handleDeleteProduct,
   filteredProducts,
   triggerAlert,
+  newProdWeights,
+  setNewProdWeights,
 }: AdminProductsTabProps) {
+  const [customWeightAdd, setCustomWeightAdd] = React.useState('');
+  const [customWeightEdit, setCustomWeightEdit] = React.useState('');
+  const [renamingWeightAdd, setRenamingWeightAdd] = React.useState<string | null>(null);
+  const [renameValueAdd, setRenameValueAdd] = React.useState('');
+  const [renamingWeightEdit, setRenamingWeightEdit] = React.useState<string | null>(null);
+  const [renameValueEdit, setRenameValueEdit] = React.useState('');
+
   const groupedProducts = React.useMemo(() => {
     const groups: { [key: string]: ExtendedProduct[] } = {};
     filteredProducts.forEach((p) => {
@@ -348,6 +359,197 @@ export default function AdminProductsTab({
                 onChange={(e) => setNewProdStock(parseInt(e.target.value) || 0)}
                 className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
               />
+            </div>
+          </div>
+
+          {/* Add Product Weights */}
+          <div className="flex flex-col gap-2.5 border border-[#eeddb9]/60 rounded-xl p-4 bg-stone-50/15 font-jakarta animate-fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 border-b border-[#eeddb9]/45 pb-2.5">
+              <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">Available Weight Variants & Custom Prices</label>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  placeholder="e.g. 750 g or 2 kg"
+                  value={customWeightAdd}
+                  onChange={(e) => setCustomWeightAdd(e.target.value)}
+                  className="h-8 px-3 bg-white border border-[#eeddb9] rounded-lg text-xs placeholder-stone-400 focus:outline-none focus:border-[#384401] w-36 font-semibold"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cleanName = customWeightAdd.trim();
+                    if (!cleanName) return;
+                    
+                    const currentNewProdWeights = newProdWeights as any[];
+                    // Prevent duplicates
+                    const exists = currentNewProdWeights.some(w => {
+                      const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                      return name.toLowerCase().replace(/\s+/g, '') === cleanName.toLowerCase().replace(/\s+/g, '');
+                    });
+                    if (exists) {
+                      alert('This variant already exists!');
+                      return;
+                    }
+                    
+                    const basePrice = newProdPrice || 0;
+                    setNewProdWeights([...currentNewProdWeights, { weight: cleanName, price: basePrice }]);
+                    setCustomWeightAdd('');
+                  }}
+                  className="bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                >
+                  + Add Option
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
+              {(() => {
+                const defaultSizes = ['250 g', '500 g', '1 kg'];
+                const currentNewProdWeights = newProdWeights as any[];
+                const existingNames = currentNewProdWeights.map((w: any) => typeof w === 'object' && w !== null && w.weight ? w.weight : w);
+                const allSizes = Array.from(new Set([...defaultSizes, ...existingNames]));
+                
+                return allSizes.map(weight => {
+                  // Check if this weight is currently checked/active
+                  const matchingItem = currentNewProdWeights.find((w: any) => {
+                    const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                    return name === weight;
+                  });
+                  const hasWeight = !!matchingItem;
+                  
+                  // Get the current price value for this weight
+                  let currentPriceValue = 0;
+                  if (hasWeight) {
+                    if (typeof matchingItem === 'object' && matchingItem !== null && typeof matchingItem.price === 'number') {
+                      currentPriceValue = matchingItem.price;
+                    } else {
+                      const basePrice = newProdPrice || 0;
+                      currentPriceValue = weight === '250 g' ? Math.round(basePrice * 0.6) : weight === '1 kg' ? Math.round(basePrice * 1.8) : basePrice;
+                    }
+                  } else {
+                    const basePrice = newProdPrice || 0;
+                    currentPriceValue = weight === '250 g' ? Math.round(basePrice * 0.6) : weight === '1 kg' ? Math.round(basePrice * 1.8) : basePrice;
+                  }
+
+                  return (
+                    <div key={weight} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 border border-[#eeddb9] rounded-xl animate-fade-in shadow-2xs">
+                      <div className="flex items-center gap-2.5 flex-grow">
+                        <input
+                          type="checkbox"
+                          checked={hasWeight}
+                          onChange={(e) => {
+                            let newWeights = [...currentNewProdWeights];
+                            if (e.target.checked) {
+                              newWeights.push({ weight, price: currentPriceValue });
+                            } else {
+                              newWeights = newWeights.filter((w: any) => {
+                                const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                                return name !== weight;
+                              });
+                            }
+                            setNewProdWeights(newWeights);
+                          }}
+                          className="rounded border-[#d3c099] text-[#384401] focus:ring-[#384401] cursor-pointer"
+                        />
+                        
+                        {renamingWeightAdd === weight ? (
+                          <div className="flex items-center gap-1.5 flex-grow max-w-[200px]">
+                            <input
+                              type="text"
+                              value={renameValueAdd}
+                              onChange={(e) => setRenameValueAdd(e.target.value)}
+                              className="h-8 px-2 bg-white border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401] w-full"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const cleanRename = renameValueAdd.trim();
+                                if (!cleanRename) return;
+                                const updated = currentNewProdWeights.map((w: any) => {
+                                  const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                                  if (name === weight) {
+                                    return typeof w === 'object' && w !== null ? { ...w, weight: cleanRename } : { weight: cleanRename, price: newProdPrice };
+                                  }
+                                  return w;
+                                });
+                                setNewProdWeights(updated);
+                                setRenamingWeightAdd(null);
+                              }}
+                              className="p-1 bg-[#384401] text-white rounded-md hover:bg-[#252d00] cursor-pointer shrink-0"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setRenamingWeightAdd(null)}
+                              className="p-1 border border-stone-250 text-stone-500 rounded-md hover:bg-stone-50 cursor-pointer shrink-0"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-stone-750">{weight} Variant</span>
+                            {!defaultSizes.includes(weight) && (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setRenamingWeightAdd(weight);
+                                    setRenameValueAdd(weight);
+                                  }}
+                                  className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md transition-colors cursor-pointer"
+                                  title="Rename Variant"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = currentNewProdWeights.filter((w: any) => {
+                                      const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                                      return name !== weight;
+                                    });
+                                    setNewProdWeights(updated);
+                                  }}
+                                  className="p-1 text-red-400 hover:text-red-650 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
+                                  title="Delete Variant"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {hasWeight && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs text-stone-500 font-bold">Custom Price:</span>
+                          <div className="relative w-28">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-500">₹</span>
+                            <input
+                              type="number"
+                              value={currentPriceValue}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                const newWeights = currentNewProdWeights.map((w: any) => {
+                                  const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                                  if (name === weight) {
+                                    return { weight, price: val };
+                                  }
+                                  return w;
+                                });
+                                setNewProdWeights(newWeights);
+                              }}
+                              className="w-full h-8 pl-6 pr-2 bg-stone-50 border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401]"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
@@ -651,6 +853,200 @@ export default function AdminProductsTab({
               />
             </div>
           </div>
+
+          {/* Edit Product Weights */}
+          <div className="flex flex-col gap-2.5 border border-[#eeddb9]/60 rounded-xl p-4 bg-stone-50/15 font-jakarta animate-fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 border-b border-[#eeddb9]/45 pb-2.5">
+              <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">Available Weight Variants & Custom Prices</label>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  placeholder="e.g. 750 g or 2 kg"
+                  value={customWeightEdit}
+                  onChange={(e) => setCustomWeightEdit(e.target.value)}
+                  className="h-8 px-3 bg-white border border-[#eeddb9] rounded-lg text-xs placeholder-stone-400 focus:outline-none focus:border-[#384401] w-36 font-semibold"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cleanName = customWeightEdit.trim();
+                    if (!cleanName) return;
+                    
+                    const currentWeights = (editingProduct.weights || []) as any[];
+                    // Prevent duplicates
+                    const exists = currentWeights.some(w => {
+                      const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                      return name.toLowerCase().replace(/\s+/g, '') === cleanName.toLowerCase().replace(/\s+/g, '');
+                    });
+                    if (exists) {
+                      alert('This variant already exists!');
+                      return;
+                    }
+                    
+                    const basePrice = editingProduct.price || 0;
+                    setEditingProduct({
+                      ...editingProduct,
+                      weights: [...currentWeights, { weight: cleanName, price: basePrice }]
+                    });
+                    setCustomWeightEdit('');
+                  }}
+                  className="bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                >
+                  + Add Option
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
+              {(() => {
+                const defaultSizes = ['250 g', '500 g', '1 kg'];
+                const currentWeights = (editingProduct.weights || []) as any[];
+                const existingNames = currentWeights.map((w: any) => typeof w === 'object' && w !== null && w.weight ? w.weight : w);
+                const allSizes = Array.from(new Set([...defaultSizes, ...existingNames]));
+                
+                return allSizes.map(weight => {
+                  // Check if this weight is currently checked/active
+                  const matchingItem = currentWeights.find((w: any) => {
+                    const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                    return name === weight;
+                  });
+                  const hasWeight = !!matchingItem;
+                  
+                  // Get the current price value for this weight
+                  let currentPriceValue = 0;
+                  if (hasWeight) {
+                    if (typeof matchingItem === 'object' && matchingItem !== null && typeof matchingItem.price === 'number') {
+                      currentPriceValue = matchingItem.price;
+                    } else {
+                      const basePrice = editingProduct.price || 0;
+                      currentPriceValue = weight === '250 g' ? Math.round(basePrice * 0.6) : weight === '1 kg' ? Math.round(basePrice * 1.8) : basePrice;
+                    }
+                  } else {
+                    const basePrice = editingProduct.price || 0;
+                    currentPriceValue = weight === '250 g' ? Math.round(basePrice * 0.6) : weight === '1 kg' ? Math.round(basePrice * 1.8) : basePrice;
+                  }
+
+                  return (
+                    <div key={weight} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 border border-[#eeddb9] rounded-xl animate-fade-in shadow-2xs">
+                      <div className="flex items-center gap-2.5 flex-grow">
+                        <input
+                          type="checkbox"
+                          checked={hasWeight}
+                          onChange={(e) => {
+                            let newWeights = [...currentWeights];
+                            if (e.target.checked) {
+                              newWeights.push({ weight, price: currentPriceValue });
+                            } else {
+                              newWeights = newWeights.filter((w: any) => {
+                                const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                                return name !== weight;
+                              });
+                            }
+                            setEditingProduct({ ...editingProduct, weights: newWeights });
+                          }}
+                          className="rounded border-[#d3c099] text-[#384401] focus:ring-[#384401] cursor-pointer"
+                        />
+                        
+                        {renamingWeightEdit === weight ? (
+                          <div className="flex items-center gap-1.5 flex-grow max-w-[200px]">
+                            <input
+                              type="text"
+                              value={renameValueEdit}
+                              onChange={(e) => setRenameValueEdit(e.target.value)}
+                              className="h-8 px-2 bg-white border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401] w-full"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const cleanRename = renameValueEdit.trim();
+                                if (!cleanRename) return;
+                                const updated = currentWeights.map((w: any) => {
+                                  const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                                  if (name === weight) {
+                                    return typeof w === 'object' && w !== null ? { ...w, weight: cleanRename } : { weight: cleanRename, price: editingProduct.price };
+                                  }
+                                  return w;
+                                });
+                                setEditingProduct({ ...editingProduct, weights: updated });
+                                setRenamingWeightEdit(null);
+                              }}
+                              className="p-1 bg-[#384401] text-white rounded-md hover:bg-[#252d00] cursor-pointer shrink-0"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setRenamingWeightEdit(null)}
+                              className="p-1 border border-stone-250 text-stone-500 rounded-md hover:bg-stone-50 cursor-pointer shrink-0"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-stone-750">{weight} Variant</span>
+                            {!defaultSizes.includes(weight) && (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setRenamingWeightEdit(weight);
+                                    setRenameValueEdit(weight);
+                                  }}
+                                  className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md transition-colors cursor-pointer"
+                                  title="Rename Variant"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = currentWeights.filter((w: any) => {
+                                      const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                                      return name !== weight;
+                                    });
+                                    setEditingProduct({ ...editingProduct, weights: updated });
+                                  }}
+                                  className="p-1 text-red-400 hover:text-red-650 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
+                                  title="Delete Variant"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {hasWeight && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs text-stone-500 font-bold">Custom Price:</span>
+                          <div className="relative w-28">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-500">₹</span>
+                            <input
+                              type="number"
+                              value={currentPriceValue}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                const newWeights = currentWeights.map((w: any) => {
+                                  const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                                  if (name === weight) {
+                                    return { weight, price: val };
+                                  }
+                                  return w;
+                                });
+                                setEditingProduct({ ...editingProduct, weights: newWeights });
+                              }}
+                              className="w-full h-8 pl-6 pr-2 bg-stone-50 border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401]"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold text-stone-650">Product Image (Change file)</label>
@@ -947,29 +1343,50 @@ export default function AdminProductsTab({
                       <h4 className="font-extrabold text-stone-850 group-hover:text-[#384401] text-sm font-jakarta mt-1.5 transition-colors">{p.name}</h4>
                       <p className="text-sm text-stone-500 font-jakarta mt-1 line-clamp-2 leading-relaxed">{p.description}</p>
                     </div>
-                    <div className="flex justify-between items-center pt-3 border-t border-stone-150">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-stone-955">₹{p.price}</span>
-                        <span className="text-sm text-stone-455 font-jakarta">Stock: {p.stock}</span>
+                    <div className="flex flex-col gap-3 pt-3 border-t border-stone-150">
+                      <div className="flex flex-col gap-1.5 w-full font-jakarta">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-stone-955 text-sm">₹{p.price} (Base)</span>
+                        </div>
+                        {p.weights && p.weights.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-stone-600">
+                            {((p.weights || []) as any[]).map((w: any, idx: number) => {
+                              const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                              const wPrice = typeof w === 'object' && w !== null && typeof w.price === 'number' ? w.price : (
+                                wName === '250 g' ? Math.round(p.price * 0.6) : wName === '1 kg' ? Math.round(p.price * 1.8) : p.price
+                              );
+                              return (
+                                <span key={idx} className="flex items-center gap-2 whitespace-nowrap">
+                                  <span>{wName}: <span className="font-bold text-stone-850">₹{wPrice}</span></span>
+                                  {idx < (p.weights?.length ?? 0) - 1 && <span className="text-stone-300 font-normal">|</span>}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex gap-3 items-center" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => {
-                            setShowAddProduct(false);
-                            setEditingProduct(p);
-                          }}
-                          className="flex items-center gap-1 text-stone-600 hover:text-[#384401] text-sm font-bold cursor-pointer"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                          Modify
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProduct(p.id)}
-                          className="flex items-center gap-1 text-red-650 hover:text-red-800 text-sm font-bold cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          Delete
-                        </button>
+                      <div className="flex justify-between items-center w-full">
+                        <span className="text-xs text-stone-455 font-jakarta">Stock: {p.stock} units</span>
+                        <div className="flex gap-3 items-center" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => {
+                              setShowAddProduct(false);
+                              setEditingProduct(p);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="flex items-center gap-1 text-stone-600 hover:text-[#384401] text-sm font-bold cursor-pointer"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProduct(p.id)}
+                            className="flex items-center gap-1 text-red-650 hover:text-red-800 text-sm font-bold cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -993,6 +1410,7 @@ export default function AdminProductsTab({
                         <th className="p-3.5 pl-5 border border-[#eeddb9]">S.No</th>
                         <th className="p-3.5 border border-[#eeddb9]">Product Name</th>
                         <th className="p-3.5 border border-[#eeddb9]">Price</th>
+                        <th className="p-3.5 border border-[#eeddb9]">Variants</th>
                         <th className="p-3.5 border border-[#eeddb9]">Stock</th>
                         <th className="p-3.5 pr-5 border border-[#eeddb9] text-right">Actions</th>
                       </tr>
@@ -1005,12 +1423,33 @@ export default function AdminProductsTab({
                             setShowAddProduct(false);
                             setShowAddCategory(false);
                             setEditingProduct(p);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
                           }}
                           className="hover:bg-stone-50/60 font-semibold cursor-pointer transition-colors"
                         >
                           <td className="p-3.5 pl-5 text-stone-900 border border-[#eeddb9]">{idx + 1}</td>
                           <td className="p-3.5 text-[#384401] font-bold border border-[#eeddb9]">{p.name}</td>
-                          <td className="p-3.5 text-stone-900 border border-[#eeddb9]">₹{p.price}</td>
+                          <td className="p-3.5 text-stone-900 border border-[#eeddb9] font-bold">₹{p.price}</td>
+                          <td className="p-3.5 border border-[#eeddb9]">
+                            {p.weights && p.weights.length > 0 ? (
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-700 font-jakarta max-w-[340px]">
+                                {((p.weights || []) as any[]).map((w: any, idx: number) => {
+                                  const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                                  const wPrice = typeof w === 'object' && w !== null && typeof w.price === 'number' ? w.price : (
+                                    wName === '250 g' ? Math.round(p.price * 0.6) : wName === '1 kg' ? Math.round(p.price * 1.8) : p.price
+                                  );
+                                  return (
+                                    <span key={idx} className="flex items-center gap-2 whitespace-nowrap">
+                                      <span>{wName}: <span className="font-bold text-stone-900">₹{wPrice}</span></span>
+                                      {idx < (p.weights?.length ?? 0) - 1 && <span className="text-stone-300 font-normal">|</span>}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-stone-400 font-bold">—</span>
+                            )}
+                          </td>
                           <td className="p-3.5 border border-[#eeddb9]">
                             <span className={`px-2 py-0.5 rounded-full text-sm font-bold ${p.stock < 10 ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-700'}`}>
                               {p.stock} units
@@ -1022,10 +1461,11 @@ export default function AdminProductsTab({
                                 onClick={() => {
                                   setShowAddProduct(false);
                                   setEditingProduct(p);
+                                  window.scrollTo({ top: 0, behavior: 'smooth' });
                                 }}
                                 className="text-stone-600 hover:text-[#384401] font-bold flex items-center gap-1 cursor-pointer"
                               >
-                                <Edit className="w-3.5 h-3.5" /> Modify
+                                <Edit className="w-3.5 h-3.5" /> Edit
                               </button>
                               <button
                                 onClick={() => handleDeleteProduct(p.id)}

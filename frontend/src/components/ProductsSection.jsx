@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Star, ShoppingCart, Minus, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { getVariantPrice } from '@/lib/variantPrice';
 
 export default function ProductsSection() {
   const router = useRouter();
@@ -124,7 +125,8 @@ export default function ProductsSection() {
         <div className="flex flex-wrap justify-center gap-6 md:gap-8 w-full">
           {products.map((product) => {
             const currentQty = quantities[product.id] || 1;
-            const currentWeight = selectedWeights[product.id] || product.weights[0];
+            const firstWeight = (typeof product.weights[0] === 'object' && product.weights[0] !== null && product.weights[0].weight) ? product.weights[0].weight : product.weights[0];
+            const currentWeight = selectedWeights[product.id] || firstWeight;
             return (
               <div 
                 key={product.id} 
@@ -181,8 +183,8 @@ export default function ProductsSection() {
 
                   {/* Pricing */}
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="text-[#1a110a] font-jakarta font-bold text-xl">₹{product.price}</span>
-                    <span className="text-[#8e7e6f] font-jakarta text-sm line-through">₹{product.originalPrice}</span>
+                    <span className="text-[#1a110a] font-jakarta font-bold text-xl">₹{getVariantPrice(product.price, currentWeight, product.weights)}</span>
+                    <span className="text-[#8e7e6f] font-jakarta text-sm line-through">₹{getVariantPrice(product.originalPrice, currentWeight, product.weights)}</span>
                     <span className="bg-[#e2edd3] text-[#384401] font-jakarta text-[10px] font-bold px-1.5 py-0.5 rounded-md">
                       {product.discount}
                     </span>
@@ -193,22 +195,25 @@ export default function ProductsSection() {
                     <div className="flex items-center gap-1">
                       <span className="text-[#1a110a] font-jakarta text-xs font-bold mr-1">Weight:</span>
                       <div className="flex gap-1">
-                        {product.weights.map((w) => (
-                          <button
-                            key={w}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleWeightChange(product.id, w);
-                            }}
-                            className={`px-2 py-0.5 text-[10px] font-jakarta font-semibold rounded-md border transition-all cursor-pointer ${
-                              currentWeight === w
-                                ? 'bg-[#ede2d3] border-[#cbb396] text-[#3e2c1c]'
-                                : 'bg-white border-[#ebdcc1] text-[#6d5e50] hover:bg-[#fcfbf9]'
-                            }`}
-                          >
-                            {w}
-                          </button>
-                        ))}
+                        {product.weights.map((w) => {
+                          const wName = (typeof w === 'object' && w !== null && w.weight) ? w.weight : w;
+                          return (
+                            <button
+                              key={wName}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleWeightChange(product.id, wName);
+                              }}
+                              className={`px-2 py-0.5 text-[10px] font-jakarta font-semibold rounded-md border transition-all cursor-pointer ${
+                                currentWeight === wName
+                                  ? 'bg-[#ede2d3] border-[#cbb396] text-[#3e2c1c]'
+                                  : 'bg-white border-[#ebdcc1] text-[#6d5e50] hover:bg-[#fcfbf9]'
+                              }`}
+                            >
+                              {wName}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 

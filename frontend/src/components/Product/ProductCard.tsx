@@ -1,8 +1,9 @@
 'use client';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Star, Minus, Plus } from 'lucide-react';
 import { useApp } from '@/lib/context/AppContext';
+import { getVariantPrice } from '@/lib/variantPrice';
 
 interface ProductCardProps {
   product: {
@@ -26,10 +27,17 @@ interface ProductCardProps {
 export default function ProductCard({ product, highlighted }: ProductCardProps) {
   const router = useRouter();
   const { addToCart, cart } = useApp();
-  const weights = product.weights || ['250g', '500g', '1kg'];
+  const rawWeights = product.weights || ['250g', '500g', '1kg'];
+  const weights = useMemo(() => {
+    return rawWeights.map((w: any) => (typeof w === 'object' && w !== null && w.weight) ? w.weight : w);
+  }, [product.weights]);
   const [selectedWeight, setSelectedWeight] = useState(weights[0]);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+
+  // Calculate variant prices dynamically
+  const currentPrice = getVariantPrice(product.price, selectedWeight, product.weights);
+  const currentOriginalPrice = product.originalPrice ? getVariantPrice(product.originalPrice, selectedWeight, product.weights) : undefined;
 
   // Lazy-load video: only autoplay when the card is visible in viewport
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -59,7 +67,7 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
     return () => observer.disconnect();
   }, [product.video]);
 
-  const isItemInCart = React.useMemo(() => {
+  const isItemInCart = useMemo(() => {
     return cart.some(item => 
       item.id === product.id && 
       item.weight.replace(/\s+/g, '') === selectedWeight.replace(/\s+/g, '')
@@ -99,7 +107,7 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
     addToCart({
       id: product.id,
       name: product.name,
-      price: product.price,
+      price: currentPrice,
       weight: selectedWeight,
       category: category
     }, qty);
@@ -112,7 +120,7 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
     addToCart({
       id: product.id,
       name: product.name,
-      price: product.price,
+      price: currentPrice,
       weight: selectedWeight,
       category: category
     }, qty);
@@ -173,8 +181,8 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
 
         {/* Pricing */}
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-[#1a110a] font-jakarta font-bold text-xl">₹{product.price}</span>
-          <span className="text-[#8e7e6f] font-jakarta text-sm line-through">₹{originalPrice}</span>
+          <span className="text-[#1a110a] font-jakarta font-bold text-xl">₹{currentPrice}</span>
+          <span className="text-[#8e7e6f] font-jakarta text-sm line-through">₹{currentOriginalPrice || originalPrice}</span>
           <span className="bg-[#e2edd3] text-[#384401] font-jakarta text-[10px] font-bold px-1.5 py-0.5 rounded-md">
             {discount}
           </span>

@@ -148,6 +148,7 @@ export default function AdminPage() {
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
   const [orderSearch, setOrderSearch] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('All');
+  const [newProdWeights, setNewProdWeights] = useState<string[]>(['250 g', '500 g', '1 kg']);
 
   // Sales State
   const [categorySales, setCategorySales] = useState<{ category: string; amount: number }[]>([]);
@@ -509,7 +510,7 @@ export default function AdminPage() {
           badge: newProdBadge || undefined,
           stock: newProdStock,
           purchasePrice: Math.floor(newProdPrice * 0.65),
-          weights: ['250 g', '500 g', '1 kg'],
+          weights: newProdWeights,
           imageUrl: newProdImage || null,
           videoUrl: newProdVideo || null,
           benefits: newProdBenefits ? newProdBenefits.split(',').map(s => s.trim()) : ['Traditional Nutrition', 'Easy to Digest', 'Natural Goodness'],
@@ -908,6 +909,8 @@ export default function AdminPage() {
                 handleUpdateProduct={handleUpdateProduct}
                 handleDeleteProduct={handleDeleteProduct}
                 filteredProducts={filteredProducts}
+                newProdWeights={newProdWeights}
+                setNewProdWeights={setNewProdWeights}
                 triggerAlert={triggerAlert}
               />
             )}

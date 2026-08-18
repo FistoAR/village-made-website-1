@@ -106,11 +106,7 @@ export default function Navbar({
 
   const navLinks = [
     { label: 'Home', href: isHero ? '#' : '/' },
-    { label: 'Our Story', href: isHero ? '#our-story' : '/#our-story' },
-    { label: 'Why Us', href: isHero ? '#why-choose' : '/#why-choose' },
     { label: 'Products', href: '/products', isExternal: true },
-    { label: 'Gallery', href: isHero ? '#gallery' : '/#gallery' },
-    { label: 'Testimonials', href: isHero ? '#testimonials' : '/#testimonials' },
     { label: 'Contact', href: '/contact', isExternal: true },
   ];
 

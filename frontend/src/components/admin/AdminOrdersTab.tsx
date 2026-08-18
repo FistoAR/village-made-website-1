@@ -10,6 +10,8 @@ interface AdminOrdersTabProps {
   selectedOrder: AdminOrder | null;
   setSelectedOrder: React.Dispatch<React.SetStateAction<AdminOrder | null>>;
   handleOrderStatusUpdate: (orderId: string, newStatus: string, remarks?: string) => void;
+  orderSearch?: string;
+  setOrderSearch?: (val: string) => void;
 }
 
 export default function AdminOrdersTab({
@@ -17,16 +19,22 @@ export default function AdminOrdersTab({
   selectedOrder,
   setSelectedOrder,
   handleOrderStatusUpdate,
+  orderSearch,
+  setOrderSearch,
 }: AdminOrdersTabProps) {
   const comingSoon = false; // Set to false to enable orders tab
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   // Filter States
-  const [searchQuery, setSearchQuery] = useState('');
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+  const searchQuery = orderSearch !== undefined ? orderSearch : localSearchQuery;
+  const setSearchQuery = setOrderSearch !== undefined ? setOrderSearch : setLocalSearchQuery;
   const [statusFilter, setStatusFilter] = useState('All');
   const [paymentFilter, setPaymentFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('All');
+  const [customFromDate, setCustomFromDate] = useState('');
+  const [customToDate, setCustomToDate] = useState('');
   const [sortBy, setSortBy] = useState('newest');
 
   // Status & Remarks update state
@@ -98,6 +106,22 @@ export default function AdminOrdersTab({
         const thirtyDaysAgo = new Date(today);
         thirtyDaysAgo.setDate(today.getDate() - 30);
         matchesDate = orderDate >= thirtyDaysAgo;
+      } else if (dateFilter === 'custom') {
+        const checkDate = new Date(orderDate);
+        checkDate.setHours(0, 0, 0, 0);
+        let startMatch = true;
+        let endMatch = true;
+        if (customFromDate) {
+          const from = new Date(customFromDate);
+          from.setHours(0, 0, 0, 0);
+          startMatch = checkDate >= from;
+        }
+        if (customToDate) {
+          const to = new Date(customToDate);
+          to.setHours(23, 59, 59, 999);
+          endMatch = checkDate <= to;
+        }
+        matchesDate = startMatch && endMatch;
       }
     }
 
@@ -132,7 +156,19 @@ export default function AdminOrdersTab({
     // Subtitle Row
     worksheet.mergeCells('A2:K2');
     const subtitleCell = worksheet.getCell('A2');
-    subtitleCell.value = `Generated: ${new Date().toLocaleString()} | Filtered Count: ${sortedOrders.length} orders`;
+    const formatExcelDateTime = (date: Date) => {
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      let hrs = date.getHours();
+      const mins = String(date.getMinutes()).padStart(2, '0');
+      const secs = String(date.getSeconds()).padStart(2, '0');
+      const ampm = hrs >= 12 ? 'PM' : 'AM';
+      hrs = hrs % 12;
+      hrs = hrs ? hrs : 12;
+      return `${d}/${m}/${y}, ${String(hrs).padStart(2, '0')}:${mins}:${secs} ${ampm}`;
+    };
+    subtitleCell.value = `Generated: ${formatExcelDateTime(new Date())} | Filtered Count: ${sortedOrders.length} orders`;
     subtitleCell.font = { name: 'Segoe UI', size: 10, italic: true };
     subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -450,7 +486,7 @@ export default function AdminOrdersTab({
   // Reset page when filter or search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [sortedOrders.length, statusFilter, paymentFilter, dateFilter, searchQuery]);
+  }, [sortedOrders.length, statusFilter, paymentFilter, dateFilter, searchQuery, customFromDate, customToDate]);
 
   const totalPages = Math.ceil(sortedOrders.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -551,9 +587,34 @@ export default function AdminOrdersTab({
               <option value="today">Today</option>
               <option value="7days">Last 7 Days</option>
               <option value="30days">Last 30 Days</option>
+              <option value="custom">Custom Date Range</option>
             </select>
           </div>
         </div>
+
+        {/* Custom date range picker sub-panel */}
+        {dateFilter === 'custom' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-3.5 border-t border-stone-100">
+            <div className="space-y-1">
+              <label className="text-xs font-extrabold uppercase text-stone-500 tracking-wider">From Date</label>
+              <input
+                type="date"
+                value={customFromDate}
+                onChange={(e) => setCustomFromDate(e.target.value)}
+                className="w-full h-10 px-3.5 bg-stone-50/50 hover:bg-stone-50 border border-[#d3c099] rounded-xl text-sm focus:outline-none font-medium focus:border-[#384401] focus:ring-1 focus:ring-[#384401]"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-extrabold uppercase text-stone-500 tracking-wider">To Date</label>
+              <input
+                type="date"
+                value={customToDate}
+                onChange={(e) => setCustomToDate(e.target.value)}
+                className="w-full h-10 px-3.5 bg-stone-50/50 hover:bg-stone-50 border border-[#d3c099] rounded-xl text-sm focus:outline-none font-medium focus:border-[#384401] focus:ring-1 focus:ring-[#384401]"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Sorting row */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3.5 border-t border-stone-100 mt-2 text-xs font-semibold text-stone-500">

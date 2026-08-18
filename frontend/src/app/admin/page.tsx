@@ -232,6 +232,28 @@ export default function AdminPage() {
     }
   }, []);
 
+  // Sync activeTab with URL query parameters to support refreshing and routing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') as AdminTab;
+      if (tabParam && ['dashboard', 'inventory', 'customers', 'products', 'orders', 'sales', 'banners', 'media', 'admin-profile'].includes(tabParam)) {
+        setActiveTab(tabParam);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && activeTab) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') !== activeTab) {
+        params.set('tab', activeTab);
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+      }
+    }
+  }, [activeTab]);
+
   const handleSync = async () => {
     setLoading(true);
     setError('');
@@ -1054,6 +1076,9 @@ export default function AdminPage() {
                 filteredCustomers={filteredCustomers}
                 customerSearch={customerSearch}
                 setCustomerSearch={setCustomerSearch}
+                orders={orders}
+                setActiveTab={setActiveTab}
+                setOrderSearch={setOrderSearch}
               />
             )}
 
@@ -1132,6 +1157,8 @@ export default function AdminPage() {
                 selectedOrder={selectedOrder}
                 setSelectedOrder={setSelectedOrder}
                 handleOrderStatusUpdate={handleOrderStatusUpdate}
+                orderSearch={orderSearch}
+                setOrderSearch={setOrderSearch}
               />
             )}
 

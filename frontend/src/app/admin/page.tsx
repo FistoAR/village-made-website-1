@@ -1167,6 +1167,7 @@ export default function AdminPage() {
                 categorySales={categorySales}
                 leaderboard={leaderboard}
                 totalSales={stats.totalSales}
+                orders={orders}
               />
             )}
 

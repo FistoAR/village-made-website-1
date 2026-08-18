@@ -46,37 +46,7 @@ const DEFAULT_FILTERS: FilterState = {
   inStockOnly: false,
 };
 
-const CATEGORIES = [
-  { id: 'malt', name: 'Malt', count: 6 },
-  { id: 'health-mix', name: 'Natural Health Mix', count: 4 },
-  { id: 'millets', name: 'Millets', count: 6 },
-  { id: 'flours', name: 'Millet Flours', count: 6 },
-  { id: 'tiffin-mix', name: 'Millet Tiffin mix', count: 4 },
-  { id: 'noodles', name: 'Millet Noodles', count: 5 },
-  { id: 'rice', name: 'Rice', count: 6 },
-  { id: 'sugar', name: 'Natural Sugar', count: 5 },
-  { id: 'cookies', name: 'Millet Cookies', count: 6 },
-  { id: 'snacks', name: 'Snacks', count: 7 },
-];
-
-const CATEGORY_MAP: Record<string, string> = {
-  malt: 'Malt',
-  'health-mix': 'Natural Health Mix',
-  millets: 'Millets',
-  flours: 'Millet Flours',
-  'tiffin-mix': 'Millet Tiffin mix',
-  noodles: 'Millet Noodles',
-  rice: 'Rice',
-  sugar: 'Natural Sugar',
-  cookies: 'Millet Cookies',
-  snacks: 'Snacks',
-};
-
-function matchesCategory(product: Product, catId: string): boolean {
-  return product.category === CATEGORY_MAP[catId];
-}
-
-/** Highlight matching substring in a string */
+// Highlight matching substring in a string
 function Highlight({ text, query }: { text: string; query: string }) {
   if (!query.trim()) return <>{text}</>;
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
@@ -435,15 +405,15 @@ function FiltersDropdown({ filters, onChange, productPriceRange }: {
 }
 
 /** Active filter pill bar */
-function ActiveFilterBar({ searchQuery, selectedCategoryId, sortBy, filters, productPriceRange, onClearSearch, onClearCategory, onClearSort, onClearPriceRange, onClearTag, onClearInStock, onClearAll }: {
-  searchQuery: string; selectedCategoryId: string; sortBy: string; filters: FilterState; productPriceRange: { min: number; max: number };
+function ActiveFilterBar({ searchQuery, selectedCategoryId, selectedCategoryName, sortBy, filters, productPriceRange, onClearSearch, onClearCategory, onClearSort, onClearPriceRange, onClearTag, onClearInStock, onClearAll }: {
+  searchQuery: string; selectedCategoryId: string; selectedCategoryName: string; sortBy: string; filters: FilterState; productPriceRange: { min: number; max: number };
   onClearSearch: () => void; onClearCategory: () => void; onClearSort: () => void; onClearPriceRange: () => void;
   onClearTag: (tag: string) => void; onClearInStock: () => void; onClearAll: () => void;
 }) {
   const hasPriceFilter = filters.priceMin > productPriceRange.min || filters.priceMax < productPriceRange.max;
   const pills: { key: string; label: string; onRemove: () => void }[] = [];
   if (searchQuery) pills.push({ key: 'search', label: `"${searchQuery}"`, onRemove: onClearSearch });
-  if (selectedCategoryId) pills.push({ key: 'cat', label: CATEGORY_MAP[selectedCategoryId] ?? selectedCategoryId, onRemove: onClearCategory });
+  if (selectedCategoryId) pills.push({ key: 'cat', label: selectedCategoryName || selectedCategoryId, onRemove: onClearCategory });
   if (sortBy !== 'default') pills.push({ key: 'sort', label: SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? sortBy, onRemove: onClearSort });
   if (hasPriceFilter) pills.push({ key: 'price', label: `\u20B9${filters.priceMin}\u2013\u20B9${filters.priceMax}`, onRemove: onClearPriceRange });
   filters.tags.forEach((tag) => pills.push({ key: `tag-${tag}`, label: tag === 'best-seller' ? '\u{1F3C6} Best Seller' : '\u2B50 Kids Favourite', onRemove: () => onClearTag(tag) }));
@@ -473,14 +443,16 @@ function ActiveFilterBar({ searchQuery, selectedCategoryId, sortBy, filters, pro
 function CategoryDropdown({
   value,
   onChange,
+  categories,
 }: {
   value: string;
   onChange: (id: string) => void;
+  categories: { id: string; name: string; count: number }[];
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const selected = CATEGORIES.find((c) => c.id === value) ?? null;
+  const selected = categories.find((c) => c.id === value) ?? null;
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -538,7 +510,7 @@ function CategoryDropdown({
 
           {/* Options */}
           <ul className="py-2 max-h-72 overflow-y-auto">
-            {CATEGORIES.map((cat) => {
+            {categories.map((cat) => {
               const active = cat.id === value;
               return (
                 <li key={cat.id}>
@@ -608,6 +580,31 @@ export default function ProductsClientContainer({ initialProducts }: { initialPr
     return dbProducts && dbProducts.length > 0 ? dbProducts : initialProducts;
   }, [dbProducts, initialProducts]);
 
+  // Dynamically compute categories and counts from actual products list
+  const dynamicCategories = useMemo(() => {
+    const counts: Record<string, number> = {};
+    productsList.forEach((p) => {
+      const cat = p.category || 'Malt';
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, count]) => {
+      const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      return { id, name, count };
+    });
+  }, [productsList]);
+
+  const dynamicCategoryMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    dynamicCategories.forEach((cat) => {
+      map[cat.id] = cat.name;
+    });
+    return map;
+  }, [dynamicCategories]);
+
+  const matchesCategory = useCallback((product: Product, catId: string): boolean => {
+    return product.category === dynamicCategoryMap[catId];
+  }, [dynamicCategoryMap]);
+
   const productPriceRange = useMemo(() => {
     if (productsList.length === 0) return { min: 0, max: 500 };
     const prices = productsList.map((p) => p.price);
@@ -648,8 +645,8 @@ export default function ProductsClientContainer({ initialProducts }: { initialPr
   }, [filteredProducts, sortBy]);
 
   const categoriesToRender = useMemo(() =>
-    CATEGORIES.filter((cat) => sortedProducts.some((p) => matchesCategory(p, cat.id))),
-    [sortedProducts]
+    dynamicCategories.filter((cat) => sortedProducts.some((p) => matchesCategory(p, cat.id))),
+    [sortedProducts, dynamicCategories, matchesCategory]
   );
 
   const hasAnyFilter = !!searchQuery || !!selectedCategoryId || sortBy !== 'default' || filters.tags.length > 0 || filters.inStockOnly || filters.priceMin > productPriceRange.min || filters.priceMax < productPriceRange.max;
@@ -728,7 +725,7 @@ export default function ProductsClientContainer({ initialProducts }: { initialPr
           <div className="w-px h-6 bg-[#DBCFB0] shrink-0 hidden sm:block" />
 
           {/* Category Dropdown */}
-          <CategoryDropdown value={selectedCategoryId} onChange={(id) => { setSelectedCategoryId(id); setSearchQuery(''); }} />
+          <CategoryDropdown value={selectedCategoryId} onChange={(id) => { setSelectedCategoryId(id); setSearchQuery(''); }} categories={dynamicCategories} />
 
           {/* Sort By Dropdown */}
           <SortByDropdown value={sortBy} onChange={setSortBy} />
@@ -762,6 +759,7 @@ export default function ProductsClientContainer({ initialProducts }: { initialPr
       <ActiveFilterBar
         searchQuery={searchQuery}
         selectedCategoryId={selectedCategoryId}
+        selectedCategoryName={dynamicCategoryMap[selectedCategoryId] || selectedCategoryId}
         sortBy={sortBy}
         filters={filters}
         productPriceRange={productPriceRange}

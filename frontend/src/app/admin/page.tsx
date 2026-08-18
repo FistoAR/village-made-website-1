@@ -705,15 +705,10 @@ export default function AdminPage() {
       : 100;
     const derivedPrice = firstVariantPrice || 100;
 
-    const catMap: Record<string, string> = {
-      'Malt': 'malt',
-      'Natural Health Mix': 'natural-health-mix',
-      'Millets': 'millets',
-      'Millet Flours': 'millet-flours',
-      'Millet Tiffin mix': 'millet-tiffin-mix',
-      'Millet Noodles': 'millet-noodles'
-    };
-    const categoryId = catMap[newProdCat] || 'malt';
+    const foundCategory = categories.find(
+      c => c.name.toLowerCase().trim() === (newProdCat || '').toLowerCase().trim()
+    );
+    const categoryId = foundCategory ? foundCategory.id : 'malt';
     const newId = `p-new-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const structuredIngredients = {
@@ -799,15 +794,10 @@ export default function AdminPage() {
       : (editingProduct.price || 100);
     const derivedPrice = firstVariantPrice || 100;
 
-    const catMap: Record<string, string> = {
-      'Malt': 'malt',
-      'Natural Health Mix': 'natural-health-mix',
-      'Millets': 'millets',
-      'Millet Flours': 'millet-flours',
-      'Millet Tiffin mix': 'millet-tiffin-mix',
-      'Millet Noodles': 'millet-noodles'
-    };
-    const categoryId = catMap[editingProduct.category] || 'malt';
+    const foundCategory = categories.find(
+      c => c.name.toLowerCase().trim() === (editingProduct.category || '').toLowerCase().trim()
+    );
+    const categoryId = foundCategory ? foundCategory.id : 'malt';
 
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';

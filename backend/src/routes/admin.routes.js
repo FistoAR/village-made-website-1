@@ -55,7 +55,7 @@ adminRouter.get('/dashboard', async (req, res, next) => {
  */
 adminRouter.get('/customers', async (req, res, next) => {
   try {
-    const result = await query('SELECT id, name, email, mobile, phone, created_at FROM users ORDER BY id DESC');
+    const result = await query(`SELECT id, name, email, mobile, phone, created_at FROM users WHERE role = $1 ORDER BY id DESC`, ['customer']);
     return res.status(200).json({
       success: true,
       customers: result.rows

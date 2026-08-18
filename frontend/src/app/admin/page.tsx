@@ -1010,7 +1010,7 @@ export default function AdminPage() {
               { id: 'orders', label: 'Order Dispatch', icon: ShoppingBag },
               { id: 'sales', label: 'Sales Reports', icon: DollarSign },
               { id: 'banners', label: 'Offer Banners', icon: Sparkles },
-              { id: 'media', label: 'Media Library', icon: FolderOpen },
+              { id: 'media', label: 'Gallery Media', icon: FolderOpen },
               { id: 'admin-profile', label: 'Admin Profile', icon: Settings }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -1178,13 +1178,7 @@ export default function AdminPage() {
             )}
 
             {activeTab === 'media' && (
-              <AdminMediaTab
-                newMediaUrl={newMediaUrl}
-                setNewMediaUrl={setNewMediaUrl}
-                handleAddMedia={handleAddMedia}
-                mediaFiles={mediaFiles}
-                setMediaFiles={setMediaFiles}
-              />
+              <AdminMediaTab />
             )}
 
             {activeTab === 'admin-profile' && (

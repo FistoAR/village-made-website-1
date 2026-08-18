@@ -132,6 +132,17 @@ export async function initDb() {
     ALTER TABLE users DROP COLUMN IF EXISTS reviews;
     ALTER TABLE users DROP COLUMN IF EXISTS notifications;
 
+    -- Gallery Items Table
+    CREATE TABLE IF NOT EXISTS gallery_items (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      url VARCHAR(512) NOT NULL,
+      type VARCHAR(50) DEFAULT 'image', -- 'image', 'video', 'youtube'
+      display_order INTEGER DEFAULT 0,
+      active BOOLEAN DEFAULT true,
+      last_updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+
     -- Indexing for Optimization
     CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews(product_id);
     CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);
@@ -328,6 +339,27 @@ export async function initDb() {
       );
     }
     console.log('✅  Coupons synced.');
+
+    // Seed default gallery items
+    const galleryCheck = await query("SELECT COUNT(*) FROM gallery_items");
+    if (parseInt(galleryCheck.rows[0].count, 10) === 0) {
+      console.log('🔄  Seeding default gallery items...');
+      const defaultGallery = [
+        { title: 'Organic Farming in the Village', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', type: 'youtube', display_order: 1 },
+        { title: 'Making Multi Grain Malt', url: 'https://www.youtube.com/watch?v=9xvca52T_3E', type: 'youtube', display_order: 2 },
+        { title: 'Traditional Stone Milling', url: 'https://www.youtube.com/watch?v=Z1Yd7eM957Q', type: 'youtube', display_order: 3 },
+        { title: 'Hygienic Packaging Process', url: 'https://www.youtube.com/watch?v=ScMzIvxBSi4', type: 'youtube', display_order: 4 },
+        { title: 'Fresh Delivery to Your Home', url: 'https://www.youtube.com/watch?v=EngW7tLk6R8', type: 'youtube', display_order: 5 }
+      ];
+      for (const item of defaultGallery) {
+        await query(
+          `INSERT INTO gallery_items (title, url, type, display_order, active)
+           VALUES ($1, $2, $3, $4, true)`,
+          [item.title, item.url, item.type, item.display_order]
+        );
+      }
+      console.log('✅  Default gallery items seeded.');
+    }
   } catch (error) {
     console.error('❌  Error initializing relational database tables:', error);
   }

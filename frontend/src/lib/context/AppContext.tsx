@@ -89,6 +89,16 @@ export interface Ticket {
   order_ref_id?: string;
 }
 
+export interface GalleryItem {
+  id: number;
+  title: string;
+  url: string;
+  type: 'image' | 'video' | 'youtube';
+  display_order: number;
+  active: boolean;
+  last_updated?: string;
+}
+
 interface AppContextType {
   language: string;
   setLanguage: (lang: string) => void;
@@ -155,6 +165,12 @@ interface AppContextType {
   tickets: Ticket[];
   raiseTicket: (subject: string, description: string, category: string, orderId?: string) => Promise<{ success: boolean; ticket?: Ticket; error?: string }>;
   fetchUserTickets: () => Promise<void>;
+  galleryItems: GalleryItem[];
+  fetchGalleryItems: () => Promise<void>;
+  fetchAllGalleryItems: () => Promise<GalleryItem[]>;
+  createGalleryItem: (item: Omit<GalleryItem, 'id'>) => Promise<{ success: boolean; item?: GalleryItem; error?: string }>;
+  updateGalleryItem: (id: number, data: Partial<GalleryItem>) => Promise<{ success: boolean; item?: GalleryItem; error?: string }>;
+  deleteGalleryItem: (id: number) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -174,6 +190,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
 
   useEffect(() => {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5001';
@@ -294,6 +311,108 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const getDefaultGalleryItems = (): GalleryItem[] => {
+    return [
+      { id: 1, title: 'Our Multi Grain Malt', url: '/images/product-section/product-placeholder-rimage.webp', type: 'image', display_order: 1, active: true },
+      { id: 2, title: 'Hygienic Packaging', url: '/images/process-section/hygienic-packing.webp', type: 'image', display_order: 2, active: true },
+      { id: 3, title: 'Pure Ingredients', url: '/images/why-choose/why-choose-product-image.webp', type: 'image', display_order: 3, active: true },
+      { id: 4, title: 'Freshly Delivered', url: '/images/process-section/delivered-fresh.webp', type: 'image', display_order: 4, active: true },
+      { id: 5, title: 'Our Village Journey', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', type: 'youtube', display_order: 5, active: true }
+    ];
+  };
+
+  const fetchGalleryItems = async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/gallery`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.items)) {
+        setGalleryItems(data.items);
+      } else {
+        setGalleryItems(getDefaultGalleryItems());
+      }
+    } catch (err) {
+      console.warn('⚠️ Failed to load gallery items from API, using fallback:', err);
+      setGalleryItems(getDefaultGalleryItems());
+    }
+  };
+
+  const fetchAllGalleryItems = async (): Promise<GalleryItem[]> => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/gallery/all`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.items)) {
+        return data.items;
+      }
+    } catch (err) {
+      console.error('Failed to fetch all gallery items:', err);
+    }
+    return galleryItems.length > 0 ? galleryItems : getDefaultGalleryItems();
+  };
+
+  const createGalleryItem = async (newItem: Omit<GalleryItem, 'id'>) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/gallery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newItem)
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchGalleryItems();
+        return { success: true, item: data.item };
+      }
+      return { success: false, error: data.error };
+    } catch (err) {
+      console.error(err);
+      const fallbackItem: GalleryItem = { id: Date.now(), ...newItem };
+      setGalleryItems(prev => [...prev, fallbackItem]);
+      return { success: true, item: fallbackItem };
+    }
+  };
+
+  const updateGalleryItem = async (id: number, updateData: Partial<GalleryItem>) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/gallery/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchGalleryItems();
+        return { success: true, item: data.item };
+      }
+      return { success: false, error: data.error };
+    } catch (err) {
+      console.error(err);
+      setGalleryItems(prev => prev.map(item => item.id === id ? { ...item, ...updateData } : item));
+      return { success: true };
+    }
+  };
+
+  const deleteGalleryItem = async (id: number) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/gallery/${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchGalleryItems();
+        return { success: true };
+      }
+      return { success: false, error: data.error };
+    } catch (err) {
+      console.error(err);
+      setGalleryItems(prev => prev.filter(item => item.id !== id));
+      return { success: true };
+    }
+  };
+
   const toggleSound = () => setSoundOn(prev => !prev);
   
   // Get the dictionary based on current language - memoized so it only
@@ -328,6 +447,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     fetchProducts();
     fetchCategories();
+    fetchGalleryItems();
     setIsHydrated(true);
   }, []);
 
@@ -1157,6 +1277,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         tickets,
         raiseTicket,
         fetchUserTickets,
+        galleryItems,
+        fetchGalleryItems,
+        fetchAllGalleryItems,
+        createGalleryItem,
+        updateGalleryItem,
+        deleteGalleryItem,
       }}
     >
       {children}

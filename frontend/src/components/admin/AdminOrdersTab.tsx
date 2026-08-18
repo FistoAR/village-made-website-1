@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Search, X, AlertTriangle, Sparkles, SlidersHorizontal, Calendar, ArrowUpDown, CreditCard } from 'lucide-react';
 import { AdminOrder } from './types';
 import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import ExcelJS from 'exceljs';
 
 interface AdminOrdersTabProps {
   orders: AdminOrder[];
@@ -116,114 +118,189 @@ export default function AdminOrdersTab({
     return 0;
   });
 
-  const handleExportExcel = () => {
-    const rowsHTML = sortedOrders.flatMap((o) => {
+  const handleExportExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Orders Report');
+
+    // Title Row
+    worksheet.mergeCells('A1:K1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'Village Made Provisions - Detailed Orders Report';
+    titleCell.font = { name: 'Segoe UI', size: 16, bold: true, color: { argb: 'FF384401' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    // Subtitle Row
+    worksheet.mergeCells('A2:K2');
+    const subtitleCell = worksheet.getCell('A2');
+    subtitleCell.value = `Generated: ${new Date().toLocaleString()} | Filtered Count: ${sortedOrders.length} orders`;
+    subtitleCell.font = { name: 'Segoe UI', size: 10, italic: true };
+    subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    // Define Columns without headers (keys and widths only) to prevent overwriting Row 1
+    worksheet.columns = [
+      { key: 'id', width: 15 },
+      { key: 'date', width: 14 },
+      { key: 'customer', width: 26 },
+      { key: 'address', width: 45 },
+      { key: 'item', width: 32 },
+      { key: 'price', width: 12 },
+      { key: 'qty', width: 8 },
+      { key: 'subtotal', width: 12 },
+      { key: 'total', width: 14 },
+      { key: 'status', width: 18 },
+      { key: 'payment', width: 18 }
+    ];
+
+    // Table Headers Row (Row 4)
+    const headers = [
+      'Order ID',
+      'Order Date',
+      'Customer Details',
+      'Delivery Address',
+      'Item Details',
+      'Item Price',
+      'Qty',
+      'Subtotal',
+      'Grand Total',
+      'Shipping Status',
+      'Payment Status'
+    ];
+    const headerRow = worksheet.getRow(4);
+    headerRow.values = headers;
+    headerRow.height = 25;
+    headerRow.eachCell((cell) => {
+      cell.font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF384401' }
+      };
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFD3C099' } },
+        left: { style: 'thin', color: { argb: 'FFD3C099' } },
+        bottom: { style: 'thin', color: { argb: 'FFD3C099' } },
+        right: { style: 'thin', color: { argb: 'FFD3C099' } }
+      };
+    });
+
+    let currentRowNum = 5;
+
+    sortedOrders.forEach((o) => {
       const items = o.items || [];
       const rowSpan = Math.max(1, items.length);
       const paymentStatus = o.paymentStatus || (o.status === 'Returned' ? 'refunded' : 'captured');
-      const customerStr = `${o.customerName || o.address?.name || 'Guest'} (${o.customerMobile || o.address?.phone || 'N/A'})`;
+      const customerStr = `${o.customerName || o.address?.name || 'Guest'}\n(${o.customerMobile || o.address?.phone || 'N/A'})`;
       const addressStr = o.address 
         ? `${o.address.address || ''}, ${o.address.city || ''}, ${o.address.pincode || ''}`
         : 'N/A';
 
       if (items.length === 0) {
-        return `
-          <tr>
-            <td style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle;">${o.id}</td>
-            <td style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle;">${o.date}</td>
-            <td style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle;">${customerStr}</td>
-            <td style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle;">${addressStr}</td>
-            <td style="border: 1px solid #d3c099; padding: 6px;" colspan="4">No items listed</td>
-            <td style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle; font-weight: bold; text-align: right;">₹${o.total}</td>
-            <td style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle;">${o.status}</td>
-            <td style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle;">${paymentStatus}</td>
-          </tr>
-        `;
+        worksheet.addRow({
+          id: o.id,
+          date: o.date,
+          customer: customerStr,
+          address: addressStr,
+          item: 'No items listed',
+          price: '',
+          qty: '',
+          subtotal: '',
+          total: `Rs. ${o.total}`,
+          status: o.status,
+          payment: paymentStatus
+        });
+        worksheet.mergeCells(`E${currentRowNum}:H${currentRowNum}`);
+        currentRowNum += 1;
+      } else {
+        items.forEach((item, wIdx) => {
+          const itemTotal = (item.price || 0) * (item.quantity || 1);
+          const itemDetails = `${item.name} (${item.weight || 'N/A'})`;
+
+          worksheet.addRow({
+            id: o.id,
+            date: o.date,
+            customer: customerStr,
+            address: addressStr,
+            item: itemDetails,
+            price: `Rs. ${item.price || 0}`,
+            qty: item.quantity || 1,
+            subtotal: `Rs. ${itemTotal}`,
+            total: `Rs. ${o.total}`,
+            status: o.status.toUpperCase(),
+            payment: paymentStatus.toUpperCase()
+          });
+
+          currentRowNum += 1;
+        });
+
+        if (rowSpan > 1) {
+          const startRow = currentRowNum - rowSpan;
+          const endRow = currentRowNum - 1;
+
+          worksheet.mergeCells(`A${startRow}:A${endRow}`);
+          worksheet.mergeCells(`B${startRow}:B${endRow}`);
+          worksheet.mergeCells(`C${startRow}:C${endRow}`);
+          worksheet.mergeCells(`D${startRow}:D${endRow}`);
+          worksheet.mergeCells(`I${startRow}:I${endRow}`);
+          worksheet.mergeCells(`J${startRow}:J${endRow}`);
+          worksheet.mergeCells(`K${startRow}:K${endRow}`);
+        }
       }
+    });
 
-      return items.map((item, wIdx) => {
-        const itemTotal = (item.price || 0) * (item.quantity || 1);
-        const itemDetails = `${item.name} (${item.weight || 'N/A'})`;
-        
-        return `
-          <tr>
-            ${wIdx === 0 ? `
-              <td rowspan="${rowSpan}" style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle; font-weight: bold;">${o.id}</td>
-              <td rowspan="${rowSpan}" style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle;">${o.date}</td>
-              <td rowspan="${rowSpan}" style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle;">${customerStr}</td>
-              <td rowspan="${rowSpan}" style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle;">${addressStr}</td>
-            ` : ''}
-            
-            <td style="border: 1px solid #d3c099; padding: 6px;">${itemDetails}</td>
-            <td style="border: 1px solid #d3c099; padding: 6px; text-align: right;">₹${item.price || 0}</td>
-            <td style="border: 1px solid #d3c099; padding: 6px; text-align: center;">${item.quantity || 1}</td>
-            <td style="border: 1px solid #d3c099; padding: 6px; text-align: right;">₹${itemTotal}</td>
-            
-            ${wIdx === 0 ? `
-              <td rowspan="${rowSpan}" style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle; font-weight: bold; text-align: right;">₹${o.total}</td>
-              <td rowspan="${rowSpan}" style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle; text-transform: uppercase;">${o.status}</td>
-              <td rowspan="${rowSpan}" style="border: 1px solid #d3c099; padding: 6px; vertical-align: middle; text-transform: uppercase;">${paymentStatus}</td>
-            ` : ''}
-          </tr>
-        `;
-      }).join('');
-    }).join('');
+    // Style data cells & calculate heights dynamically
+    for (let r = 5; r < currentRowNum; r++) {
+      const row = worksheet.getRow(r);
+      const rowBgColor = r % 2 === 0 ? 'FFF9F6F0' : 'FFFFFFFF';
+      let maxLinesInRow = 1;
 
-    const excelHTML = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-        <head>
-          <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-          <!--[if gte mso 9]>
-          <xml>
-            <x:ExcelWorkbook>
-              <x:ExcelWorksheets>
-                <x:ExcelWorksheet>
-                  <x:Name>Orders Log Report</x:Name>
-                  <x:WorksheetOptions>
-                    <x:DisplayGridlines/>
-                  </x:WorksheetOptions>
-                </x:ExcelWorksheet>
-              </x:ExcelWorksheets>
-            </x:ExcelWorkbook>
-          </xml>
-          <![endif]-->
-          <style>
-            table { border-collapse: collapse; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 11px; }
-            th { background-color: #384401; color: #ffffff; font-weight: bold; border: 1px solid #d3c099; padding: 8px; text-align: left; }
-          </style>
-        </head>
-        <body>
-          <h2>Village Made Provisions - Detailed Orders Report</h2>
-          <p>Generated: ${new Date().toLocaleString()} | Filtered Count: ${sortedOrders.length} orders</p>
-          <table>
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Order Date</th>
-                <th>Customer Details</th>
-                <th>Delivery Address</th>
-                <th>Item Details</th>
-                <th>Item Price</th>
-                <th>Qty</th>
-                <th>Subtotal</th>
-                <th>Grand Total</th>
-                <th>Shipping Status</th>
-                <th>Payment Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHTML}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFD3C099' } },
+          left: { style: 'thin', color: { argb: 'FFD3C099' } },
+          bottom: { style: 'thin', color: { argb: 'FFD3C099' } },
+          right: { style: 'thin', color: { argb: 'FFD3C099' } }
+        };
 
-    const blob = new Blob([excelHTML], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        cell.font = { name: 'Segoe UI', size: 10 };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: rowBgColor }
+        };
+
+        // Align left for column 4 (Delivery Address), center for all other cells
+        if (colNumber === 4) {
+          cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        } else {
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        }
+
+        // Calculate text lines to adjust row height dynamically
+        const valStr = cell.value ? cell.value.toString() : '';
+        const colWidth = worksheet.columns[colNumber - 1]?.width || 10;
+        const paragraphs = valStr.split('\n');
+        let cellLines = 0;
+        paragraphs.forEach((p) => {
+          const maxCharsPerLine = Math.max(10, colWidth - 2);
+          cellLines += Math.ceil(p.length / maxCharsPerLine);
+        });
+
+        if (cellLines > maxLinesInRow) {
+          maxLinesInRow = cellLines;
+        }
+      });
+
+      // Apply dynamic height with a minimum threshold of 23.25
+      row.height = Math.max(23.25, maxLinesInRow * 14.5);
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `village_made_detailed_orders_${new Date().toISOString().split('T')[0]}.xls`);
+    link.href = url;
+    link.download = `village_made_detailed_orders_${new Date().toISOString().split('T')[0]}.xlsx`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -236,106 +313,138 @@ export default function AdminOrdersTab({
       format: 'a4'
     });
 
-    const element = document.createElement('div');
-    element.style.width = '800px';
-    element.style.padding = '20px';
-    element.style.fontFamily = 'Helvetica, Arial, sans-serif';
+    // Add Report Title
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(56, 68, 1); // #384401
+    doc.text('VILLAGE MADE PROVISIONS - DETAILED ORDERS REPORT', 40, 40);
 
-    const rowsHTML = sortedOrders.flatMap((o, idx) => {
+    // Add Metadata
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(142, 126, 111); // #8e7e6f
+    doc.text(`Generated on: ${new Date().toLocaleString()} | Filtered Count: ${sortedOrders.length} orders`, 40, 55);
+
+    const headers = [
+      'S.No',
+      'Order ID',
+      'Date',
+      'Customer',
+      'Delivery Address',
+      'Item Ordered',
+      'Item Price',
+      'Qty',
+      'Subtotal',
+      'Grand Total',
+      'Shipping Status',
+      'Payment'
+    ];
+
+    const body: any[] = [];
+    sortedOrders.forEach((o, idx) => {
       const items = o.items || [];
       const rowSpan = Math.max(1, items.length);
       const paymentStatus = o.paymentStatus || (o.status === 'Returned' ? 'refunded' : 'captured');
       
-      const customerStr = `${o.customerName || o.address?.name || 'Guest'} (${o.customerMobile || o.address?.phone || 'N/A'})`;
+      const customerStr = `${o.customerName || o.address?.name || 'Guest'}\n(${o.customerMobile || o.address?.phone || 'N/A'})`;
       const addressStr = o.address 
         ? `${o.address.address || ''}, ${o.address.city || ''}, ${o.address.pincode || ''}`
         : 'N/A';
 
       if (items.length === 0) {
-        return `
-          <tr style="background-color: ${idx % 2 === 0 ? '#fafaf9' : '#ffffff'};">
-            <td style="text-align: center; padding: 6px; border: 1px solid #eeddb9; vertical-align: middle;">${idx + 1}</td>
-            <td style="padding: 6px; border: 1px solid #eeddb9; font-weight: bold; color: #384401; vertical-align: middle;">${o.id}</td>
-            <td style="padding: 6px; border: 1px solid #eeddb9; vertical-align: middle;">${o.date}</td>
-            <td style="padding: 6px; border: 1px solid #eeddb9; vertical-align: middle;">${customerStr}</td>
-            <td style="padding: 6px; border: 1px solid #eeddb9; vertical-align: middle; font-size: 8px;">${addressStr}</td>
-            <td style="padding: 6px; border: 1px solid #eeddb9;" colspan="4">No items ordered</td>
-            <td style="padding: 6px; border: 1px solid #eeddb9; font-weight: bold; vertical-align: middle; text-align: right;">₹${o.total}</td>
-            <td style="padding: 6px; border: 1px solid #eeddb9; text-transform: uppercase; font-size: 8px; vertical-align: middle; text-align: center;">${o.status}</td>
-            <td style="padding: 6px; border: 1px solid #eeddb9; font-size: 8px; text-transform: uppercase; vertical-align: middle; text-align: center;">${paymentStatus}</td>
-          </tr>
-        `;
+        body.push([
+          { content: (idx + 1).toString(), rowSpan: 1 },
+          { content: o.id, rowSpan: 1, styles: { fontStyle: 'bold', textColor: [56, 68, 1] } },
+          { content: o.date, rowSpan: 1 },
+          { content: customerStr, rowSpan: 1 },
+          { content: addressStr, rowSpan: 1, styles: { fontSize: 7 } },
+          { content: 'No items ordered', colSpan: 4, styles: { halign: 'center', fontStyle: 'italic' } },
+          { content: `Rs. ${o.total}`, rowSpan: 1, styles: { fontStyle: 'bold', halign: 'right' } },
+          { content: o.status, rowSpan: 1, styles: { halign: 'center' } },
+          { content: paymentStatus, rowSpan: 1, styles: { halign: 'center' } }
+        ]);
+      } else {
+        items.forEach((item, wIdx) => {
+          const itemTotal = (item.price || 0) * (item.quantity || 1);
+          const weightStr = (item.weight || 'N/A').replace(/\s+/g, '\u00A0');
+          const itemDetails = `${item.name} (${weightStr})`;
+
+          if (wIdx === 0) {
+            body.push([
+              { content: (idx + 1).toString(), rowSpan: rowSpan, styles: { valign: 'middle', halign: 'center' } },
+              { content: o.id, rowSpan: rowSpan, styles: { valign: 'middle', fontStyle: 'bold', textColor: [56, 68, 1] } },
+              { content: o.date, rowSpan: rowSpan, styles: { valign: 'middle' } },
+              { content: customerStr, rowSpan: rowSpan, styles: { valign: 'middle' } },
+              { content: addressStr, rowSpan: rowSpan, styles: { valign: 'middle', fontSize: 7 } },
+              { content: itemDetails },
+              { content: `Rs. ${item.price || 0}`, styles: { halign: 'right' } },
+              { content: (item.quantity || 1).toString(), styles: { halign: 'center' } },
+              { content: `Rs. ${itemTotal}`, styles: { halign: 'right' } },
+              { content: `Rs. ${o.total}`, rowSpan: rowSpan, styles: { valign: 'middle', halign: 'right', fontStyle: 'bold' } },
+              { content: o.status.toUpperCase(), rowSpan: rowSpan, styles: { valign: 'middle', halign: 'center', fontSize: 7.5 } },
+              { content: paymentStatus.toUpperCase(), rowSpan: rowSpan, styles: { valign: 'middle', halign: 'center', fontSize: 7.5 } }
+            ]);
+          } else {
+            body.push([
+              { content: itemDetails },
+              { content: `Rs. ${item.price || 0}`, styles: { halign: 'right' } },
+              { content: (item.quantity || 1).toString(), styles: { halign: 'center' } },
+              { content: `Rs. ${itemTotal}`, styles: { halign: 'right' } }
+            ]);
+          }
+        });
       }
-
-      return items.map((item, wIdx) => {
-        const itemTotal = (item.price || 0) * (item.quantity || 1);
-        const itemDetails = `${item.name} (${item.weight || 'N/A'})`;
-
-        return `
-          <tr style="background-color: ${idx % 2 === 0 ? '#fafaf9' : '#ffffff'};">
-            ${wIdx === 0 ? `
-              <td rowspan="${rowSpan}" style="text-align: center; padding: 6px; border: 1px solid #eeddb9; vertical-align: middle;">${idx + 1}</td>
-              <td rowspan="${rowSpan}" style="padding: 6px; border: 1px solid #eeddb9; font-weight: bold; color: #384401; vertical-align: middle;">${o.id}</td>
-              <td rowspan="${rowSpan}" style="padding: 6px; border: 1px solid #eeddb9; vertical-align: middle;">${o.date}</td>
-              <td rowspan="${rowSpan}" style="padding: 6px; border: 1px solid #eeddb9; vertical-align: middle;">${customerStr}</td>
-              <td rowspan="${rowSpan}" style="padding: 6px; border: 1px solid #eeddb9; vertical-align: middle; font-size: 8px; color: #555;">${addressStr}</td>
-            ` : ''}
-
-            <td style="padding: 6px; border: 1px solid #eeddb9; font-size: 9px;">${itemDetails}</td>
-            <td style="padding: 6px; border: 1px solid #eeddb9; font-size: 9px; text-align: right;">₹${item.price || 0}</td>
-            <td style="padding: 6px; border: 1px solid #eeddb9; font-size: 9px; text-align: center;">${item.quantity || 1}</td>
-            <td style="padding: 6px; border: 1px solid #eeddb9; font-size: 9px; text-align: right;">₹${itemTotal}</td>
-
-            ${wIdx === 0 ? `
-              <td rowspan="${rowSpan}" style="padding: 6px; border: 1px solid #eeddb9; font-weight: bold; vertical-align: middle; text-align: right;">₹${o.total}</td>
-              <td rowspan="${rowSpan}" style="padding: 6px; border: 1px solid #eeddb9; text-transform: uppercase; font-size: 8px; vertical-align: middle; text-align: center;">${o.status}</td>
-              <td rowspan="${rowSpan}" style="padding: 6px; border: 1px solid #eeddb9; font-size: 8px; text-transform: uppercase; vertical-align: middle; text-align: center;">${paymentStatus}</td>
-            ` : ''}
-          </tr>
-        `;
-      }).join('');
-    }).join('');
-
-    element.innerHTML = `
-      <h1 style="color: #384401; font-size: 16px; margin: 0 0 5px 0; text-transform: uppercase;">Village Made Provisions - Detailed Orders Report</h1>
-      <div style="font-size: 10px; color: #8e7e6f; margin-bottom: 15px;">
-        Generated on: ${new Date().toLocaleString()} | Filtered Count: ${sortedOrders.length} orders
-      </div>
-      <table style="width: 100%; border-collapse: collapse; font-size: 9px;">
-        <thead>
-          <tr style="background-color: #faf6eb; color: #384401;">
-            <th style="width: 30px; text-align: center; border: 1px solid #eeddb9; padding: 6px;">S.No</th>
-            <th style="border: 1px solid #eeddb9; padding: 6px;">Order ID</th>
-            <th style="border: 1px solid #eeddb9; padding: 6px;">Date</th>
-            <th style="border: 1px solid #eeddb9; padding: 6px;">Customer</th>
-            <th style="border: 1px solid #eeddb9; padding: 6px;">Delivery Address</th>
-            <th style="border: 1px solid #eeddb9; padding: 6px;">Item Ordered</th>
-            <th style="border: 1px solid #eeddb9; padding: 6px; text-align: right;">Item Price</th>
-            <th style="border: 1px solid #eeddb9; padding: 6px; text-align: center;">Qty</th>
-            <th style="border: 1px solid #eeddb9; padding: 6px; text-align: right;">Subtotal</th>
-            <th style="border: 1px solid #eeddb9; padding: 6px; text-align: right;">Grand Total</th>
-            <th style="border: 1px solid #eeddb9; padding: 6px; text-align: center;">Shipping Status</th>
-            <th style="border: 1px solid #eeddb9; padding: 6px; text-align: center;">Payment</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rowsHTML}
-        </tbody>
-      </table>
-    `;
-
-    document.body.appendChild(element);
-
-    doc.html(element, {
-      callback: function (doc) {
-        doc.save(`village_made_detailed_orders_${new Date().toISOString().split('T')[0]}.pdf`);
-        document.body.removeChild(element);
-      },
-      x: 20,
-      y: 20,
-      width: 800, // Landscape width constraint
-      windowWidth: 840
     });
+
+    autoTable(doc, {
+      startY: 70,
+      head: [headers],
+      body: body,
+      theme: 'grid',
+      styles: {
+        fontSize: 7.5,
+        cellPadding: { top: 5, right: 3.5, bottom: 5, left: 3.5 },
+        lineColor: [238, 221, 185], // #eeddb9
+        lineWidth: 0.5,
+        textColor: [28, 25, 23] // #1c1917
+      },
+      headStyles: {
+        fillColor: [56, 68, 1], // #384401
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        halign: 'left',
+        valign: 'middle'
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 25 }, // S.No
+        1: { cellWidth: 58 }, // Order ID
+        2: { cellWidth: 55 }, // Date
+        3: { cellWidth: 85 }, // Customer
+        4: { cellWidth: 165 }, // Delivery Address
+        5: { cellWidth: 110 }, // Item Ordered
+        6: { halign: 'right', cellWidth: 45 }, // Item Price
+        7: { halign: 'center', cellWidth: 25 }, // Qty
+        8: { halign: 'right', cellWidth: 48 }, // Subtotal
+        9: { halign: 'right', cellWidth: 54 }, // Grand Total
+        10: { halign: 'center', cellWidth: 62 }, // Shipping Status
+        11: { halign: 'center', cellWidth: 50 } // Payment
+      },
+      alternateRowStyles: {
+        fillColor: [250, 246, 235] // #faf6eb
+      },
+      margin: { top: 70, right: 40, bottom: 40, left: 40 },
+      didParseCell: function (data) {
+        if (data.section === 'head') {
+          if (data.column.index === 0 || data.column.index === 7 || data.column.index === 10 || data.column.index === 11) {
+            data.cell.styles.halign = 'center';
+          } else if (data.column.index === 6 || data.column.index === 8 || data.column.index === 9) {
+            data.cell.styles.halign = 'right';
+          }
+        }
+      }
+    });
+
+    doc.save(`village_made_detailed_orders_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   // Reset page when filter or search changes

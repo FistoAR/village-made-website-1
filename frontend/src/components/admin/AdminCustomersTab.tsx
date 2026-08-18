@@ -12,7 +12,7 @@ export default function AdminCustomersTab({
   customerSearch,
   setCustomerSearch,
 }: AdminCustomersTabProps) {
-  const comingSoon = true; // Set to false to enable customers tab
+  const comingSoon = false; // Set to false to enable customers tab
 
   if (comingSoon) {
     return (

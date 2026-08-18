@@ -435,7 +435,7 @@ export default function CartPage() {
             {/* Title Section */}
             <div className="mb-8">
               <h1 className="font-poetsen text-3xl sm:text-4xl md:text-5xl text-stone-950 tracking-tight mb-3">
-                Your Village Cart
+                Your Shopping Cart
               </h1>
               <p className="text-stone-700 font-semibold font-jakarta text-base">
                 Review your items prepared traditionally with care and hygiene.

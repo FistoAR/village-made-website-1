@@ -314,7 +314,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const storedUser = localStorage.getItem('village_made_user');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        const isAdminSession = sessionStorage.getItem('is_admin_auth') === 'true';
+        if (parsedUser && parsedUser.role === 'admin' && !isAdminSession) {
+          localStorage.removeItem('village_made_user');
+        } else {
+          setUser(parsedUser);
+        }
       } catch (e) {
         console.error('Failed to parse user session', e);
       }

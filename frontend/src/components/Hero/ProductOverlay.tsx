@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import { HeroProductConfig } from '@/types';
+import GlobalProductCard from '@/components/Product/ProductCard';
 import { useApp } from '@/lib/context/AppContext';
 
 interface ProductOverlayProps {
@@ -15,179 +15,6 @@ interface ProductOverlayProps {
   onProductClick: (productId: string | null) => void;
 }
 
-function ProductCard({
-  product,
-  isHighlighted,
-  categoryColor,
-  categoryLabel,
-  onClick,
-}: {
-  product: HeroProductConfig;
-  isHighlighted: boolean;
-  categoryColor: string;
-  categoryLabel?: string;
-  onClick: () => void;
-}) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const detailsRef = useRef<HTMLDivElement>(null);
-  const { addToCart } = useApp();
-  const router = useRouter();
-  const [added, setAdded] = useState(false);
-
-  // Auto-scroll highlighted product cards into view
-  useEffect(() => {
-    if (isHighlighted && cardRef.current) {
-      cardRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center',
-      });
-    }
-  }, [isHighlighted]);
-
-  useEffect(() => {
-    const el = cardRef.current;
-    const details = detailsRef.current;
-    if (!el) return;
-
-    if (isHighlighted) {
-      // Highlight: scale up, add intense glow, expand details
-      gsap.to(el, {
-        scale: 1.02,
-        borderColor: categoryColor,
-        boxShadow: `0 12px 36px rgba(0,0,0,0.75), 0 0 20px 3px ${categoryColor}66`,
-        duration: 0.45,
-        ease: 'power3.out',
-      });
-      if (details) {
-        gsap.to(details, {
-          height: 'auto',
-          opacity: 1,
-          duration: 0.45,
-          ease: 'power3.out',
-        });
-      }
-    } else {
-      // Reset layout
-      gsap.to(el, {
-        scale: 1,
-        borderColor: 'rgba(238, 221, 185, 0.15)',
-        boxShadow: '0 6px 20px rgba(0,0,0,0.5)',
-        duration: 0.4,
-        ease: 'power3.out',
-      });
-      if (details) {
-        gsap.to(details, {
-          height: 0,
-          opacity: 0,
-          duration: 0.3,
-          ease: 'power3.inOut',
-        });
-      }
-    }
-  }, [isHighlighted, categoryColor]);
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      weight: '500 g',
-      category: categoryLabel || 'Malt',
-      image: product.image,
-    }, 1);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
-  };
-
-  const handleBuyNow = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      weight: '500 g',
-      category: categoryLabel || 'Malt',
-      image: product.image,
-    }, 1);
-    router.push('/cart');
-  };
-
-  return (
-    <div
-      ref={cardRef}
-      onClick={onClick}
-      className={[
-        'w-full lg:w-full rounded-2xl border overflow-hidden transition-all duration-300 cursor-pointer select-none',
-        'max-lg:w-[280px] max-lg:shrink-0',
-        isHighlighted 
-          ? 'bg-gradient-to-b from-[#2b170c]/95 to-[#1c0e07]/95' 
-          : 'bg-[#150a04]/80 hover:bg-[#1a0e06]/90 backdrop-blur-md',
-      ].join(' ')}
-      style={{
-        borderColor: isHighlighted ? categoryColor : 'rgba(238, 221, 185, 0.15)',
-      }}
-    >
-      <div className="flex gap-4 p-4 items-center">
-        {/* Product Image */}
-        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden border border-[#eeddb9]/20 shadow-inner">
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            className="object-cover transition-transform duration-500 hover:scale-110"
-            sizes="64px"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-        </div>
-
-        {/* Header Info */}
-        <div className="flex flex-col justify-center flex-1 min-w-0">
-          <h3 className="font-display text-white text-sm md:text-[15px] font-bold leading-snug tracking-wide group-hover:text-[#eeddb9] truncate">
-            {product.name}
-          </h3>
-          <span
-            className="font-body text-sm font-semibold mt-1 tracking-wider"
-            style={{ color: isHighlighted ? categoryColor : '#e6c594' }}
-          >
-            ₹{product.price}
-          </span>
-        </div>
-      </div>
-
-      {/* Expanded details */}
-      <div ref={detailsRef} className="overflow-hidden h-0 opacity-0 px-4 pb-4">
-        <p className="font-body text-white/70 text-[11px] leading-relaxed border-t border-[#eeddb9]/10 pt-3 mb-3 font-normal max-lg:line-clamp-2">
-          {product.description}
-        </p>
-        <div className="flex gap-2.5">
-          <button
-            className={`flex-1 py-2.5 rounded-xl text-xs font-body font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer active:scale-[0.97] border ${
-              added 
-                ? 'bg-[#C56C4F] border-[#C56C4F] text-white' 
-                : 'border-[#eeddb9]/30 bg-transparent hover:bg-white/5 text-[#eeddb9]'
-            }`}
-            onClick={handleAddToCart}
-          >
-            {added ? 'Added ✓' : 'Add to Cart'}
-          </button>
-          <button
-            className="flex-1 py-2.5 rounded-xl text-xs font-body font-bold text-white tracking-widest uppercase transition-all duration-200 hover:brightness-110 active:scale-[0.97] cursor-pointer shadow-md"
-            style={{ 
-              background: `linear-gradient(135deg, ${categoryColor} 0%, ${categoryColor}dd 100%)`,
-              boxShadow: `0 4px 12px ${categoryColor}25`
-            }}
-            onClick={handleBuyNow}
-          >
-            Buy Now
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function ProductOverlay({
   products,
   activeProductId,
@@ -198,6 +25,8 @@ export default function ProductOverlay({
   onProductClick,
 }: ProductOverlayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { products: dbProducts } = useApp();
+  const [manualExpandedId, setManualExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -214,6 +43,37 @@ export default function ProductOverlay({
     }
   }, [visible, products]);
 
+  // Smooth scroll active or manually expanded product card into center viewport
+  useEffect(() => {
+    const targetId = manualExpandedId || activeProductId;
+    if (targetId && containerRef.current) {
+      const activeEl = document.getElementById(`overlay-product-${targetId}`);
+      const container = containerRef.current;
+      if (activeEl && container) {
+        const isMobile = window.innerWidth < 1024;
+        if (isMobile) {
+          const containerWidth = container.clientWidth;
+          const elementLeft = activeEl.offsetLeft;
+          const elementWidth = activeEl.clientWidth;
+          const targetScrollLeft = elementLeft - (containerWidth / 2) + (elementWidth / 2);
+          container.scrollTo({
+            left: targetScrollLeft,
+            behavior: 'smooth'
+          });
+        } else {
+          const containerHeight = container.clientHeight;
+          const elementTop = activeEl.offsetTop;
+          const elementHeight = activeEl.clientHeight;
+          const targetScrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2);
+          container.scrollTo({
+            top: targetScrollTop,
+            behavior: 'smooth'
+          });
+        }
+      }
+    }
+  }, [activeProductId, manualExpandedId]);
+
   if (!visible || products.length === 0) return null;
 
   return (
@@ -221,16 +81,19 @@ export default function ProductOverlay({
       ref={containerRef}
       className={[
         'absolute right-6 top-1/2 -translate-y-1/2 z-40',
-        'flex flex-col gap-3.5 w-72 md:w-80 max-h-[85vh]',
+        'flex flex-col gap-5 w-64 md:w-72 max-h-[85vh]',
         'overflow-y-auto pr-2 pl-2 hide-scrollbar py-2 items-center',
-        // Responsive mobile/tablet adjustments: horizontally scrollable strip at the bottom above category buttons
+        // Responsive mobile/tablet adjustments: horizontally scrollable ribbon at the bottom
         'max-lg:fixed max-lg:bottom-[76px] max-lg:left-0 max-lg:right-0 max-lg:top-auto max-lg:-translate-y-0',
-        'max-lg:w-full max-lg:max-h-[300px] max-lg:flex-row max-lg:overflow-x-auto max-lg:px-4 max-lg:py-3',
+        'max-lg:w-full max-lg:max-h-[520px] max-lg:flex-row max-lg:overflow-x-auto max-lg:px-4 max-lg:py-4 max-lg:gap-5',
       ].join(' ')}
     >
       {/* Return to Categories Button */}
       <button
-        onClick={onReturnClick}
+        onClick={() => {
+          setManualExpandedId(null);
+          onReturnClick();
+        }}
         className={[
           'cursor-pointer active:scale-95 transition-all flex-shrink-0 flex items-center justify-center',
           // Desktop: premium wooden button
@@ -258,22 +121,85 @@ export default function ProductOverlay({
         Featured Products
       </div>
 
-      {products.map((p) => (
-        <ProductCard
-          key={p.id}
-          product={p}
-          categoryLabel={categoryLabel}
-          isHighlighted={activeProductId === p.id}
-          categoryColor={categoryColor}
-          onClick={() => {
-            if (activeProductId === p.id) {
-              onProductClick(null);
-            } else {
-              onProductClick(p.id);
-            }
-          }}
-        />
-      ))}
+      {products.map((p) => {
+        const isHighlighted = activeProductId === p.id;
+        
+        // Find matching product in DB catalog if loaded
+        const dbProduct = dbProducts?.find((item) => item.id === p.id);
+
+        // Map HeroProductConfig properties, overriding with latest live DB details
+        const productProps = dbProduct ? {
+          id: dbProduct.id,
+          name: dbProduct.name,
+          description: dbProduct.description,
+          price: dbProduct.price,
+          originalPrice: dbProduct.originalPrice || Math.round(dbProduct.price * 1.3),
+          discount: dbProduct.discount || '20% OFF',
+          rating: dbProduct.rating || 4.7,
+          reviews: dbProduct.reviews || 128,
+          weights: dbProduct.weights || ['500g'],
+          stock: dbProduct.stock !== undefined ? dbProduct.stock : 50,
+          image: dbProduct.image || p.image,
+          video: dbProduct.video || p.video || '/videos/products/product-sample-video.webm',
+          category: dbProduct.category || categoryLabel || 'Malt',
+        } : {
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          originalPrice: Math.round(p.price * 1.3),
+          discount: '20% OFF',
+          rating: 4.7,
+          reviews: 128,
+          weights: ['500g'],
+          stock: 50,
+          image: p.image,
+          video: p.video || '/videos/products/product-sample-video.webm',
+          category: categoryLabel || 'Malt',
+        };
+
+        const isExpanded = isHighlighted || manualExpandedId === p.id;
+        const isAnyCardExpanded = activeProductId !== null || manualExpandedId !== null;
+        const shouldDim = isAnyCardExpanded && !isExpanded;
+
+        return (
+          <div
+            id={`overlay-product-${p.id}`}
+            key={p.id}
+            onClickCapture={(e) => {
+              // Intercept the click on the card to update the background video highlight 
+              // instead of immediately navigating to the product detail page, unless clicking active buttons
+              const target = e.target as HTMLElement;
+              if (!target.closest('button') && !target.closest('a')) {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                if (manualExpandedId === p.id) {
+                  setManualExpandedId(null);
+                  onProductClick(null);
+                } else {
+                  setManualExpandedId(p.id);
+                  onProductClick(p.id);
+                }
+              }
+            }}
+            className={[
+              'w-full lg:w-full max-lg:w-[260px] max-lg:shrink-0 flex-shrink-0 transition-all duration-300',
+              isExpanded 
+                ? 'z-30 relative scale-[1.03] lg:scale-[1.02] max-lg:mx-3 max-lg:my-0 lg:my-2' 
+                : shouldDim
+                  ? 'z-10 relative scale-90 opacity-60 lg:opacity-60 lg:scale-95 max-lg:mx-0 max-lg:my-0 lg:my-0'
+                  : 'z-10 relative scale-100 opacity-100 lg:scale-100 max-lg:mx-0 max-lg:my-0 lg:my-0'
+            ].join(' ')}
+          >
+            <GlobalProductCard
+              product={productProps}
+              highlighted={isExpanded}
+              heroMode={true}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

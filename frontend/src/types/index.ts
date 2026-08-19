@@ -52,6 +52,7 @@ export interface HeroProductConfig {
   description: string;
   price: number;
   image: string;
+  video?: string;
   /** The video currentTime (seconds) at which this product card should appear */
   highlightAt: number;
   /** Index (0-based) of which explain video this product appears in */

@@ -23,9 +23,10 @@ interface ProductCardProps {
     badge?: string;
   };
   highlighted?: boolean;
+  heroMode?: boolean;
 }
 
-export default function ProductCard({ product, highlighted }: ProductCardProps) {
+export default function ProductCard({ product, highlighted, heroMode = false }: ProductCardProps) {
   const router = useRouter();
   const { addToCart, cart } = useApp();
   const rawWeights = product.weights || ['250g', '500g', '1kg'];
@@ -155,7 +156,7 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
       }`}
     >
       {/* Product Video Area — lazy-load: only play when visible */}
-      <div className="w-full aspect-square relative overflow-hidden bg-black" ref={videoWrapRef}>
+      <div className={`w-full relative overflow-hidden bg-black ${heroMode ? 'aspect-video' : 'aspect-square'}`} ref={videoWrapRef}>
         <video 
           ref={videoRef}
           muted 
@@ -166,7 +167,7 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
         />
         
         {/* Best Seller Badge */}
-        {product.badge && (
+        {product.badge && !heroMode && (
           <div className="absolute top-5 left-0 bg-[#42321c] text-white text-[10px] sm:text-[11px] font-jakarta font-bold pl-4 pr-5 py-2.5 rounded-tl-[24px] rounded-br-[20px] flex items-center gap-1.5 shadow-xs z-10">
             <Star className="w-3 sm:w-3.5 h-3 sm:h-3.5 fill-[#f3a847] text-[#f3a847]" />
             {product.badge}
@@ -179,117 +180,138 @@ export default function ProductCard({ product, highlighted }: ProductCardProps) 
         className="flex flex-col flex-grow p-4 relative z-10 -mt-22 pt-8 bg-cover bg-no-repeat bg-top" 
         style={{ backgroundImage: "url('/images/product-section/bottom-paper-texture.webp')" }}
       >
-        <span className="text-[#394308] font-jakarta text-sm font-bold pt-12 mb-1">{category}</span>
+        <span className="text-[#394308] font-jakarta text-xs font-bold mb-1 pt-12">{category}</span>
         <h3 className="text-[#462617] font-jakarta font-bold text-base sm:text-lg mb-1">{product.name}</h3>
-        <p className="text-[#333333] font-jakarta text-sm leading-relaxed mb-3">{product.description}</p>
 
-        {/* Rating */}
-        <div className="flex items-center gap-1 mb-3">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`w-3.5 h-3.5 ${
-                i < Math.floor(rating)
-                  ? 'fill-[#f3a847] text-[#f3a847]'
-                  : 'fill-[#e3d7c3] text-[#e3d7c3]'
-              }`}
-            />
-          ))}
-          <span className="text-[#1a110a] font-jakarta text-xs font-bold ml-1">{rating}</span>
-          <span className="text-[#8e7e6f] font-jakarta text-xs">({reviews})</span>
-        </div>
+        {/* Collapsible Details wrapper (only active in heroMode) */}
+        <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
+          heroMode 
+            ? (highlighted ? 'max-h-[220px] max-lg:max-h-[160px] overflow-y-auto mt-2 pr-1 opacity-100' : 'max-h-0 opacity-0 pointer-events-none') 
+            : 'mt-2'
+        }`}>
+          <p className="text-[#333333] font-jakarta text-sm leading-relaxed mb-3">{product.description}</p>
 
-        {/* Pricing */}
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-[#1a110a] font-jakarta font-bold text-xl">₹{currentPrice}</span>
-          <span className="text-[#8e7e6f] font-jakarta text-sm line-through">₹{currentOriginalPrice || originalPrice}</span>
-          <span className="bg-[#e2edd3] text-[#384401] font-jakarta text-[10px] font-bold px-1.5 py-0.5 rounded-md">
-            {discount}
-          </span>
-        </div>
+          {/* Rating */}
+          <div className="flex items-center gap-1 mb-3">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`w-3.5 h-3.5 ${
+                  i < Math.floor(rating)
+                    ? 'fill-[#f3a847] text-[#f3a847]'
+                    : 'fill-[#e3d7c3] text-[#e3d7c3]'
+                }`}
+              />
+            ))}
+            <span className="text-[#1a110a] font-jakarta text-xs font-bold ml-1">{rating}</span>
+            <span className="text-[#8e7e6f] font-jakarta text-xs">({reviews})</span>
+          </div>
 
-        {/* Weight selection and Qty Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 border-t border-stone-200/40 pt-3">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[#1a110a] font-jakarta text-xs font-bold mr-0.5">Weight:</span>
-            <div className="flex gap-1 flex-wrap">
-              {weights.map((w) => (
+          {/* Pricing */}
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-[#1a110a] font-jakarta font-bold text-xl">₹{currentPrice}</span>
+            <span className="text-[#8e7e6f] font-jakarta text-sm line-through">₹{currentOriginalPrice || originalPrice}</span>
+            <span className="bg-[#e2edd3] text-[#384401] font-jakarta text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+              {discount}
+            </span>
+          </div>
+
+          {/* Weight selection and Qty Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 border-t border-stone-200/40 pt-3">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[#1a110a] font-jakarta text-xs font-bold mr-0.5">Weight:</span>
+              <div className="flex gap-1 flex-wrap">
+                {weights.map((w) => (
+                  <button
+                    key={w}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedWeight(w);
+                    }}
+                    className={`px-2 py-0.5 text-[10px] font-jakarta font-semibold rounded-md border transition-all cursor-pointer ${
+                      selectedWeight === w
+                        ? 'bg-[#ede2d3] border-[#cbb396] text-[#3e2c1c]'
+                        : 'bg-white border-[#ebdcc1] text-[#6d5e50] hover:bg-[#fcfbf9]'
+                    }`}
+                  >
+                    {w}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quantity selector */}
+            <div className="flex items-center justify-between sm:justify-start gap-2">
+              <span className="text-[#1a110a] font-jakarta text-xs font-bold sm:hidden">Qty:</span>
+              <div className="flex items-center bg-[#faf6eb] border border-[#d2c9b4] rounded-md h-6 px-1 shrink-0">
                 <button
-                  key={w}
+                  disabled={currentStock === 0}
                   onClick={(e) => {
                     e.stopPropagation();
-                    setSelectedWeight(w);
+                    setQty(Math.max(1, qty - 1));
                   }}
-                  className={`px-2 py-0.5 text-[10px] font-jakarta font-semibold rounded-md border transition-all cursor-pointer ${
-                    selectedWeight === w
-                      ? 'bg-[#ede2d3] border-[#cbb396] text-[#3e2c1c]'
-                      : 'bg-white border-[#ebdcc1] text-[#6d5e50] hover:bg-[#fcfbf9]'
+                  className="w-4 h-4 flex items-center justify-center text-[#3e2c1c] hover:bg-[#ebdcc1]/40 rounded cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <Minus className="w-2.5 h-2.5" />
+                </button>
+                <span className="font-jakarta text-[11px] font-bold text-[#1a110a] mx-1.5">{qty}</span>
+                <button
+                  disabled={qty >= currentStock || currentStock === 0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (qty < currentStock) setQty(qty + 1);
+                  }}
+                  className="w-4 h-4 flex items-center justify-center text-[#3e2c1c] hover:bg-[#ebdcc1]/40 rounded cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-2.5 h-2.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col min-[380px]:flex-row lg:flex-col xl:flex-row gap-2 mt-auto">
+            {currentStock === 0 ? (
+              <div className="flex-1 bg-stone-200 border border-stone-300 text-stone-500 text-center font-jakarta font-bold text-xs py-2.5 rounded-lg select-none">
+                Out of Stock
+              </div>
+            ) : (
+              <>
+                <button 
+                  onClick={handleAddToCart}
+                  className={`flex-1 text-xs font-jakarta font-bold py-2.5 rounded-lg transition-all duration-300 cursor-pointer text-center text-white shadow-xs ${
+                    added 
+                      ? 'bg-[#C56C4F] scale-[0.98]' 
+                      : 'bg-[#704632] hover:bg-[#5b3827]'
                   }`}
                 >
-                  {w}
+                  {added ? 'Added! ✓' : 'Add to Cart'}
                 </button>
-              ))}
-            </div>
+                <button 
+                  onClick={isItemInCart ? (e) => { e.stopPropagation(); router.push('/cart'); } : handleBuyNow}
+                  className={`flex-1 text-xs font-jakarta font-bold py-2.5 rounded-lg transition-all cursor-pointer text-center text-white shadow-xs ${
+                    isItemInCart 
+                      ? 'bg-[#56701b] hover:bg-[#435714]' 
+                      : 'bg-[#384401] hover:bg-[#252d00]'
+                  }`}
+                >
+                  {isItemInCart ? 'View in Cart ✓' : 'Buy Now'}
+                </button>
+              </>
+            )}
           </div>
 
-          {/* Quantity selector */}
-          <div className="flex items-center justify-between sm:justify-start gap-2">
-            <span className="text-[#1a110a] font-jakarta text-xs font-bold sm:hidden">Qty:</span>
-            <div className="flex items-center bg-[#faf6eb] border border-[#d2c9b4] rounded-md h-6 px-1 shrink-0">
-              <button
-                disabled={currentStock === 0}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setQty(Math.max(1, qty - 1));
-                }}
-                className="w-4 h-4 flex items-center justify-center text-[#3e2c1c] hover:bg-[#ebdcc1]/40 rounded cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <Minus className="w-2.5 h-2.5" />
-              </button>
-              <span className="font-jakarta text-[11px] font-bold text-[#1a110a] mx-1.5">{qty}</span>
-              <button
-                disabled={qty >= currentStock || currentStock === 0}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (qty < currentStock) setQty(qty + 1);
-                }}
-                className="w-4 h-4 flex items-center justify-center text-[#3e2c1c] hover:bg-[#ebdcc1]/40 rounded cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <Plus className="w-2.5 h-2.5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col min-[380px]:flex-row lg:flex-col xl:flex-row gap-2 mt-auto">
-          {currentStock === 0 ? (
-            <div className="flex-1 bg-stone-200 border border-stone-300 text-stone-500 text-center font-jakarta font-bold text-xs py-2.5 rounded-lg select-none">
-              Out of Stock
-            </div>
-          ) : (
-            <>
-              <button 
-                onClick={handleAddToCart}
-                className={`flex-1 text-xs font-jakarta font-bold py-2.5 rounded-lg transition-all duration-300 cursor-pointer text-center text-white shadow-xs ${
-                  added 
-                    ? 'bg-[#C56C4F] scale-[0.98]' 
-                    : 'bg-[#704632] hover:bg-[#5b3827]'
-                }`}
-              >
-                {added ? 'Added! ✓' : 'Add to Cart'}
-              </button>
-              <button 
-                onClick={isItemInCart ? (e) => { e.stopPropagation(); router.push('/cart'); } : handleBuyNow}
-                className={`flex-1 text-xs font-jakarta font-bold py-2.5 rounded-lg transition-all cursor-pointer text-center text-white shadow-xs ${
-                  isItemInCart 
-                    ? 'bg-[#56701b] hover:bg-[#435714]' 
-                    : 'bg-[#384401] hover:bg-[#252d00]'
-                }`}
-              >
-                {isItemInCart ? 'View in Cart ✓' : 'Buy Now'}
-              </button>
-            </>
+          {/* View Full Details Option */}
+          {heroMode && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/products/${product.id}`);
+              }}
+              className="w-full text-center mt-3.5 text-[11px] font-jakarta font-bold text-[#704632] hover:text-[#5b3827] hover:underline cursor-pointer transition-colors"
+            >
+              View Full Details →
+            </button>
           )}
         </div>
       </div>

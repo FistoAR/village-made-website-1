@@ -55,6 +55,16 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
 
     const prevSrcRef = useRef<string>('');
     const isFirstLoad = useRef(true);
+    const loopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Clean up loop timeout on unmount
+    useEffect(() => {
+      return () => {
+        if (loopTimeoutRef.current) {
+          clearTimeout(loopTimeoutRef.current);
+        }
+      };
+    }, []);
 
     const onTimeUpdateRef = useRef(onTimeUpdate);
     const onEndedRef = useRef(onEnded);
@@ -76,6 +86,10 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
       pause: () => {
         const activeEl = activePlayer === 'A' ? videoRefA.current : videoRefB.current;
         activeEl?.pause();
+        if (loopTimeoutRef.current) {
+          clearTimeout(loopTimeoutRef.current);
+          loopTimeoutRef.current = null;
+        }
       },
       seek: (time: number) => {
         const activeEl = activePlayer === 'A' ? videoRefA.current : videoRefB.current;
@@ -90,6 +104,11 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
     useEffect(() => {
       if (src === prevSrcRef.current) return;
       prevSrcRef.current = src;
+
+      if (loopTimeoutRef.current) {
+        clearTimeout(loopTimeoutRef.current);
+        loopTimeoutRef.current = null;
+      }
 
       if (isFirstLoad.current) {
         isFirstLoad.current = false;
@@ -188,9 +207,9 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
       const activeEl = activePlayer === 'A' ? videoRefA.current : videoRefB.current;
       if (activeEl) {
         activeEl.muted = muted;
-        activeEl.loop = loop;
+        activeEl.loop = false; // Disable native loop for custom 1-second pause looping
       }
-    }, [muted, loop, activePlayer]);
+    }, [muted, activePlayer]);
 
     // ── Event listeners for Player A ────────────────────────────────────────
     useEffect(() => {
@@ -207,7 +226,22 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
       };
 
       const handleEnded = () => {
-        if (activePlayer === 'A') onEndedRef.current?.();
+        if (activePlayer === 'A') {
+          if (loop) {
+            if (loopTimeoutRef.current) clearTimeout(loopTimeoutRef.current);
+            loopTimeoutRef.current = setTimeout(() => {
+              const activeEl = videoRefA.current;
+              if (activeEl && activePlayer === 'A') {
+                activeEl.currentTime = 0;
+                activeEl.play().catch((err) => {
+                  console.log("Failed to replay player A after 1s:", err);
+                });
+              }
+            }, 1000);
+          } else {
+            onEndedRef.current?.();
+          }
+        }
       };
 
       const handleCanPlay = () => {
@@ -245,7 +279,22 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
       };
 
       const handleEnded = () => {
-        if (activePlayer === 'B') onEndedRef.current?.();
+        if (activePlayer === 'B') {
+          if (loop) {
+            if (loopTimeoutRef.current) clearTimeout(loopTimeoutRef.current);
+            loopTimeoutRef.current = setTimeout(() => {
+              const activeEl = videoRefB.current;
+              if (activeEl && activePlayer === 'B') {
+                activeEl.currentTime = 0;
+                activeEl.play().catch((err) => {
+                  console.log("Failed to replay player B after 1s:", err);
+                });
+              }
+            }, 1000);
+          } else {
+            onEndedRef.current?.();
+          }
+        }
       };
 
       const handleCanPlay = () => {
@@ -285,7 +334,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
           ref={videoRefA}
           src={srcA || undefined}
           autoPlay={autoPlay && activePlayer === 'A'}
-          loop={loop && activePlayer === 'A'}
+          loop={false}
           muted={muted}
           playsInline
           className={`absolute inset-0 w-full h-full object-cover transition-opacity ${className}`}
@@ -302,7 +351,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
           ref={videoRefB}
           src={srcB || undefined}
           autoPlay={autoPlay && activePlayer === 'B'}
-          loop={loop && activePlayer === 'B'}
+          loop={false}
           muted={muted}
           playsInline
           className={`absolute inset-0 w-full h-full object-cover transition-opacity ${className}`}

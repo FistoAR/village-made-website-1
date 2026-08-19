@@ -40,7 +40,6 @@ import VideoPlayer, { VideoPlayerHandle } from './VideoPlayer';
 import TimelineManager, { TimelineEvent } from './TimelineManager';
 import CategoryButtons from './CategoryButtons';
 import ProductOverlay from './ProductOverlay';
-import GuideOverlay from './GuideOverlay';
 import LanguageSelector from '@/components/Language/LanguageSelector';
 
 const CONFIG = heroConfig as HeroConfig;
@@ -298,6 +297,7 @@ export default function HeroSection() {
           actions.introEnded();
           // Force immediate play to begin IDLE native looping
           setTimeout(() => {
+            videoHandleRef.current?.seek(0);
             videoHandleRef.current?.play().catch(err => {
               console.log("Failed to start idle loop playback:", err);
             });
@@ -314,6 +314,7 @@ export default function HeroSection() {
         actions.returnEnded();
         // Force immediate play to resume IDLE native looping
         setTimeout(() => {
+          videoHandleRef.current?.seek(0);
           videoHandleRef.current?.play().catch(err => {
             console.log("Failed to start idle loop playback:", err);
           });
@@ -574,13 +575,7 @@ export default function HeroSection() {
         isPreloading={isPreloading}
       />
 
-      {/* ── Cinematic gradient overlays ── */}
-      {/* Bottom gradient for UI legibility */}
-      <div className="absolute inset-0 z-10 pointer-events-none"
-        style={{
-          background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 30%, transparent 60%, rgba(0,0,0,0.2) 100%)',
-        }}
-      />
+
 
       {/* IDLE vignette overlay */}
       <div
@@ -594,12 +589,7 @@ export default function HeroSection() {
 
 
 
-      {/* ── Guide Overlay ── */}
-      <GuideOverlay
-        phase={state.phase}
-        activeCategoryLabel={activeCategory?.label}
-        explainIndex={state.explainIndex}
-      />
+
 
       {/* ── Product Overlay ── */}
       <ProductOverlay
@@ -615,30 +605,13 @@ export default function HeroSection() {
       {/* ── Active Category Context Bar ── */}
       {(state.phase === 'TRAVEL' || state.phase === 'EXPLAIN' || state.phase === 'RETURN') && activeCategory && (
         <div
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/15 backdrop-blur-md text-xs font-body text-white/70 shadow-lg"
+          className="absolute bottom-6 max-lg:bottom-auto max-lg:top-[76px] left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/15 backdrop-blur-md text-xs font-body text-white/70 shadow-lg"
           style={{ background: 'rgba(0,0,0,0.5)' }}
         >
           <span>{activeCategory.icon}</span>
           <span className="font-semibold" style={{ color: categoryColor }}>
             {activeCategory.label}
           </span>
-          {state.phase === 'EXPLAIN' && (
-            <>
-              <span className="text-white/30">•</span>
-              <span>
-                Scene {state.explainIndex + 1} of {explainVideoCount}
-              </span>
-            </>
-          )}
-          {state.queuedCategory && (
-            <>
-              <span className="text-white/30">•</span>
-              <span className="text-white/50">
-                Next:{' '}
-                {CONFIG.categories.find((c) => c.id === state.queuedCategory)?.label}
-              </span>
-            </>
-          )}
         </div>
       )}
 

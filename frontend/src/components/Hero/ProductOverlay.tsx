@@ -28,11 +28,35 @@ export default function ProductOverlay({
   const { products: dbProducts } = useApp();
   const [manualExpandedId, setManualExpandedId] = useState<string | null>(null);
 
+  const categoryLabelLower = categoryLabel?.toLowerCase();
+  const dbCategoryProducts = dbProducts?.filter(
+    (item) => item.category?.toLowerCase() === categoryLabelLower
+  ) ?? [];
+
+  const displayProducts = [...products];
+  dbCategoryProducts.forEach((dbP) => {
+    const alreadyInConfig = displayProducts.some(
+      (p) => p.name?.toLowerCase() === dbP.name?.toLowerCase()
+    );
+    if (!alreadyInConfig) {
+      displayProducts.push({
+        id: dbP.id,
+        name: dbP.name,
+        description: dbP.description || '',
+        price: dbP.price,
+        image: dbP.image || '',
+        video: dbP.video || '/videos/products/product-sample-video.webm',
+        highlightAt: 999,
+        explainVideoIndex: 0,
+      });
+    }
+  });
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    if (visible && products.length > 0) {
+    if (visible && displayProducts.length > 0) {
       gsap.fromTo(
         el,
         { x: 100, opacity: 0 },
@@ -41,7 +65,7 @@ export default function ProductOverlay({
     } else {
       gsap.to(el, { x: 100, opacity: 0, duration: 0.4, ease: 'power3.in' });
     }
-  }, [visible, products]);
+  }, [visible, displayProducts.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Smooth scroll active or manually expanded product card into center viewport
   useEffect(() => {
@@ -74,7 +98,7 @@ export default function ProductOverlay({
     }
   }, [activeProductId, manualExpandedId]);
 
-  if (!visible || products.length === 0) return null;
+  if (!visible || displayProducts.length === 0) return null;
 
   return (
     <div
@@ -84,8 +108,8 @@ export default function ProductOverlay({
         'flex flex-col gap-5 w-64 md:w-72 max-h-[85vh]',
         'overflow-y-auto pr-2 pl-2 hide-scrollbar py-2 items-center',
         // Responsive mobile/tablet adjustments: horizontally scrollable ribbon at the bottom
-        'max-lg:fixed max-lg:bottom-[76px] max-lg:left-0 max-lg:right-0 max-lg:top-auto max-lg:-translate-y-0',
-        'max-lg:w-full max-lg:max-h-[520px] max-lg:flex-row max-lg:overflow-x-auto max-lg:px-4 max-lg:py-4 max-lg:gap-5',
+        'max-lg:absolute max-lg:bottom-[5%] max-lg:left-0 max-lg:right-0 max-lg:top-auto max-lg:-translate-y-0',
+        'max-lg:w-full max-lg:max-h-[520px] max-lg:flex-row max-lg:overflow-x-auto max-lg:px-4 max-lg:py-4 max-lg:gap-5 max-lg:items-end',
       ].join(' ')}
     >
       {/* Return to Categories Button */}
@@ -121,11 +145,13 @@ export default function ProductOverlay({
         Featured Products
       </div>
 
-      {products.map((p) => {
+      {displayProducts.map((p) => {
         const isHighlighted = activeProductId === p.id;
         
-        // Find matching product in DB catalog if loaded
-        const dbProduct = dbProducts?.find((item) => item.id === p.id);
+        // Find matching product in DB catalog by name if loaded
+        const dbProduct = dbProducts?.find(
+          (item) => item.name?.toLowerCase() === p.name?.toLowerCase()
+        );
 
         // Map HeroProductConfig properties, overriding with latest live DB details
         const productProps = dbProduct ? {

@@ -80,7 +80,7 @@ export default function GuideOverlay({
 
   return (
     <div
-      className="absolute bottom-20 left-0 right-0 flex justify-center px-4 z-30 pointer-events-none"
+      className="absolute bottom-20 max-lg:bottom-auto max-lg:top-[124px] left-0 right-0 flex justify-center px-4 z-30 pointer-events-none"
     >
       <div
         ref={textRef}

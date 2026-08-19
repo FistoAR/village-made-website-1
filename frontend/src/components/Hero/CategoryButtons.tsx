@@ -65,7 +65,7 @@ function CategoryButton({
       gsap.fromTo(
         btnRef.current,
         { scale: 0.93 },
-        { scale: 1, duration: 0.35, ease: 'back.out(2.5)' }
+        { scale: 1, duration: 0.35, ease: 'back.out(2.5)', clearProps: 'transform' }
       );
     }
     onCategoryClick(cat.id);
@@ -140,6 +140,7 @@ export default function CategoryButtons({
           duration: 0.5,
           ease: 'power2.out',
           stagger: 0.04,
+          clearProps: 'transform,opacity',
         }
       );
     }

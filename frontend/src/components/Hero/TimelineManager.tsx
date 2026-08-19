@@ -46,11 +46,11 @@ export default function TimelineManager({
   onEventRef.current = onEvent;
   eventsRef.current = events;
 
-  // Reset fired set when the video source changes
+  // Reset fired set when the video source or video element changes
   useEffect(() => {
     firedRef.current = new Set();
     lastTimeRef.current = 0;
-  }, [videoSrc]);
+  }, [videoSrc, videoElement]);
 
   // rAF loop
   useEffect(() => {

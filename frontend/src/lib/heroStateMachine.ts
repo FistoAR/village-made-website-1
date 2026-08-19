@@ -112,10 +112,13 @@ export function heroReducer(state: HeroState, action: HeroAction): HeroState {
         };
       }
 
-      // All explain videos done — go to return
+      // All explain videos done — go to idle
       return {
         ...state,
-        phase: 'RETURN',
+        phase: 'IDLE',
+        activeCategory: null,
+        highlightedCategory: null,
+        explainIndex: 0,
         activeProductId: null,
       };
     }
@@ -165,7 +168,9 @@ export function heroReducer(state: HeroState, action: HeroAction): HeroState {
       if (!isSequence) return state;
       return {
         ...state,
-        phase: 'RETURN',
+        phase: 'IDLE',
+        activeCategory: null,
+        highlightedCategory: null,
         explainIndex: 0,
         activeProductId: null,
         queuedCategory: null,

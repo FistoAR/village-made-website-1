@@ -69,13 +69,23 @@ export interface OfferBanner {
   tag?: string;
 }
 
+export interface ProductBenefit {
+  title: string;
+  description: string;
+}
+
 export interface ExtendedProduct extends Product {
   stock: number;
   purchasePrice?: number;
   image?: string;
   video?: string;
-  benefits?: string[];
+  benefits?: ProductBenefit[];
   ingredients?: any;
   features?: any;
   faqs?: any;
+  shelfLife?: string;
+  shelfLifeDetails?: string;
+  suitableFor?: { label: string; value: string }[];
+  recipes?: { title: string; prepTime?: string; cookTime?: string; ingredients?: string; instructions: string }[];
+  descriptionImage?: string;
 }

@@ -115,6 +115,12 @@ export async function initDb() {
       benefits JSONB,
       ingredients JSONB,
       features JSONB,
+      faqs JSONB,
+      shelf_life VARCHAR(100),
+      shelf_life_details TEXT,
+      suitable_for JSONB,
+      recipes JSONB,
+      description_image VARCHAR(512),
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -124,6 +130,11 @@ export async function initDb() {
     ALTER TABLE reviews ADD COLUMN IF NOT EXISTS title VARCHAR(255);
     ALTER TABLE reviews ADD COLUMN IF NOT EXISTS helpful INTEGER DEFAULT 0;
     ALTER TABLE products ADD COLUMN IF NOT EXISTS faqs JSONB;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS shelf_life VARCHAR(100);
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS shelf_life_details TEXT;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS suitable_for JSONB;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS recipes JSONB;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS description_image VARCHAR(512);
 
     -- Drop old JSONB columns from the users table if they exist
     ALTER TABLE users DROP COLUMN IF EXISTS addresses;

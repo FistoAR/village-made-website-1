@@ -125,7 +125,7 @@ export default function ProductDetailPage({
       .slice(0, 4);
   }, [products, product]);
 
-  const [activeTab, setActiveTab] = useState('description');
+  const [activeTab, setActiveTab] = useState('recipes');
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(0);
   
   const router = useRouter();
@@ -587,8 +587,9 @@ export default function ProductDetailPage({
         <div className="sticky top-[72px] z-40 bg-[#FDFBF7]/95 backdrop-blur-sm border-b border-[#eeddb9]/40 mb-6 flex md:justify-center pb-3 md:pb-1 -mx-4 md:-mx-12 lg:-mx-24 px-4 md:px-12 lg:px-24">
           <div className="grid grid-cols-2 md:flex md:justify-center gap-x-8 gap-y-3 md:gap-24 w-full md:w-auto">
             {[
-              { id: 'description', label: 'Description' },
+              { id: 'recipes', label: 'Recipes' },
               { id: 'ingredients', label: 'Ingredients' },
+              { id: 'description', label: 'Description' },
               { id: 'reviews', label: `Reviews (${displayReviews})` },
               { id: 'faq', label: 'FAQ' },
             ].map((tab) => (
@@ -612,6 +613,93 @@ export default function ProductDetailPage({
         {/* Tab Content Display Area */}
         <div className="min-h-[300px]">
 
+          {/* TAB 0: RECIPES */}
+          {activeTab === 'recipes' && (
+            <div className="w-full font-jakarta p-6 bg-[#FAF4E6]/25 border border-[#eeddb9]/30 rounded-[24px]">
+              {(() => {
+                const isMalt = (product.category || '').toLowerCase().includes('malt') || product.categoryId === 'malt';
+                const list = (product as any).recipes && (product as any).recipes.length > 0
+                  ? (product as any).recipes
+                  : [
+                      {
+                        title: isMalt ? 'Premium Healthy Porridge / Malt Drink' : 'Traditional Preparation Method',
+                        prepTime: isMalt ? '2 Mins' : '5 Mins',
+                        cookTime: isMalt ? '8 Mins' : '15 Mins',
+                        ingredients: isMalt
+                          ? `2 tbsp ${product.name}, 1 Cup Milk or Water, Sweetener (Jaggery or Palm Sugar) to taste`
+                          : `1 Cup Grains/Mix, 2.5 Cups Water, Pinch of Salt`,
+                        instructions: isMalt
+                          ? `Dissolve 2 tablespoons of ${product.name} in half a cup of cold milk or water to form a smooth slurry without any lumps.\nHeat the remaining milk or water in a sauce pan on medium flame.\nGradually pour the prepared slurry into the pan while stirring constantly to prevent lump formation.\nCook on a low flame for 6-8 minutes, stirring continuously until the mixture thickens.\nRemove from heat, blend in jaggery or palm sugar to taste, and serve warm.`
+                          : `Rinse the grains or mix thoroughly under cold running water.\nBring 2.5 cups of water to a boil in a cooking vessel with a pinch of salt.\nAdd the grains/mix to the boiling water, reduce the heat to a simmer, and cover with a lid.\nCook for 12-15 minutes or until the water is completely absorbed and the texture is soft and tender.\nTurn off the flame, let it rest for 2-3 minutes, fluff gently with a spoon, and serve hot.`
+                      }
+                    ];
+
+                return (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                    {list.map((rec: any, idx: number) => {
+                      const ingList = rec.ingredients ? rec.ingredients.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+                      const stepList = rec.instructions ? rec.instructions.split('\n').map((s: string) => s.trim()).filter(Boolean) : [];
+                      return (
+                        <div key={idx} className="bg-white border border-[#eeddb9]/45 rounded-3xl p-6 md:p-8 shadow-xs hover:shadow-sm transition-all duration-300">
+                          <h4 className="text-lg md:text-xl font-extrabold text-[#384401] mb-5 uppercase tracking-wide border-b border-[#eeddb9]/30 pb-3 font-jakarta">
+                            {rec.title}
+                          </h4>
+                          
+                          <div className="flex gap-6 mb-6">
+                            {rec.prepTime && (
+                              <div className="flex flex-col bg-[#FDF8EF] border border-[#B0B49C]/40 rounded-xl px-4 py-2">
+                                <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Prep Time</span>
+                                <span className="text-sm font-extrabold text-[#384401]">{rec.prepTime}</span>
+                              </div>
+                            )}
+                            {rec.cookTime && (
+                              <div className="flex flex-col bg-[#FDF8EF] border border-[#B0B49C]/40 rounded-xl px-4 py-2">
+                                <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Cook Time</span>
+                                <span className="text-sm font-extrabold text-[#384401]">{rec.cookTime}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {ingList.length > 0 && (
+                            <div className="mb-6">
+                              <span className="text-xs font-extrabold text-amber-855 uppercase tracking-widest block mb-2.5">Ingredients Needed</span>
+                              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-stone-650 text-xs font-semibold leading-relaxed">
+                                {ingList.map((ing: string, i: number) => (
+                                  <li key={i} className="flex items-start gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-600 mt-1.5 shrink-0" />
+                                    <span>{ing}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {stepList.length > 0 && (
+                            <div>
+                              <span className="text-xs font-extrabold text-[#C56C4F] uppercase tracking-widest block mb-3 font-jakarta">Cooking Instructions</span>
+                              <div className="space-y-4">
+                                {stepList.map((step: string, sIdx: number) => (
+                                  <div key={sIdx} className="flex gap-3">
+                                    <span className="w-5 h-5 rounded-full bg-[#EFE6DB] text-[#384401] flex items-center justify-center font-extrabold text-[10px] shrink-0 font-jakarta mt-0.5">
+                                      {sIdx + 1}
+                                    </span>
+                                    <p className="text-stone-650 text-xs leading-relaxed font-jakarta">
+                                      {step}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
           {/* TAB 1: DESCRIPTION */}
           {activeTab === 'description' && (
             <div className="flex flex-col lg:flex-row gap-6 lg:gap-[3%] items-stretch justify-between">
@@ -626,46 +714,70 @@ export default function ProductDetailPage({
 
                 {/* Sub features list */}
                 <div className="flex flex-col gap-5">
-                  <div className="flex gap-3">
-                    <span className="w-8 h-8 rounded-full bg-[#EFE6DB] flex items-center justify-center shrink-0">
-                      {/* Bowl outline svg */}
-                      <svg className="w-4 h-4 text-[#384401]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 2v4M8 4h8" />
-                        <path d="M3 10a9 9 0 0 0 18 0V9H3v1Z" />
-                        <path d="M7 19h10" />
-                      </svg>
-                    </span>
-                    <div className="flex flex-col">
-                      <span className="text-[#384401] font-bold text-xs sm:text-sm font-jakarta">Traditional Nutrition</span>
-                      <span className="text-stone-605 text-xs font-jakarta leading-relaxed mt-0.5">Prepared using time-honoured recipes with carefully selected ingredients to preserve authentic flavour and natural goodness in every serving.</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <span className="w-8 h-8 rounded-full bg-[#EFE6DB] flex items-center justify-center shrink-0">
-                      {/* Digestive outline svg */}
-                      <svg className="w-4 h-4 text-[#384401]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 3a9 9 0 0 0-9 9c0 4.97 4.03 9 9 9s9-4.03 9-9" />
-                        <path d="M12 8v8M9 12h6" />
-                      </svg>
-                    </span>
-                    <div className="flex flex-col">
-                      <span className="text-[#384401] font-bold text-xs sm:text-sm font-jakarta">Easy to Digest</span>
-                      <span className="text-stone-605 text-xs font-jakarta leading-relaxed mt-0.5">A smooth and nourishing malt drink that is gentle on the stomach, making it suitable for regular consumption by the whole family.</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <span className="w-8 h-8 rounded-full bg-[#EFE6DB] flex items-center justify-center shrink-0">
-                      {/* Shield check svg */}
-                      <svg className="w-4 h-4 text-[#384401]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                        <path d="m9 11 2 2 4-4" />
-                      </svg>
-                    </span>
-                    <div className="flex flex-col">
-                      <span className="text-[#384401] font-bold text-xs sm:text-sm font-jakarta">Natural Goodness</span>
-                      <span className="text-stone-605 text-xs font-jakarta leading-relaxed mt-0.5">Made without artificial colours or preservatives, ensuring a healthier choice with trusted quality and freshness.</span>
-                    </div>
-                  </div>
+                  {(() => {
+                    const standardBenefits = {
+                      "Traditional Nutrition": {
+                        desc: "Prepared using time-honoured recipes with carefully selected ingredients to preserve authentic flavour and natural goodness in every serving.",
+                        icon: (
+                          <svg className="w-4 h-4 text-[#384401]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2v4M8 4h8" />
+                            <path d="M3 10a9 9 0 0 0 18 0V9H3v1Z" />
+                            <path d="M7 19h10" />
+                          </svg>
+                        )
+                      },
+                      "Easy to Digest": {
+                        desc: "A smooth and nourishing malt drink that is gentle on the stomach, making it suitable for regular consumption by the whole family.",
+                        icon: (
+                          <svg className="w-4 h-4 text-[#384401]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 3a9 9 0 0 0-9 9c0 4.97 4.03 9 9 9s9-4.03 9-9" />
+                            <path d="M12 8v8M9 12h6" />
+                          </svg>
+                        )
+                      },
+                      "Natural Goodness": {
+                        desc: "Made without artificial colours or preservatives, ensuring a healthier choice with trusted quality and freshness.",
+                        icon: (
+                          <svg className="w-4 h-4 text-[#384401]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            <path d="m9 11 2 2 4-4" />
+                          </svg>
+                        )
+                      }
+                    };
+
+                    const benefitsList = product.benefits && product.benefits.length > 0
+                      ? product.benefits
+                      : ['Traditional Nutrition', 'Easy to Digest', 'Natural Goodness'];
+
+                    return benefitsList.map((item: any, bIdx: number) => {
+                      const title = typeof item === 'object' && item !== null ? item.title : String(item);
+                      const customDesc = typeof item === 'object' && item !== null ? item.description : null;
+                      
+                      // Match standard
+                      const matched = standardBenefits[title as keyof typeof standardBenefits] || {
+                        desc: customDesc || "Delivering authentic quality and pure nutrition in every bite.",
+                        icon: (
+                          <svg className="w-4 h-4 text-[#384401]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="m9 12 2 2 4-4" />
+                          </svg>
+                        )
+                      };
+
+                      return (
+                        <div key={bIdx} className="flex gap-3">
+                          <span className="w-8 h-8 rounded-full bg-[#EFE6DB] flex items-center justify-center shrink-0">
+                            {matched.icon}
+                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-[#384401] font-bold text-xs sm:text-sm font-jakarta">{title}</span>
+                            <span className="text-stone-605 text-xs font-jakarta leading-relaxed mt-0.5">{customDesc || matched.desc}</span>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
 
@@ -673,8 +785,8 @@ export default function ProductDetailPage({
               <div className="w-full lg:w-[28%] flex flex-col">
                 <div className="relative w-full h-full aspect-square sm:aspect-[4/3] lg:aspect-auto min-h-[320px] lg:min-h-0 rounded-[24px] overflow-hidden shadow-sm flex-grow">
                   <Image
-                    src="/images/products/details-page/description-image-1.webp"
-                    alt="Porridge Bowl Showcase"
+                    src={(product as any).descriptionImage || "/images/products/details-page/description-image-1.webp"}
+                    alt={`${product.name} showcase`}
                     fill
                     sizes="(max-width: 1024px) 100vw, 28vw"
                     className="object-cover"
@@ -691,8 +803,8 @@ export default function ProductDetailPage({
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[#384401] text-sm font-bold uppercase tracking-wider font-jakarta">Shelf Life</span>
-                    <span className="text-[#384401] font-extrabold text-sm mt-0.5 tracking-wider">6 Months</span>
-                    <span className="text-stone-900 text-xs leading-normal mt-1">Best before 6 months from the date of manufacturing.</span>
+                    <span className="text-[#384401] font-extrabold text-sm mt-0.5 tracking-wider">{(product as any).shelfLife || "6 Months"}</span>
+                    <span className="text-stone-900 text-xs leading-normal mt-1">{(product as any).shelfLifeDetails || `Best before ${(product as any).shelfLife || "6 Months"} from the date of manufacturing.`}</span>
                   </div>
                 </div>
 
@@ -700,27 +812,33 @@ export default function ProductDetailPage({
                 <div className="border border-[#DFB684] bg-[#FDF8EF] rounded-[20px] p-4 shadow-2xs flex-grow">
                   <span className="text-[#C56C4F] text-xs font-extrabold uppercase tracking-widest block mb-3 font-jakarta">Suitable For</span>
                   <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-2.5">
-                      <img src="/images/products/details-page/suitable-persons/babies.webp" alt="" className="w-9 h-9 pt-0.5 rounded-full object-cover border border-[#DFB684]" />
-                      <div className="flex flex-col">
-                        <span className="text-black font-bold text-xs font-jakarta">Babies</span>
-                        <span className="text-stone-800 text-xs font-jakarta">6+ Months*</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <img src="/images/products/details-page/suitable-persons/toddlers.webp" alt="" className="w-9 h-9 pt-0.5 rounded-full object-cover border border-[#DFB684]" />
-                      <div className="flex flex-col">
-                        <span className="text-black font-bold text-xs font-jakarta">Toddlers</span>
-                        <span className="text-stone-800 text-xs font-jakarta">1-3 Years</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <img src="/images/products/details-page/suitable-persons/growing-kids.webp" alt="" className="w-9 h-9 pt-0.5 rounded-full object-cover border border-[#DFB684]" />
-                      <div className="flex flex-col">
-                        <span className="text-black font-bold text-xs font-jakarta">Growing Kids</span>
-                        <span className="text-stone-800 text-xs font-jakarta">4+ Years</span>
-                      </div>
-                    </div>
+                    {(() => {
+                      const suitableList = (product as any).suitableFor && (product as any).suitableFor.length > 0
+                        ? (product as any).suitableFor
+                        : [
+                            { label: 'Babies', value: '6+ Months*' },
+                            { label: 'Toddlers', value: '1-3 Years' },
+                            { label: 'Growing Kids', value: '4+ Years' }
+                          ];
+                      return suitableList.map((target: any, tIdx: number) => {
+                        const labelLower = (target.label || '').toLowerCase();
+                        let imgPath = '/images/products/details-page/suitable-persons/growing-kids.webp';
+                        if (labelLower.includes('baby') || labelLower.includes('babies')) {
+                          imgPath = '/images/products/details-page/suitable-persons/babies.webp';
+                        } else if (labelLower.includes('toddler')) {
+                          imgPath = '/images/products/details-page/suitable-persons/toddlers.webp';
+                        }
+                        return (
+                          <div key={tIdx} className="flex items-center gap-2.5">
+                            <img src={imgPath} alt="" className="w-9 h-9 pt-0.5 rounded-full object-cover border border-[#DFB684]" />
+                            <div className="flex flex-col">
+                              <span className="text-black font-bold text-xs font-jakarta">{target.label}</span>
+                              <span className="text-stone-850 text-xs font-jakarta">{target.value}</span>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               </div>

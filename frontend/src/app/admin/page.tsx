@@ -17,7 +17,8 @@ import {
   AdminCustomer,
   PurchaseRecord,
   OfferBanner,
-  ExtendedProduct
+  ExtendedProduct,
+  ProductBenefit
 } from '@/components/admin/types';
 
 import AdminGatedAuth from '@/components/admin/AdminGatedAuth';
@@ -91,8 +92,13 @@ export default function AdminPage() {
   const [newProdStock, setNewProdStock] = useState(25);
   const [newProdImage, setNewProdImage] = useState('');
   const [newProdVideo, setNewProdVideo] = useState('');
-  const [newProdBenefits, setNewProdBenefits] = useState('');
+  const [newProdBenefits, setNewProdBenefits] = useState<ProductBenefit[]>([
+    { title: 'Traditional Nutrition', description: 'Made with ancient grains passed down through generations.' },
+    { title: 'Easy to Digest', description: 'Gentle on growing tummies, suitable for all age groups.' },
+    { title: 'Natural Goodness', description: 'No artificial colours, flavours or preservatives.' }
+  ]);
   const [newProdIngredients, setNewProdIngredients] = useState('');
+  const [newProdDescImage, setNewProdDescImage] = useState('');
   
   // Ingredients responsive images setup
   const [newProdIngDesktop, setNewProdIngDesktop] = useState('');
@@ -105,6 +111,16 @@ export default function AdminPage() {
   const [newProdFaqs, setNewProdFaqs] = useState<{ q: string; a: string }[]>([]);
   const [faqInputQ, setFaqInputQ] = useState('');
   const [faqInputA, setFaqInputA] = useState('');
+
+  // Dynamic features setup
+  const [newProdShelfLife, setNewProdShelfLife] = useState('6 Months');
+  const [newProdShelfLifeDetails, setNewProdShelfLifeDetails] = useState('Best before 6 months from the date of manufacturing.');
+  const [newProdSuitableFor, setNewProdSuitableFor] = useState<{ label: string; value: string }[]>([
+    { label: 'Babies', value: '6+ Months*' },
+    { label: 'Toddlers', value: '1-3 Years' },
+    { label: 'Growing Kids', value: '4+ Years' }
+  ]);
+  const [newProdRecipes, setNewProdRecipes] = useState<{ title: string; prepTime?: string; cookTime?: string; ingredients?: string; instructions: string }[]>([]);
 
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -736,10 +752,15 @@ export default function AdminPage() {
           weights: newProdWeights,
           imageUrl: newProdImage || null,
           videoUrl: newProdVideo || null,
-          benefits: newProdBenefits ? newProdBenefits.split(',').map(s => s.trim()) : ['Traditional Nutrition', 'Easy to Digest', 'Natural Goodness'],
+          benefits: newProdBenefits,
           ingredients: structuredIngredients,
-          features: { shelf_life: '6 Months', suitable_for: 'All age groups' },
-          faqs: newProdFaqs
+          features: { shelf_life: newProdShelfLife, suitable_for: 'All age groups' },
+          faqs: newProdFaqs,
+          shelfLife: newProdShelfLife,
+          shelfLifeDetails: newProdShelfLifeDetails,
+          suitableFor: newProdSuitableFor,
+          recipes: newProdRecipes,
+          descriptionImage: newProdDescImage || null
         })
       });
       const data = await res.json();
@@ -754,14 +775,27 @@ export default function AdminPage() {
         setNewProdStock(25);
         setNewProdImage('');
         setNewProdVideo('');
-        setNewProdBenefits('');
+        setNewProdBenefits([
+          { title: 'Traditional Nutrition', description: 'Made with ancient grains passed down through generations.' },
+          { title: 'Easy to Digest', description: 'Gentle on growing tummies, suitable for all age groups.' },
+          { title: 'Natural Goodness', description: 'No artificial colours, flavours or preservatives.' }
+        ]);
         setNewProdIngredients('');
+        setNewProdDescImage('');
         setNewProdIngDesktop('');
         setNewProdIngTablet('');
         setNewProdIngMobile('');
         setNewProdIngSameTab(true);
         setNewProdIngSameMobile('desktop');
         setNewProdFaqs([]);
+        setNewProdShelfLife('6 Months');
+        setNewProdShelfLifeDetails('Best before 6 months from the date of manufacturing.');
+        setNewProdSuitableFor([
+          { label: 'Babies', value: '6+ Months*' },
+          { label: 'Toddlers', value: '1-3 Years' },
+          { label: 'Growing Kids', value: '4+ Years' }
+        ]);
+        setNewProdRecipes([]);
       } else {
         triggerAlert(data.error || 'Failed to save product to database.', true);
       }
@@ -815,10 +849,19 @@ export default function AdminPage() {
           weights: editingProduct.weights || ['250 g', '500 g', '1 kg'],
           imageUrl: editingProduct.image || null,
           videoUrl: editingProduct.video || null,
-          benefits: editingProduct.benefits || ['Traditional Nutrition', 'Easy to Digest', 'Natural Goodness'],
+          benefits: editingProduct.benefits || [
+            { title: 'Traditional Nutrition', description: 'Made with ancient grains passed down through generations.' },
+            { title: 'Easy to Digest', description: 'Gentle on growing tummies, suitable for all age groups.' },
+            { title: 'Natural Goodness', description: 'No artificial colours, flavours or preservatives.' }
+          ],
           ingredients: editingProduct.ingredients,
           features: editingProduct.features || { shelf_life: '6 Months' },
-          faqs: editingProduct.faqs || []
+          faqs: editingProduct.faqs || [],
+          shelfLife: (editingProduct as any).shelfLife || null,
+          shelfLifeDetails: (editingProduct as any).shelfLifeDetails || null,
+          suitableFor: (editingProduct as any).suitableFor || null,
+          recipes: (editingProduct as any).recipes || [],
+          descriptionImage: (editingProduct as any).descriptionImage || null
         })
       });
       const data = await res.json();
@@ -1120,6 +1163,14 @@ export default function AdminPage() {
                 setNewProdBenefits={setNewProdBenefits}
                 newProdFaqs={newProdFaqs}
                 setNewProdFaqs={setNewProdFaqs}
+                newProdShelfLife={newProdShelfLife}
+                setNewProdShelfLife={setNewProdShelfLife}
+                newProdShelfLifeDetails={newProdShelfLifeDetails}
+                setNewProdShelfLifeDetails={setNewProdShelfLifeDetails}
+                newProdSuitableFor={newProdSuitableFor}
+                setNewProdSuitableFor={setNewProdSuitableFor}
+                newProdRecipes={newProdRecipes}
+                setNewProdRecipes={setNewProdRecipes}
                 faqInputQ={faqInputQ}
                 setFaqInputQ={setFaqInputQ}
                 faqInputA={faqInputA}
@@ -1137,6 +1188,8 @@ export default function AdminPage() {
                 filteredProducts={filteredProducts}
                 newProdWeights={newProdWeights}
                 setNewProdWeights={setNewProdWeights}
+                newProdDescImage={newProdDescImage}
+                setNewProdDescImage={setNewProdDescImage}
                 triggerAlert={triggerAlert}
               />
             )}

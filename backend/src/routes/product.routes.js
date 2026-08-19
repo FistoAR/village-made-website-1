@@ -48,7 +48,12 @@ productRouter.get('/', async (req, res, next) => {
       benefits: typeof row.benefits === 'string' ? JSON.parse(row.benefits) : row.benefits,
       ingredients: typeof row.ingredients === 'string' ? JSON.parse(row.ingredients) : row.ingredients,
       features: typeof row.features === 'string' ? JSON.parse(row.features) : row.features,
-      faqs: typeof row.faqs === 'string' ? JSON.parse(row.faqs) : (row.faqs || [])
+      faqs: typeof row.faqs === 'string' ? JSON.parse(row.faqs) : (row.faqs || []),
+      shelfLife: row.shelf_life || undefined,
+      shelfLifeDetails: row.shelf_life_details || undefined,
+      suitableFor: typeof row.suitable_for === 'string' ? JSON.parse(row.suitable_for) : (row.suitable_for || undefined),
+      recipes: typeof row.recipes === 'string' ? JSON.parse(row.recipes) : (row.recipes || []),
+      descriptionImage: row.description_image || undefined
     }));
 
     return res.status(200).json({
@@ -83,7 +88,8 @@ productRouter.get('/categories', async (req, res, next) => {
 productRouter.post('/', async (req, res, next) => {
   const {
     id, categoryId, name, description, price, originalPrice, discount,
-    weights, badge, stock, purchasePrice, imageUrl, videoUrl, benefits, ingredients, features, faqs
+    weights, badge, stock, purchasePrice, imageUrl, videoUrl, benefits, ingredients, features, faqs,
+    shelfLife, shelfLifeDetails, suitableFor, recipes, descriptionImage
   } = req.body;
 
   if (!id || !categoryId || !name || !price) {
@@ -99,8 +105,9 @@ productRouter.post('/', async (req, res, next) => {
     await query(
       `INSERT INTO products (
         id, category_id, name, description, price, original_price, discount,
-        weights, badge, stock, purchase_price, image_url, video_url, benefits, ingredients, features, faqs
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+        weights, badge, stock, purchase_price, image_url, video_url, benefits, ingredients, features, faqs,
+        shelf_life, shelf_life_details, suitable_for, recipes, description_image
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`,
       [
         id,
         categoryId,
@@ -118,7 +125,12 @@ productRouter.post('/', async (req, res, next) => {
         JSON.stringify(benefits || []),
         JSON.stringify(ingredients || []),
         JSON.stringify(features || {}),
-        JSON.stringify(faqs || [])
+        JSON.stringify(faqs || []),
+        shelfLife || null,
+        shelfLifeDetails || null,
+        JSON.stringify(suitableFor || null),
+        JSON.stringify(recipes || []),
+        descriptionImage || null
       ]
     );
 
@@ -136,7 +148,8 @@ productRouter.put('/:id', async (req, res, next) => {
   const productId = req.params.id;
   const {
     categoryId, name, description, price, originalPrice, discount,
-    weights, badge, stock, purchasePrice, imageUrl, videoUrl, benefits, ingredients, features, faqs
+    weights, badge, stock, purchasePrice, imageUrl, videoUrl, benefits, ingredients, features, faqs,
+    shelfLife, shelfLifeDetails, suitableFor, recipes, descriptionImage
   } = req.body;
 
   try {
@@ -149,8 +162,10 @@ productRouter.put('/:id', async (req, res, next) => {
       `UPDATE products 
        SET category_id = $1, name = $2, description = $3, price = $4, original_price = $5, discount = $6,
            weights = $7, badge = $8, stock = $9, purchase_price = $10, image_url = $11, video_url = $12,
-           benefits = $13, ingredients = $14, features = $15, faqs = $16
-       WHERE id = $17`,
+           benefits = $13, ingredients = $14, features = $15, faqs = $16,
+           shelf_life = $17, shelf_life_details = $18, suitable_for = $19, recipes = $20,
+           description_image = $21
+       WHERE id = $22`,
       [
         categoryId,
         name,
@@ -168,6 +183,11 @@ productRouter.put('/:id', async (req, res, next) => {
         JSON.stringify(ingredients || []),
         JSON.stringify(features || {}),
         JSON.stringify(faqs || []),
+        shelfLife || null,
+        shelfLifeDetails || null,
+        JSON.stringify(suitableFor || null),
+        JSON.stringify(recipes || []),
+        descriptionImage || null,
         productId
       ]
     );

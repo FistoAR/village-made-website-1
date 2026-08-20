@@ -457,12 +457,13 @@ export default function AdminProductsTab({
   return (
     <div className="space-y-6">
       {/* Filters and Add row */}
-      <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between font-jakarta">
-        <div className="flex gap-3 flex-wrap">
+      <div className="flex flex-col gap-3 font-jakarta">
+        {/* Row 1: Filters */}
+        <div className="flex gap-2 flex-wrap items-center">
           <select
             value={selectedProductCategory}
             onChange={(e) => setSelectedProductCategory(e.target.value)}
-            className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-stone-900 text-sm font-bold focus:outline-none"
+            className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-stone-900 text-sm font-bold focus:outline-none flex-shrink-0"
           >
             <option value="All">All Categories</option>
             {categories.map((cat) => (
@@ -470,7 +471,7 @@ export default function AdminProductsTab({
             ))}
           </select>
 
-          <div className="relative w-full sm:w-48">
+          <div className="relative flex-1 min-w-[140px]">
             <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -481,11 +482,11 @@ export default function AdminProductsTab({
             />
           </div>
 
-          <div className="flex bg-stone-100 rounded-xl p-0.5 border border-stone-200 select-none items-center">
+          <div className="flex bg-stone-100 rounded-xl p-0.5 border border-stone-200 select-none items-center flex-shrink-0 ml-auto">
             <button
               type="button"
               onClick={() => setProductViewMode('card')}
-              className={`px-3.5 py-1.5 rounded-lg text-sm font-bold font-jakarta transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-bold font-jakarta transition-all cursor-pointer ${
                 productViewMode === 'card' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500 hover:text-stone-850'
               }`}
             >
@@ -494,7 +495,7 @@ export default function AdminProductsTab({
             <button
               type="button"
               onClick={() => setProductViewMode('table')}
-              className={`px-3.5 py-1.5 rounded-lg text-sm font-bold font-jakarta transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-bold font-jakarta transition-all cursor-pointer ${
                 productViewMode === 'table' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500 hover:text-stone-850'
               }`}
             >
@@ -503,12 +504,13 @@ export default function AdminProductsTab({
           </div>
         </div>
 
-        <div className="flex gap-2 shrink-0">
+        {/* Row 2: Action Buttons */}
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={handleOpenReorder}
-            className="flex items-center justify-center gap-1.5 bg-[#FAF4E6] border border-[#d3c099] text-[#704632] hover:bg-[#FAF4E6]/80 text-xs font-bold py-2.5 px-4.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-1.5 bg-[#FAF4E6] border border-[#d3c099] text-[#704632] hover:bg-[#FAF4E6]/80 text-xs font-bold py-2.5 px-3 sm:px-4.5 rounded-xl shadow-xs transition-colors cursor-pointer flex-1 sm:flex-none"
           >
-            <ListOrdered className="w-3.5 h-3.5" />
+            <ListOrdered className="w-3.5 h-3.5 shrink-0" />
             Manage Order
           </button>
           <button
@@ -517,9 +519,9 @@ export default function AdminProductsTab({
               setEditingProduct(null);
               setShowAddCategory(!showAddCategory);
             }}
-            className="flex items-center justify-center gap-1.5 bg-[#704632] hover:bg-[#5b3827] text-white text-xs font-bold py-2.5 px-4.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-1.5 bg-[#704632] hover:bg-[#5b3827] text-white text-xs font-bold py-2.5 px-3 sm:px-4.5 rounded-xl shadow-xs transition-colors cursor-pointer flex-1 sm:flex-none"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 shrink-0" />
             New Category
           </button>
           <button
@@ -528,9 +530,9 @@ export default function AdminProductsTab({
               setShowAddCategory(false);
               setShowAddProduct(!showAddProduct);
             }}
-            className="flex items-center justify-center gap-1.5 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-2.5 px-4.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-1.5 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-2.5 px-3 sm:px-4.5 rounded-xl shadow-xs transition-colors cursor-pointer flex-1 sm:flex-none"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 shrink-0" />
             New Product
           </button>
         </div>

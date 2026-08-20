@@ -1019,13 +1019,13 @@ export default function AdminPage() {
             </p>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={handleSync}
               className="flex items-center gap-2 bg-white border border-[#eeddb9] hover:bg-[#FAF4E6]/50 text-stone-850 text-xs font-bold py-2.5 px-4 rounded-xl shadow-2xs transition-colors cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              Sync Data
+              <span className="hidden sm:inline">Sync Data</span>
             </button>
             <button
               onClick={() => {
@@ -1055,20 +1055,20 @@ export default function AdminPage() {
         )}
 
         {/* Grid Layout: Sidebar & Content Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4 lg:gap-8 items-start">
           
           {/* Sidebar Nav controls */}
-          <nav className="flex flex-row lg:flex-col gap-2.5 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 scrollbar-none select-none">
+          <nav className="flex flex-row lg:flex-col gap-2 lg:gap-2.5 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 scrollbar-none select-none">
             {[
-              { id: 'dashboard', label: 'Overall Dashboard', icon: BarChart3 },
-              { id: 'inventory', label: 'Inventory & Stock', icon: Layers },
-              { id: 'customers', label: 'Customer Files', icon: Users },
-              { id: 'products', label: 'Products Control', icon: Package },
-              { id: 'orders', label: 'Order Dispatch', icon: ShoppingBag },
-              { id: 'sales', label: 'Sales Reports', icon: DollarSign },
-              { id: 'banners', label: 'Offer Banners', icon: Sparkles },
-              { id: 'media', label: 'Gallery Media', icon: FolderOpen },
-              { id: 'admin-profile', label: 'Admin Profile', icon: Settings }
+              { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+              { id: 'inventory', label: 'Inventory', icon: Layers },
+              { id: 'customers', label: 'Customers', icon: Users },
+              { id: 'products', label: 'Products', icon: Package },
+              { id: 'orders', label: 'Orders', icon: ShoppingBag },
+              { id: 'sales', label: 'Sales', icon: DollarSign },
+              { id: 'banners', label: 'Banners', icon: Sparkles },
+              { id: 'media', label: 'Media', icon: FolderOpen },
+              { id: 'admin-profile', label: 'Profile', icon: Settings }
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -1076,13 +1076,13 @@ export default function AdminPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as AdminTab)}
-                  className={`flex items-center gap-3 px-4.5 py-3 rounded-2xl text-sm font-bold uppercase tracking-wider shrink-0 transition-all cursor-pointer ${
+                  className={`flex items-center gap-2 lg:gap-3 px-3 lg:px-4.5 py-2.5 lg:py-3 rounded-xl lg:rounded-2xl text-xs lg:text-sm font-bold uppercase tracking-wider shrink-0 transition-all cursor-pointer ${
                     isActive 
                       ? 'bg-[#384401] text-white shadow-md' 
                       : 'bg-white border border-[#d3c099] text-stone-700 hover:bg-[#FAF4E6]/50'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5 lg:w-4 lg:h-4 shrink-0" />
                   {tab.label}
                 </button>
               );
@@ -1090,7 +1090,7 @@ export default function AdminPage() {
           </nav>
 
           {/* Core Content Window */}
-          <div className="bg-white border border-[#d3c099] rounded-[32px] p-6 sm:p-8 shadow-xs min-h-[500px] relative">
+          <div className="bg-white border border-[#d3c099] rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 lg:p-8 shadow-xs min-h-[500px] relative overflow-x-hidden">
             {loading && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1.5px] rounded-[32px] z-50">
                 <div className="flex flex-col items-center gap-3">

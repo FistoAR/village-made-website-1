@@ -30,7 +30,7 @@ export default function AdminInventoryTab({
   purchaseHistory,
   handlePurchaseSubmit,
 }: AdminInventoryTabProps) {
-  const comingSoon = true; // Set to false to enable inventory tab
+  const comingSoon = false; // Set to false to enable inventory tab
 
   if (comingSoon) {
     return (
@@ -132,8 +132,8 @@ export default function AdminInventoryTab({
           </h3>
           
           <div className="border border-[#d3c099] rounded-2xl overflow-hidden bg-stone-50/10">
-            <div className="overflow-y-auto max-h-[300px]">
-              <table className="w-full text-left text-xs border border-[#d3c099] border-collapse">
+            <div className="overflow-x-auto overflow-y-auto max-h-[300px]">
+              <table className="w-full min-w-[340px] text-left text-xs border border-[#d3c099] border-collapse">
                 <thead>
                   <tr className="bg-stone-50 border-b border-[#d3c099] text-stone-500 font-extrabold uppercase tracking-wider sticky top-0">
                     <th className="p-3 pl-4 border border-[#d3c099]">Product</th>
@@ -192,8 +192,8 @@ export default function AdminInventoryTab({
         <h3 className="text-sm font-extrabold uppercase tracking-wider text-stone-955 font-jakarta">
           Purchase Logs History
         </h3>
-        <div className="border border-[#d3c099] rounded-2xl overflow-hidden bg-stone-50/10">
-          <table className="w-full text-left text-xs border border-[#d3c099] border-collapse">
+        <div className="border border-[#d3c099] rounded-2xl overflow-hidden bg-stone-50/10 overflow-x-auto">
+          <table className="w-full min-w-[480px] text-left text-xs border border-[#d3c099] border-collapse">
             <thead>
               <tr className="bg-stone-50 border-b border-[#d3c099] text-stone-500 font-bold uppercase tracking-wider">
                 <th className="p-3 pl-4 border border-[#d3c099]">Entry ID</th>

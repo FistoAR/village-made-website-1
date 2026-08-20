@@ -955,8 +955,8 @@ export default function AdminOrdersTab({
             )}
 
             {/* Items */}
-            <div className="border border-[#d3c099] rounded-2xl overflow-hidden bg-stone-50/10 font-jakarta">
-              <table className="w-full text-left text-sm border border-[#d3c099] border-collapse">
+            <div className="border border-[#d3c099] rounded-2xl overflow-hidden bg-stone-50/10 font-jakarta overflow-x-auto">
+              <table className="w-full min-w-[360px] text-left text-sm border border-[#d3c099] border-collapse">
                 <thead>
                   <tr className="bg-stone-50 border-b border-[#d3c099] text-stone-455 font-bold uppercase tracking-wider text-xs">
                     <th className="p-3 pl-4 border border-[#d3c099] w-[60px] text-center">S.No</th>

@@ -92,7 +92,8 @@ export async function initDb() {
     CREATE TABLE IF NOT EXISTS categories (
       id VARCHAR(100) PRIMARY KEY,
       name VARCHAR(100) NOT NULL,
-      description TEXT
+      description TEXT,
+      display_order INTEGER DEFAULT 0
     );
 
     -- Products Table
@@ -135,6 +136,7 @@ export async function initDb() {
     ALTER TABLE products ADD COLUMN IF NOT EXISTS suitable_for JSONB;
     ALTER TABLE products ADD COLUMN IF NOT EXISTS recipes JSONB;
     ALTER TABLE products ADD COLUMN IF NOT EXISTS description_image VARCHAR(512);
+    ALTER TABLE categories ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0;
 
     -- Drop old JSONB columns from the users table if they exist
     ALTER TABLE users DROP COLUMN IF EXISTS addresses;
@@ -181,12 +183,16 @@ export async function initDb() {
       { id: 'millet-cookies', name: 'Millet Cookies', description: 'Delicious and healthy baked millet cookies.' },
       { id: 'snacks', name: 'Snacks', description: 'Traditional and healthy snacks.' }
     ];
-    for (const cat of defaultCategories) {
+    for (let i = 0; i < defaultCategories.length; i++) {
+      const cat = defaultCategories[i];
       await query(
-        `INSERT INTO categories (id, name, description) 
-         VALUES ($1, $2, $3)
-         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description`,
-        [cat.id, cat.name, cat.description]
+        `INSERT INTO categories (id, name, description, display_order) 
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (id) DO UPDATE SET 
+           name = EXCLUDED.name, 
+           description = EXCLUDED.description, 
+           display_order = COALESCE(categories.display_order, EXCLUDED.display_order)`,
+        [cat.id, cat.name, cat.description, i * 10]
       );
     }
     console.log('✅  Categories synced.');

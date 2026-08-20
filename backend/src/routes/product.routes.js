@@ -71,7 +71,7 @@ productRouter.get('/', async (req, res, next) => {
  */
 productRouter.get('/categories', async (req, res, next) => {
   try {
-    const result = await query('SELECT * FROM categories ORDER BY name ASC');
+    const result = await query('SELECT * FROM categories ORDER BY display_order ASC, name ASC');
     return res.status(200).json({
       success: true,
       categories: result.rows
@@ -284,11 +284,34 @@ productRouter.post('/categories', async (req, res, next) => {
     }
 
     await query(
-      'INSERT INTO categories (id, name, description) VALUES ($1, $2, $3)',
+      `INSERT INTO categories (id, name, description, display_order) 
+       VALUES ($1, $2, $3, COALESCE((SELECT MAX(display_order) + 10 FROM categories), 10))`,
       [id, name, description || '']
     );
 
     return res.status(201).json({ success: true, message: 'Category added successfully.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * PUT /api/products/categories/reorder
+ * Reorder categories in bulk
+ */
+productRouter.put('/categories/reorder', async (req, res, next) => {
+  const { orders } = req.body;
+  if (!Array.isArray(orders)) {
+    return res.status(400).json({ success: false, error: 'Invalid orders data. Must be an array of category order items.' });
+  }
+
+  try {
+    for (const item of orders) {
+      if (item.id && typeof item.display_order === 'number') {
+        await query('UPDATE categories SET display_order = $1 WHERE id = $2', [item.display_order, item.id]);
+      }
+    }
+    return res.status(200).json({ success: true, message: 'Categories reordered successfully.' });
   } catch (error) {
     next(error);
   }

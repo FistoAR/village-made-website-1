@@ -86,6 +86,8 @@ export default function AdminPage() {
   // Add Product Form
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState(100);
+  const [newProdOriginalPrice, setNewProdOriginalPrice] = useState(100);
+  const [newProdDiscount, setNewProdDiscount] = useState('0');
   const [newProdCat, setNewProdCat] = useState('Malt');
   const [newProdDesc, setNewProdDesc] = useState('');
   const [newProdBadge, setNewProdBadge] = useState('');
@@ -300,9 +302,13 @@ export default function AdminPage() {
       setError('');
       try {
         if (activeTab === 'dashboard') {
-          await fetchDashboardData();
+          await Promise.all([fetchDashboardData(), fetchProducts()]);
+        } else if (activeTab === 'inventory') {
+          await fetchProducts();
         } else if (activeTab === 'customers') {
           await fetchCustomersData();
+        } else if (activeTab === 'products') {
+          await Promise.all([fetchProducts(), fetchCategories()]);
         } else if (activeTab === 'orders') {
           await fetchOrdersData();
         } else if (activeTab === 'sales') {
@@ -745,6 +751,8 @@ export default function AdminPage() {
           categoryId,
           name: newProdName,
           price: derivedPrice,
+          originalPrice: newProdOriginalPrice,
+          discount: newProdDiscount && Number(newProdDiscount) > 0 ? `${newProdDiscount}% OFF` : null,
           description: newProdDesc,
           badge: newProdBadge || undefined,
           stock: newProdStock,
@@ -770,6 +778,8 @@ export default function AdminPage() {
         setShowAddProduct(false);
         setNewProdName('');
         setNewProdPrice(0);
+        setNewProdOriginalPrice(100);
+        setNewProdDiscount('0');
         setNewProdDesc('');
         setNewProdBadge('');
         setNewProdStock(25);
@@ -805,12 +815,14 @@ export default function AdminPage() {
       const newProduct: ExtendedProduct = {
         id: newId,
         name: newProdName,
-        price: newProdPrice,
+        price: derivedPrice,
+        originalPrice: newProdOriginalPrice,
+        discount: newProdDiscount && Number(newProdDiscount) > 0 ? `${newProdDiscount}% OFF` : undefined,
         category: newProdCat,
         description: newProdDesc,
         badge: newProdBadge || undefined,
         stock: newProdStock,
-        purchasePrice: Math.floor(newProdPrice * 0.65),
+        purchasePrice: Math.floor(derivedPrice * 0.65),
         ingredients: structuredIngredients as any,
         faqs: newProdFaqs as any
       };
@@ -842,6 +854,8 @@ export default function AdminPage() {
           categoryId,
           name: editingProduct.name,
           price: derivedPrice,
+          originalPrice: editingProduct.originalPrice,
+          discount: editingProduct.discount,
           description: editingProduct.description,
           badge: editingProduct.badge || null,
           stock: editingProduct.stock,
@@ -1076,7 +1090,18 @@ export default function AdminPage() {
           </nav>
 
           {/* Core Content Window */}
-          <div className="bg-white border border-[#d3c099] rounded-[32px] p-6 sm:p-8 shadow-xs min-h-[500px]">
+          <div className="bg-white border border-[#d3c099] rounded-[32px] p-6 sm:p-8 shadow-xs min-h-[500px] relative">
+            {loading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1.5px] rounded-[32px] z-50">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="relative w-14 h-14">
+                    <div className="absolute inset-0 rounded-full border-4 border-[#384401]/10"></div>
+                    <div className="absolute inset-0 rounded-full border-4 border-t-[#384401] border-r-[#384401]/30 animate-spin"></div>
+                  </div>
+                  <span className="text-[11px] font-bold font-jakarta text-[#384401] uppercase tracking-widest animate-pulse">Loading {activeTab} Data...</span>
+                </div>
+              </div>
+            )}
             
             {activeTab === 'dashboard' && (
               <AdminDashboardTab
@@ -1139,6 +1164,10 @@ export default function AdminPage() {
                 setNewProdName={setNewProdName}
                 newProdPrice={newProdPrice}
                 setNewProdPrice={setNewProdPrice}
+                newProdOriginalPrice={newProdOriginalPrice}
+                setNewProdOriginalPrice={setNewProdOriginalPrice}
+                newProdDiscount={newProdDiscount}
+                setNewProdDiscount={setNewProdDiscount}
                 newProdDesc={newProdDesc}
                 setNewProdDesc={setNewProdDesc}
                 newProdBadge={newProdBadge}

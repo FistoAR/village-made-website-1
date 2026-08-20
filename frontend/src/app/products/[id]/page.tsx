@@ -12,7 +12,7 @@ import categoriesData from '@/data/categories.json';
 import { Star, Minus, Plus, ArrowLeft, Heart, Share2, Calendar, MessageSquare, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, ShieldCheck, Pencil, Trash2 } from 'lucide-react';
 import { Category } from '@/types';
 import { useApp } from '@/lib/context/AppContext';
-import { getVariantPrice } from '@/lib/variantPrice';
+import { getVariantPrice, getVariantOriginalPrice } from '@/lib/variantPrice';
 
 /** Renders N/5 stars with accurate partial fill using SVG linearGradient per star */
 function StarRating({ rating, size = 16, gap = 2 }: { rating: number; size?: number; gap?: number }) {
@@ -98,11 +98,14 @@ export default function ProductDetailPage({
     return getVariantPrice(product.price, selectedWeight, product.weights);
   }, [product, selectedWeight]);
 
+  const discount = product?.discount;
+  const hasDiscount = !!discount && discount !== '0%' && discount !== '0% OFF';
+
   const currentOriginalPrice = useMemo(() => {
     if (!product) return 0;
-    const baseOriginal = product.originalPrice || Math.round(product.price * 1.3);
-    return getVariantPrice(baseOriginal, selectedWeight, product.weights);
-  }, [product, selectedWeight]);
+    const baseOriginal = product.originalPrice || (hasDiscount ? Math.round(product.price / (1 - (parseInt(discount!.replace(/[^0-9]/g, '')) || 20) / 100)) : product.price);
+    return getVariantOriginalPrice(baseOriginal, selectedWeight, product.weights);
+  }, [product, selectedWeight, hasDiscount, discount]);
 
   const currentStock = useMemo(() => {
     if (!product) return 0;
@@ -286,6 +289,7 @@ export default function ProductDetailPage({
       id: product.id,
       name: product.name,
       price: currentPrice,
+      originalPrice: currentOriginalPrice,
       weight: selectedWeight,
       category: product.category
     }, quantity);
@@ -299,6 +303,7 @@ export default function ProductDetailPage({
       id: product.id,
       name: product.name,
       price: currentPrice,
+      originalPrice: currentOriginalPrice,
       weight: selectedWeight,
       category: product.category
     }, quantity);
@@ -456,26 +461,32 @@ export default function ProductDetailPage({
               <div className="mb-6">
                 <div className="flex items-baseline gap-2.5">
                   <span className="text-3xl font-extrabold text-stone-955 font-jakarta">₹{currentPrice}</span>
-                  <span className="text-stone-400 line-through text-base">₹{currentOriginalPrice}</span>
-                  <span className="text-[#384401] font-extrabold text-base">{displayDiscount}</span>
+                  {hasDiscount && currentOriginalPrice > currentPrice && (
+                    <>
+                      <span className="text-stone-400 line-through text-base">₹{currentOriginalPrice}</span>
+                      <span className="text-[#384401] font-extrabold text-base">{discount}</span>
+                    </>
+                  )}
                 </div>
                 <span className="text-stone-500 text-xs mt-1 block">Inclusive of all taxes</span>
               </div>
 
               {/* Key Quality Indicators Bar */}
               <div className="flex flex-wrap items-center justify-between bg-[#FDF6E9] rounded-xl p-3 gap-3 mb-6 w-full">
-                {(product.benefits || ['Rich in Calcium', 'No Added Sugar', 'Made with Real Bananas']).map((benefit: string, idx: number) => {
+                {(product.benefits || ['Rich in Calcium', 'No Added Sugar', 'Made with Real Bananas']).map((benefit: any, idx: number) => {
+                  const benefitText = typeof benefit === 'object' && benefit !== null ? (benefit.title || '') : String(benefit);
                   let iconSrc = "/images/products/details-page/icon-images/no-added-sugar.svg";
-                  if (benefit.toLowerCase().includes('calcium')) iconSrc = "/images/products/details-page/icon-images/rich-in-calcium.svg";
-                  else if (benefit.toLowerCase().includes('banana')) iconSrc = "/images/products/details-page/icon-images/made-with-banana.svg";
-                  else if (benefit.toLowerCase().includes('digest')) iconSrc = "/images/products/details-page/icon-images/easy-returns.svg";
+                  const lowerText = benefitText.toLowerCase();
+                  if (lowerText.includes('calcium')) iconSrc = "/images/products/details-page/icon-images/rich-in-calcium.svg";
+                  else if (lowerText.includes('banana')) iconSrc = "/images/products/details-page/icon-images/made-with-banana.svg";
+                  else if (lowerText.includes('digest')) iconSrc = "/images/products/details-page/icon-images/easy-returns.svg";
                   
                   return (
                     <div key={idx} className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-full bg-[#EFE6DB] flex items-center justify-center shrink-0">
                         <img src={iconSrc} alt="" className="w-5 h-5 object-contain" />
                       </div>
-                      <span className="text-stone-955 font-bold text-xs font-jakarta">{benefit}</span>
+                      <span className="text-stone-955 font-bold text-xs font-jakarta">{benefitText}</span>
                     </div>
                   );
                 })}
@@ -753,7 +764,36 @@ export default function ProductDetailPage({
                     return benefitsList.map((item: any, bIdx: number) => {
                       const title = typeof item === 'object' && item !== null ? item.title : String(item);
                       const customDesc = typeof item === 'object' && item !== null ? item.description : null;
+                      const customIcon = typeof item === 'object' && item !== null ? item.icon : null;
                       
+                      const iconMap = {
+                        bowl: (
+                          <svg className="w-4 h-4 text-[#384401]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2v4M8 4h8" />
+                            <path d="M3 10a9 9 0 0 0 18 0V9H3v1Z" />
+                            <path d="M7 19h10" />
+                          </svg>
+                        ),
+                        digest: (
+                          <svg className="w-4 h-4 text-[#384401]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 3a9 9 0 0 0-9 9c0 4.97 4.03 9 9 9s9-4.03 9-9" />
+                            <path d="M12 8v8M9 12h6" />
+                          </svg>
+                        ),
+                        shield: (
+                          <svg className="w-4 h-4 text-[#384401]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            <path d="m9 11 2 2 4-4" />
+                          </svg>
+                        ),
+                        leaf: (
+                          <svg className="w-4 h-4 text-[#384401]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 8a7 7 0 0 1-9 10Z" />
+                            <path d="M9 22v-4" />
+                          </svg>
+                        )
+                      };
+
                       // Match standard
                       const matched = standardBenefits[title as keyof typeof standardBenefits] || {
                         desc: customDesc || "Delivering authentic quality and pure nutrition in every bite.",
@@ -765,10 +805,12 @@ export default function ProductDetailPage({
                         )
                       };
 
+                      const displayIcon = (customIcon && iconMap[customIcon as keyof typeof iconMap]) || matched.icon;
+
                       return (
                         <div key={bIdx} className="flex gap-3">
                           <span className="w-8 h-8 rounded-full bg-[#EFE6DB] flex items-center justify-center shrink-0">
-                            {matched.icon}
+                            {displayIcon}
                           </span>
                           <div className="flex flex-col">
                             <span className="text-[#384401] font-bold text-xs sm:text-sm font-jakarta">{title}</span>

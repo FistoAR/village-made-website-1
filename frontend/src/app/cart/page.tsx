@@ -521,9 +521,16 @@ export default function CartPage() {
                         {/* Price and Action items grouping */}
                         <div className="flex items-center gap-4 sm:gap-6">
                           {/* Price */}
-                          <span className="font-jakarta font-black text-stone-950 text-right text-sm sm:text-base min-w-[60px]">
-                            ₹{item.price * item.quantity}
-                          </span>
+                          <div className="flex flex-col items-end min-w-[70px]">
+                            <span className="font-jakarta font-black text-stone-955 text-right text-sm sm:text-base">
+                              ₹{item.price * item.quantity}
+                            </span>
+                            {item.originalPrice && item.originalPrice > item.price && (
+                              <span className="text-stone-400 line-through text-[10px] sm:text-xs font-semibold">
+                                ₹{item.originalPrice * item.quantity}
+                              </span>
+                            )}
+                          </div>
 
                           {/* Remove button */}
                           <button

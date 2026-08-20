@@ -72,6 +72,7 @@ export interface OfferBanner {
 export interface ProductBenefit {
   title: string;
   description: string;
+  icon?: string;
 }
 
 export interface ExtendedProduct extends Product {

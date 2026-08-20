@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Star, Minus, Plus } from 'lucide-react';
 import { useApp } from '@/lib/context/AppContext';
-import { getVariantPrice } from '@/lib/variantPrice';
+import { getVariantPrice, getVariantOriginalPrice } from '@/lib/variantPrice';
 
 interface ProductCardProps {
   product: {
@@ -38,8 +38,13 @@ export default function ProductCard({ product, highlighted, heroMode = false }: 
   const [added, setAdded] = useState(false);
 
   // Calculate variant prices dynamically
+  const discount = product.discount;
+  const hasDiscount = !!discount && discount !== '0%' && discount !== '0% OFF';
+  const displayDiscount = hasDiscount ? discount : undefined;
+
   const currentPrice = getVariantPrice(product.price, selectedWeight, product.weights);
-  const currentOriginalPrice = product.originalPrice ? getVariantPrice(product.originalPrice, selectedWeight, product.weights) : undefined;
+  const baseOriginalPrice = product.originalPrice || (hasDiscount ? Math.round(product.price / (1 - (parseInt(discount!.replace(/[^0-9]/g, '')) || 20) / 100)) : product.price);
+  const currentOriginalPrice = getVariantOriginalPrice(baseOriginalPrice, selectedWeight, product.weights);
 
   const currentStock = useMemo(() => {
     if (product.weights && Array.isArray(product.weights)) {
@@ -115,8 +120,6 @@ export default function ProductCard({ product, highlighted, heroMode = false }: 
       setReviews(product.reviews || 128);
     }
   }, [product.id, product.rating, product.reviews]);
-  const originalPrice = product.originalPrice || Math.round(product.price * 1.3);
-  const discount = product.discount || '20% OFF';
   const category = product.category || 'Malt';
 
   const handleCardClick = () => {
@@ -129,6 +132,7 @@ export default function ProductCard({ product, highlighted, heroMode = false }: 
       id: product.id,
       name: product.name,
       price: currentPrice,
+      originalPrice: currentOriginalPrice,
       weight: selectedWeight,
       category: category
     }, qty);
@@ -142,6 +146,7 @@ export default function ProductCard({ product, highlighted, heroMode = false }: 
       id: product.id,
       name: product.name,
       price: currentPrice,
+      originalPrice: currentOriginalPrice,
       weight: selectedWeight,
       category: category
     }, qty);
@@ -208,12 +213,16 @@ export default function ProductCard({ product, highlighted, heroMode = false }: 
           </div>
 
           {/* Pricing */}
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-4 h-7">
             <span className="text-[#1a110a] font-jakarta font-bold text-xl">₹{currentPrice}</span>
-            <span className="text-[#8e7e6f] font-jakarta text-sm line-through">₹{currentOriginalPrice || originalPrice}</span>
-            <span className="bg-[#e2edd3] text-[#384401] font-jakarta text-[10px] font-bold px-1.5 py-0.5 rounded-md">
-              {discount}
-            </span>
+            {hasDiscount && currentOriginalPrice > currentPrice && (
+              <>
+                <span className="text-[#8e7e6f] font-jakarta text-sm line-through">₹{currentOriginalPrice}</span>
+                <span className="bg-[#e2edd3] text-[#384401] font-jakarta text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+                  {displayDiscount}
+                </span>
+              </>
+            )}
           </div>
 
           {/* Weight selection and Qty Row */}

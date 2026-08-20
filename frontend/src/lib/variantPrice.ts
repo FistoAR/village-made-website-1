@@ -25,3 +25,34 @@ export const getVariantPrice = (basePrice: number, weight?: string, productWeigh
   }
   return basePrice;
 };
+
+export const getVariantOriginalPrice = (baseOriginalPrice: number, weight?: string, productWeights?: any[]): number => {
+  if (!weight) return baseOriginalPrice;
+  
+  if (productWeights && Array.isArray(productWeights)) {
+    const cleanWeight = weight.toLowerCase().replace(/\s+/g, '');
+    const found = productWeights.find((w: any) => {
+      if (typeof w === 'object' && w !== null && w.weight) {
+        return w.weight.toLowerCase().replace(/\s+/g, '') === cleanWeight;
+      }
+      return false;
+    });
+    if (found) {
+      if (typeof found.originalPrice === 'number') {
+        return found.originalPrice;
+      }
+      if (typeof found.price === 'number') {
+        return found.price;
+      }
+    }
+  }
+
+  const w = weight.toLowerCase().replace(/\s+/g, '');
+  if (w === '250g') {
+    return Math.round(baseOriginalPrice * 0.6);
+  }
+  if (w === '1kg' || w === '1000g') {
+    return Math.round(baseOriginalPrice * 1.8);
+  }
+  return baseOriginalPrice;
+};

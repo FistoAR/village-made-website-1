@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Search, Plus, Edit, Trash2, X, Check, Upload } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, X, Check, Upload, ArrowUp, ArrowDown, ListOrdered, GripVertical, ChevronDown, ChevronRight } from 'lucide-react';
 import { ExtendedProduct, ProductBenefit } from './types';
+import { useApp } from '@/lib/context/AppContext';
 
 interface UploadBoxProps {
   accept: string;
@@ -9,9 +10,10 @@ interface UploadBoxProps {
   label: string;
   currentValue?: string;
   isUploading?: boolean;
+  supportedText?: string;
 }
 
-function UploadBox({ accept, onFileSelect, onClear, label, currentValue, isUploading }: UploadBoxProps) {
+function UploadBox({ accept, onFileSelect, onClear, label, currentValue, isUploading, supportedText }: UploadBoxProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,24 +66,41 @@ function UploadBox({ accept, onFileSelect, onClear, label, currentValue, isUploa
             <span className="text-xs text-[#C56C4F] font-bold">Uploading File...</span>
           </div>
         ) : currentValue ? (
-          <div className="flex flex-col items-center gap-1 text-center w-full">
+          <div className="flex flex-col items-center gap-2 text-center w-full" onClick={(e) => e.stopPropagation()}>
             <span className="text-xs font-bold text-emerald-800 truncate max-w-[250px]">
               Uploaded Successfully
             </span>
-            <div className="flex gap-2 items-center mt-1" onClick={(e) => e.stopPropagation()}>
-              <a 
-                href={currentValue} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="text-[10px] text-[#384401] hover:underline font-bold"
+            
+            <div className="w-16 h-16 rounded-xl border border-stone-200 overflow-hidden bg-white flex items-center justify-center shadow-3xs p-1 shrink-0">
+              <img 
+                src={currentValue === 'custom_placeholder' ? '/images/products/details-page/icon-images/no-added-sugar.svg' : currentValue} 
+                alt="Upload preview" 
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+            </div>
+
+            <div className="flex gap-2 items-center mt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  if (currentValue && currentValue !== 'custom_placeholder') {
+                    window.open(currentValue, '_blank');
+                  } else {
+                    alert('No preview available for default placeholder');
+                  }
+                }}
+                className="text-[10px] text-[#384401] hover:bg-[#384401]/5 font-bold border border-[#384401]/25 px-2.5 py-1 rounded-lg bg-white transition-all cursor-pointer shadow-3xs"
               >
-                Preview Link
-              </a>
+                Preview
+              </button>
               {onClear && (
                 <button
                   type="button"
                   onClick={onClear}
-                  className="text-[10px] text-red-500 hover:text-red-700 font-bold ml-2 border border-red-200 px-1.5 py-0.5 rounded bg-red-50"
+                  className="text-[10px] text-red-650 hover:bg-red-50 font-bold border border-red-200 px-2.5 py-1 rounded-lg bg-white transition-all cursor-pointer shadow-3xs"
                 >
                   Remove File
                 </button>
@@ -92,7 +111,7 @@ function UploadBox({ accept, onFileSelect, onClear, label, currentValue, isUploa
           <div className="flex flex-col items-center gap-1 text-stone-400 text-center">
             <Upload className="w-5 h-5 text-stone-450" />
             <span className="text-xs font-bold font-jakarta text-stone-600">Drag & Drop or Click to Upload</span>
-            <span className="text-[10px] text-stone-400">Supports images & videos</span>
+            <span className="text-[10px] text-stone-400">{supportedText || "Supports images & videos"}</span>
           </div>
         )}
       </div>
@@ -101,7 +120,7 @@ function UploadBox({ accept, onFileSelect, onClear, label, currentValue, isUploa
 }
 
 interface AdminProductsTabProps {
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; description?: string; display_order?: number; displayOrder?: number }[];
   selectedProductCategory: string;
   setSelectedProductCategory: (val: string) => void;
   productSearch: string;
@@ -123,6 +142,10 @@ interface AdminProductsTabProps {
   setNewProdName: (val: string) => void;
   newProdPrice: number;
   setNewProdPrice: (val: number) => void;
+  newProdOriginalPrice: number;
+  setNewProdOriginalPrice: (val: number) => void;
+  newProdDiscount: string;
+  setNewProdDiscount: (val: string) => void;
   newProdDesc: string;
   setNewProdDesc: (val: string) => void;
   newProdBadge: string;
@@ -200,6 +223,10 @@ export default function AdminProductsTab({
   setNewProdName,
   newProdPrice,
   setNewProdPrice,
+  newProdOriginalPrice,
+  setNewProdOriginalPrice,
+  newProdDiscount,
+  setNewProdDiscount,
   newProdDesc,
   setNewProdDesc,
   newProdBadge,
@@ -262,6 +289,147 @@ export default function AdminProductsTab({
   const [renamingWeightEdit, setRenamingWeightEdit] = React.useState<string | null>(null);
   const [renameValueEdit, setRenameValueEdit] = React.useState('');
 
+  const { fetchCategories } = useApp();
+  const [showReorderModal, setShowReorderModal] = React.useState(false);
+  const [tempCategories, setTempCategories] = React.useState<{ id: string; name: string; display_order: number }[]>([]);
+  const [isSavingReorder, setIsSavingReorder] = React.useState(false);
+  const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = React.useState<Record<string, boolean>>({});
+
+  const toggleCategoryCollapse = (catName: string) => {
+    setCollapsedCategories((prev) => ({
+      ...prev,
+      [catName]: !prev[catName],
+    }));
+  };
+
+  const validateSVGIcon = async (file: File): Promise<boolean> => {
+    // 1. Validate File extension / Mime type
+    if (file.type !== 'image/svg+xml' && !file.name.endsWith('.svg')) {
+      triggerAlert('Only SVG (.svg) files are allowed for custom benefit icons.', true);
+      return false;
+    }
+    // 2. Validate File Size (limit to 20 KB)
+    const MAX_SIZE = 20 * 1024; // 20 KB
+    if (file.size > MAX_SIZE) {
+      triggerAlert('SVG file size should be less than 20 KB.', true);
+      return false;
+    }
+    // 3. Read and parse SVG properties (check for basic validity and block potential script tags)
+    try {
+      const text = await file.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, 'image/svg+xml');
+      const parserError = doc.querySelector('parsererror');
+      if (parserError) {
+        triggerAlert('Invalid SVG file markup.', true);
+        return false;
+      }
+      
+      const svgElement = doc.documentElement;
+      if (svgElement.tagName.toLowerCase() !== 'svg') {
+        triggerAlert('Invalid file structure. SVG root tag not found.', true);
+        return false;
+      }
+      
+      // XSS check: block script elements
+      if (doc.querySelector('script')) {
+        triggerAlert('Security error: SVG file contains script elements.', true);
+        return false;
+      }
+      
+      return true;
+    } catch (err) {
+      console.error(err);
+      triggerAlert('Failed to parse or validate SVG file.', true);
+      return false;
+    }
+  };
+
+  const handleOpenReorder = () => {
+    const list = categories.map((c, i) => ({
+      id: c.id,
+      name: c.name,
+      display_order: c.display_order !== undefined ? c.display_order : (c.displayOrder !== undefined ? c.displayOrder : i * 10)
+    })).sort((a, b) => a.display_order - b.display_order);
+    setTempCategories(list);
+    setShowReorderModal(true);
+  };
+
+  const handleMoveCategory = (index: number, direction: 'up' | 'down') => {
+    const newIdx = direction === 'up' ? index - 1 : index + 1;
+    if (newIdx < 0 || newIdx >= tempCategories.length) return;
+
+    const list = [...tempCategories];
+    const temp = list[index];
+    list[index] = list[newIdx];
+    list[newIdx] = temp;
+
+    const updated = list.map((cat, idx) => ({
+      ...cat,
+      display_order: idx * 10
+    }));
+    setTempCategories(updated);
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOverItem = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    
+    const list = [...tempCategories];
+    const draggedItem = list[draggedIndex];
+    
+    list.splice(draggedIndex, 1);
+    list.splice(index, 0, draggedItem);
+    
+    const updated = list.map((cat, idx) => ({
+      ...cat,
+      display_order: idx * 10
+    }));
+    
+    setDraggedIndex(index);
+    setTempCategories(updated);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
+  const handleSaveReorder = async () => {
+    setIsSavingReorder(true);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/products/categories/reorder`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orders: tempCategories.map(c => ({ id: c.id, display_order: c.display_order }))
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerAlert('Category display order updated successfully!');
+        if (fetchCategories) {
+          await fetchCategories();
+        }
+        setShowReorderModal(false);
+      } else {
+        triggerAlert(data.error || 'Failed to update order.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      triggerAlert('Failed to update category order.', true);
+    } finally {
+      setIsSavingReorder(false);
+    }
+  };
+
   const groupedProducts = React.useMemo(() => {
     const groups: { [key: string]: ExtendedProduct[] } = {};
     filteredProducts.forEach((p) => {
@@ -294,7 +462,7 @@ export default function AdminProductsTab({
           <select
             value={selectedProductCategory}
             onChange={(e) => setSelectedProductCategory(e.target.value)}
-            className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-stone-900 text-xs font-bold focus:outline-none"
+            className="h-10 px-3 bg-white border border-[#eeddb9] rounded-xl text-stone-900 text-sm font-bold focus:outline-none"
           >
             <option value="All">All Categories</option>
             {categories.map((cat) => (
@@ -309,7 +477,7 @@ export default function AdminProductsTab({
               placeholder="Search product..."
               value={productSearch}
               onChange={(e) => setProductSearch(e.target.value)}
-              className="w-full h-10 pl-8.5 pr-3 bg-white border border-[#eeddb9] rounded-xl text-xs placeholder-stone-400 focus:outline-none"
+              className="w-full h-10 pl-8.5 pr-3 bg-white border border-[#eeddb9] rounded-xl text-sm placeholder-stone-400 focus:outline-none"
             />
           </div>
 
@@ -336,6 +504,13 @@ export default function AdminProductsTab({
         </div>
 
         <div className="flex gap-2 shrink-0">
+          <button
+            onClick={handleOpenReorder}
+            className="flex items-center justify-center gap-1.5 bg-[#FAF4E6] border border-[#d3c099] text-[#704632] hover:bg-[#FAF4E6]/80 text-xs font-bold py-2.5 px-4.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+          >
+            <ListOrdered className="w-3.5 h-3.5" />
+            Manage Order
+          </button>
           <button
             onClick={() => {
               setShowAddProduct(false);
@@ -411,11 +586,110 @@ export default function AdminProductsTab({
         </div>
       )}
 
+      {/* Manage Category Order Modal */}
+      {showReorderModal && (
+        <div className="fixed h-full inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="bg-[#FAF6EB] border border-[#eeddb9] rounded-2xl p-6 shadow-2xl max-w-lg w-full max-h-[75vh] flex flex-col relative space-y-4 font-jakarta text-[#3d2b1f]">
+            <div className="flex justify-between items-center shrink-0">
+              <h4 className="text-xl font-extrabold uppercase tracking-wider text-[#704632] font-jakarta font-semibold">Manage Category Order</h4>
+              <button
+                type="button"
+                onClick={() => setShowReorderModal(false)}
+                className="text-stone-600 hover:text-stone-900 p-1 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <p className="text-xs text-stone-500 font-jakarta shrink-0">
+              Adjust the order in which categories appear on the client product page. Use the up/down arrows or click and drag categories to reorder (desktop).
+            </p>
+
+            <div className="border border-[#eeddb9] rounded-xl overflow-y-auto max-h-[40vh] divide-y divide-[#eeddb9] bg-white flex-1">
+              {tempCategories.map((cat, idx) => (
+                <div 
+                  key={cat.id} 
+                  draggable 
+                  onDragStart={(e) => handleDragStart(e, idx)}
+                  onDragOver={(e) => handleDragOverItem(e, idx)}
+                  onDragEnd={handleDragEnd}
+                  className={`flex items-center justify-between p-3.5 hover:bg-[#FAF4E6]/35 transition-colors cursor-move select-none ${
+                    draggedIndex === idx ? 'bg-[#EEF2E0] border-2 border-dashed border-[#C9D98A]/80 opacity-55 shadow-inner' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {/* Grip handle (Only visible in desktop view) */}
+                    <span className="text-[#A18A6A] hover:text-[#704632] cursor-grab active:cursor-grabbing p-0.5 md:flex hidden shrink-0">
+                      <GripVertical className="w-4 h-4" />
+                    </span>
+                    <span className="text-xs font-bold text-stone-400 font-mono w-6 shrink-0">
+                      {(idx + 1).toString().padStart(2, '0')}
+                    </span>
+                    <span className="text-sm font-bold text-[#3E2C1C]">
+                      {cat.name}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={() => handleMoveCategory(idx, 'up')}
+                      className={`p-1.5 rounded-lg border transition-colors ${
+                        idx === 0 
+                          ? 'border-stone-100 text-stone-300 bg-stone-50 cursor-not-allowed' 
+                          : 'border-[#eeddb9] text-[#704632] hover:bg-[#FAF4E6] cursor-pointer'
+                      }`}
+                      aria-label="Move up"
+                    >
+                      <ArrowUp className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={idx === tempCategories.length - 1}
+                      onClick={() => handleMoveCategory(idx, 'down')}
+                      className={`p-1.5 rounded-lg border transition-colors ${
+                        idx === tempCategories.length - 1 
+                          ? 'border-stone-100 text-stone-300 bg-stone-50 cursor-not-allowed' 
+                          : 'border-[#eeddb9] text-[#704632] hover:bg-[#FAF4E6] cursor-pointer'
+                      }`}
+                      aria-label="Move down"
+                    >
+                      <ArrowDown className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-2 pt-2 justify-end shrink-0">
+              <button 
+                type="button" 
+                onClick={() => setShowReorderModal(false)} 
+                className="border border-stone-300 hover:bg-stone-50 text-stone-700 text-xs font-bold py-2.5 px-4 rounded-xl cursor-pointer transition-colors"
+                disabled={isSavingReorder}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                onClick={handleSaveReorder} 
+                className="bg-[#704632] hover:bg-[#5b3827] text-white text-xs font-bold py-2.5 px-4 rounded-xl cursor-pointer transition-colors flex items-center gap-1.5"
+                disabled={isSavingReorder}
+              >
+                {isSavingReorder ? 'Saving...' : 'Save Order'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Product Modal/Form */}
       {showAddProduct && (
-        <div className="fixed h-full inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <form onSubmit={handleAddProductSubmit} className="bg-[#FAF6EB] border border-[#eeddb9] rounded-2xl p-6 shadow-2xl max-w-4xl w-full font-jakarta text-[#3d2b1f]">
-            <div className="flex justify-between items-center">
+        <div className="fixed h-full inset-0 z-[200] overflow-y-auto flex items-start md:items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4">
+          <form onSubmit={handleAddProductSubmit} className="bg-[#FAF6EB] border border-[#eeddb9] rounded-2xl p-4 md:p-6 shadow-2xl max-w-4xl w-full font-jakarta text-[#3d2b1f] max-h-[85vh] flex flex-col my-auto">
+            <div className="flex justify-between items-center shrink-0">
               <h4 className="text-xl font-extrabold uppercase tracking-wider text-[#384401] font-jakarta">Add New Provision Product</h4>
               <button
                 type="button"
@@ -427,7 +701,15 @@ export default function AdminProductsTab({
               </button>
             </div>
 
-            <div className="flex border-b border-[#eeddb9]/50 mb-4 font-jakarta gap-2 mt-4">
+            {addActiveTab !== 'basic' && (
+              <div className="mt-3 px-5 py-3 rounded-xl bg-[#384401]/5 border border-[#384401]/20 flex flex-wrap gap-x-6 gap-y-1.5 items-center text-sm text-stone-700 font-jakarta animate-fade-in shadow-xs shrink-0">
+                <span><strong className="text-[#384401] uppercase tracking-wider text-[10px] mr-1">Product:</strong> <span className="font-extrabold text-stone-900">{newProdName || '(Untitled Product)'}</span></span>
+                <span className="hidden md:inline text-[#eeddb9]/60">|</span>
+                <span><strong className="text-[#384401] uppercase tracking-wider text-[10px] mr-1">Category:</strong> <span className="font-extrabold text-[#704632]">{newProdCat || '(Unspecified Category)'}</span></span>
+              </div>
+            )}
+
+            <div className="flex border-b border-[#eeddb9]/50 mb-4 font-jakarta gap-2 mt-4 overflow-x-auto whitespace-nowrap scrollbar-none shrink-0">
               <button
                 type="button"
                 onClick={() => setAddActiveTab('basic')}
@@ -485,7 +767,7 @@ export default function AdminProductsTab({
               </button>
             </div>
 
-            <div className="mt-2 max-h-[70vh] overflow-y-auto relative space-y-6 pr-1">
+            <div className="mt-2 max-h-[55vh] md:max-h-[70vh] overflow-y-auto relative space-y-6 pr-1">
 
               {addActiveTab === 'basic' && (
                 <>
@@ -526,7 +808,7 @@ export default function AdminProductsTab({
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-jakarta">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-bold text-stone-700">Ribbon Badge (Optional)</label>
                       <input
@@ -544,6 +826,21 @@ export default function AdminProductsTab({
                         value={newProdStock}
                         onChange={(e) => setNewProdStock(parseInt(e.target.value) || 0)}
                         className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-bold text-stone-700">Discount Rate (%)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="99"
+                        value={newProdDiscount}
+                        onChange={(e) => {
+                          const val = Math.min(99, Math.max(0, parseInt(e.target.value) || 0));
+                          setNewProdDiscount(val.toString());
+                        }}
+                        className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all font-bold"
+                        placeholder="e.g. 15"
                       />
                     </div>
                   </div>
@@ -576,8 +873,10 @@ export default function AdminProductsTab({
                               return;
                             }
                             
-                            const basePrice = newProdPrice || 0;
-                            setNewProdWeights([...currentNewProdWeights, { weight: cleanName, price: basePrice }]);
+                            const basePrice = newProdOriginalPrice || 100;
+                            const discountPercent = parseInt(newProdDiscount) || 0;
+                            const salePrice = Math.round(basePrice * (1 - discountPercent / 100));
+                            setNewProdWeights([...currentNewProdWeights, { weight: cleanName, originalPrice: basePrice, price: salePrice }]);
                             setCustomWeightAdd('');
                           }}
                           className="bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
@@ -603,15 +902,15 @@ export default function AdminProductsTab({
                           let currentStockValue = 0;
                           if (hasWeight) {
                             if (typeof matchingItem === 'object' && matchingItem !== null) {
-                              currentPriceValue = typeof matchingItem.price === 'number' ? matchingItem.price : 0;
+                              currentPriceValue = typeof matchingItem.originalPrice === 'number' ? matchingItem.originalPrice : (typeof matchingItem.price === 'number' ? matchingItem.price : 0);
                               currentStockValue = typeof matchingItem.stock === 'number' ? matchingItem.stock : (newProdStock || 50);
                             } else {
-                              const basePrice = newProdPrice || 0;
+                              const basePrice = newProdOriginalPrice || 100;
                               currentPriceValue = weight === '250 g' ? Math.round(basePrice * 0.6) : weight === '1 kg' ? Math.round(basePrice * 1.8) : basePrice;
                               currentStockValue = newProdStock || 50;
                             }
                           } else {
-                            const basePrice = newProdPrice || 0;
+                            const basePrice = newProdOriginalPrice || 100;
                             currentPriceValue = weight === '250 g' ? Math.round(basePrice * 0.6) : weight === '1 kg' ? Math.round(basePrice * 1.8) : basePrice;
                             currentStockValue = newProdStock || 50;
                           }
@@ -625,7 +924,9 @@ export default function AdminProductsTab({
                                   onChange={(e) => {
                                     let newWeights = [...currentNewProdWeights];
                                     if (e.target.checked) {
-                                      newWeights.push({ weight, price: currentPriceValue, stock: currentStockValue });
+                                      const discountPercent = parseInt(newProdDiscount) || 0;
+                                      const salePrice = Math.round(currentPriceValue * (1 - discountPercent / 100));
+                                      newWeights.push({ weight, originalPrice: currentPriceValue, price: salePrice, stock: currentStockValue });
                                     } else {
                                       newWeights = newWeights.filter((w: any) => {
                                         const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
@@ -710,19 +1011,21 @@ export default function AdminProductsTab({
 
                               {hasWeight && (
                                 <div className="flex flex-wrap items-center gap-4 shrink-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[11px] text-stone-505 font-bold">Price:</span>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-[11px] text-stone-505 font-bold">Orig Price:</span>
                                     <div className="relative w-20">
                                       <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-505">₹</span>
                                       <input
                                         type="number"
                                         value={currentPriceValue}
                                         onChange={(e) => {
-                                          const val = Number(e.target.value);
+                                          const origVal = Number(e.target.value);
+                                          const discountPercent = parseInt(newProdDiscount) || 0;
+                                          const salePrice = Math.round(origVal * (1 - discountPercent / 100));
                                           const newWeights = currentNewProdWeights.map((w: any) => {
                                             const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
                                             if (name === weight) {
-                                              return { ...w, weight, price: val };
+                                              return { ...w, weight, originalPrice: origVal, price: salePrice };
                                             }
                                             return w;
                                           });
@@ -731,6 +1034,11 @@ export default function AdminProductsTab({
                                         className="w-full h-7 pl-5 pr-1 bg-stone-50 border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401]"
                                       />
                                     </div>
+                                    {parseInt(newProdDiscount) > 0 && (
+                                      <span className="text-[10px] text-emerald-800 font-extrabold ml-1 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 shrink-0">
+                                        Sale: ₹{Math.round(currentPriceValue * (1 - (parseInt(newProdDiscount) || 0) / 100))}
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="flex items-center gap-1.5">
                                     <span className="text-[11px] text-stone-500 font-bold">Stock:</span>
@@ -852,7 +1160,7 @@ export default function AdminProductsTab({
                                 <Trash2 className="w-3.5 h-3.5" /> Delete
                               </button>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <div className="flex flex-col gap-1.5">
                                 <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">Title</label>
                                 <input
@@ -868,6 +1176,54 @@ export default function AdminProductsTab({
                                 />
                               </div>
                               <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">Icon</label>
+                                <select
+                                  value={benefit.icon === 'custom_placeholder' || (benefit.icon && !['bowl', 'digest', 'shield', 'leaf'].includes(benefit.icon)) ? 'custom' : (benefit.icon || '')}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    const updated = [...newProdBenefits];
+                                    updated[idx] = { ...updated[idx], icon: val === 'custom' ? 'custom_placeholder' : val };
+                                    setNewProdBenefits(updated);
+                                  }}
+                                  className="h-10 px-3 bg-stone-50 border border-[#d3c099]/60 rounded-lg text-sm text-stone-900 focus:bg-white focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all cursor-pointer font-bold"
+                                >
+                                  <option value="">Default Indicator (Circle check)</option>
+                                  <option value="bowl">Bowl / Traditional Nutrition</option>
+                                  <option value="digest">Digestive / Easy to Digest</option>
+                                  <option value="shield">Shield / Natural Goodness</option>
+                                  <option value="leaf">Leaf / Sprouted</option>
+                                  <option value="custom">Custom SVG Upload...</option>
+                                </select>
+                              </div>
+ 
+                              {(benefit.icon === 'custom_placeholder' || (benefit.icon && !['bowl', 'digest', 'shield', 'leaf'].includes(benefit.icon))) && (
+                                <div className="flex flex-col gap-1.5 md:col-span-3 border border-[#eeddb9]/40 rounded-xl p-3 bg-stone-50/55 animate-fade-in">
+                                  <UploadBox
+                                    accept=".svg,image/svg+xml"
+                                    label="Upload Custom SVG Icon (Required: valid SVG, under 20 KB, viewBox 24x24 recommended)" supportedText="Supports SVG files only"
+                                    currentValue={benefit.icon && benefit.icon !== 'custom_placeholder' ? benefit.icon : ''}
+                                    onClear={() => {
+                                      const updated = [...newProdBenefits];
+                                      updated[idx] = { ...updated[idx], icon: 'custom_placeholder' };
+                                      setNewProdBenefits(updated);
+                                    }}
+                                    onFileSelect={async (file) => {
+                                      const isValid = await validateSVGIcon(file);
+                                      if (isValid) {
+                                        const url = await handleFileUpload(file, 'product-images');
+                                        if (url) {
+                                          const updated = [...newProdBenefits];
+                                          updated[idx] = { ...updated[idx], icon: url };
+                                          setNewProdBenefits(updated);
+                                          triggerAlert('Custom SVG icon validated and uploaded!');
+                                        }
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              )}
+
+                              <div className="flex flex-col gap-1.5 md:col-span-3">
                                 <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">Description</label>
                                 <textarea
                                   rows={2}
@@ -966,32 +1322,20 @@ export default function AdminProductsTab({
                   <div className="border border-[#d3c099] rounded-xl p-4 bg-amber-50/5 space-y-3 font-jakarta">
                     <span className="text-base font-extrabold text-[#704632] block uppercase tracking-wider font-jakarta">Ingredients Infographics Image Configuration</span>
                     
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-bold text-stone-700">Desktop Ingredients Image URL / Upload</label>
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="text"
-                          value={newProdIngDesktop}
-                          onChange={(e) => setNewProdIngDesktop(e.target.value)}
-                          placeholder="e.g. /images/products/ingredients-image.webp"
-                          className="flex-grow h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
-                        />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const url = await handleFileUpload(file, 'product-images');
-                              if (url) setNewProdIngDesktop(url);
-                            }
-                          }}
-                          className="text-xs w-48 file:py-2 file:px-3 file:rounded-lg file:bg-stone-100"
-                        />
-                      </div>
+                    <div className="flex flex-col gap-4">
+                      <UploadBox
+                        accept="image/*"
+                        label="Desktop Ingredients Image"
+                        currentValue={newProdIngDesktop}
+                        onClear={() => setNewProdIngDesktop('')}
+                        onFileSelect={async (file) => {
+                          const url = await handleFileUpload(file, 'product-images');
+                          if (url) setNewProdIngDesktop(url);
+                        }}
+                      />
                     </div>
 
-                    <div className="flex flex-col gap-2 border-t border-stone-200/50 pt-2">
+                    <div className="flex flex-col gap-2 border-t border-stone-200/50 pt-3">
                       <div className="flex items-center gap-2">
                         <input
                           type="checkbox"
@@ -1003,26 +1347,28 @@ export default function AdminProductsTab({
                         <label htmlFor="newProdIngSameTab" className="text-sm font-bold text-stone-700 cursor-pointer select-none">Use same ingredients image for tablet</label>
                       </div>
                       {!newProdIngSameTab && (
-                        <div className="flex flex-col gap-1.5 pl-5">
-                          <label className="text-xs font-bold text-stone-505">Tablet Ingredients Image URL</label>
-                          <input
-                            type="text"
-                            value={newProdIngTablet}
-                            onChange={(e) => setNewProdIngTablet(e.target.value)}
-                            placeholder="Tablet specific ingredients image URL..."
-                            className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+                        <div className="flex flex-col gap-1.5 pl-5 pt-2">
+                          <UploadBox
+                            accept="image/*"
+                            label="Tablet Ingredients Image"
+                            currentValue={newProdIngTablet}
+                            onClear={() => setNewProdIngTablet('')}
+                            onFileSelect={async (file) => {
+                              const url = await handleFileUpload(file, 'product-images');
+                              if (url) setNewProdIngTablet(url);
+                            }}
                           />
                         </div>
                       )}
                     </div>
 
-                    <div className="flex flex-col gap-2 border-t border-stone-200/50 pt-2">
+                    <div className="flex flex-col gap-2 border-t border-stone-200/50 pt-3">
                       <div className="flex items-center gap-4">
-                        <label className="text-sm font-bold text-stone-700">Mobile Option:</label>
+                        <label className="text-sm font-bold text-stone-700 font-jakarta">Mobile Option:</label>
                         <select
                           value={newProdIngSameMobile}
                           onChange={(e: any) => setNewProdIngSameMobile(e.target.value)}
-                          className="h-9 px-3 bg-white border border-[#d3c099] rounded-lg text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+                          className="h-9 px-3 bg-white border border-[#d3c099] rounded-lg text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all font-bold"
                         >
                           <option value="desktop">Use the same as desktop</option>
                           <option value="tablet">Use the same as tablet</option>
@@ -1030,14 +1376,16 @@ export default function AdminProductsTab({
                         </select>
                       </div>
                       {newProdIngSameMobile === 'none' && (
-                        <div className="flex flex-col gap-1.5 pl-5">
-                          <label className="text-xs font-bold text-stone-500">Mobile Ingredients Image URL</label>
-                          <input
-                            type="text"
-                            value={newProdIngMobile}
-                            onChange={(e) => setNewProdIngMobile(e.target.value)}
-                            placeholder="Mobile specific ingredients image URL..."
-                            className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+                        <div className="flex flex-col gap-1.5 pl-5 pt-2">
+                          <UploadBox
+                            accept="image/*"
+                            label="Mobile Ingredients Image"
+                            currentValue={newProdIngMobile}
+                            onClear={() => setNewProdIngMobile('')}
+                            onFileSelect={async (file) => {
+                              const url = await handleFileUpload(file, 'product-images');
+                              if (url) setNewProdIngMobile(url);
+                            }}
                           />
                         </div>
                       )}
@@ -1230,7 +1578,7 @@ export default function AdminProductsTab({
               )}
             </div>
 
-            <div className="flex justify-end gap-2 mt-5">
+            <div className="flex justify-end gap-2 mt-5 shrink-0">
               <button type="button" onClick={() => { setShowAddProduct(false); setAddActiveTab('basic'); }} className="border border-stone-300 hover:bg-stone-50 text-stone-700 text-xs font-bold py-2.5 px-6 rounded-xl cursor-pointer">
                 Cancel
               </button>
@@ -1244,9 +1592,9 @@ export default function AdminProductsTab({
 
       {/* Edit Product Modal/Form */}
       {editingProduct && (
-        <div className="fixed h-full inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <form onSubmit={handleUpdateProduct} className="bg-[#FAF6EB] border border-[#eeddb9] rounded-2xl p-6 shadow-2xl max-w-4xl w-full font-jakarta text-[#3d2b1f]">
-            <div className="flex justify-between items-center">
+        <div className="fixed h-full inset-0 z-[200] overflow-y-auto flex items-start md:items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4">
+          <form onSubmit={handleUpdateProduct} className="bg-[#FAF6EB] border border-[#eeddb9] rounded-2xl p-4 md:p-6 shadow-2xl max-w-4xl w-full font-jakarta text-[#3d2b1f] max-h-[85vh] flex flex-col my-auto">
+            <div className="flex justify-between items-center shrink-0">
               <h4 className="text-xl font-extrabold uppercase tracking-wider text-[#704632] font-jakarta">Edit Provision Product Details</h4>
               <button
                 type="button"
@@ -1258,7 +1606,15 @@ export default function AdminProductsTab({
               </button>
             </div>
 
-            <div className="flex border-b border-[#eeddb9]/50 mb-4 font-jakarta gap-2 mt-4">
+            {editActiveTab !== 'basic' && (
+              <div className="mt-3 px-5 py-3 rounded-xl bg-[#704632]/5 border border-[#704632]/20 flex flex-wrap gap-x-6 gap-y-1.5 items-center text-sm text-stone-700 font-jakarta animate-fade-in shadow-xs shrink-0">
+                <span><strong className="text-[#704632] uppercase tracking-wider text-[10px] mr-1">Product:</strong> <span className="font-extrabold text-stone-900">{editingProduct.name || '(Untitled Product)'}</span></span>
+                <span className="hidden md:inline text-[#eeddb9]/60">|</span>
+                <span><strong className="text-[#704632] uppercase tracking-wider text-[10px] mr-1">Category:</strong> <span className="font-extrabold text-[#384401]">{editingProduct.category || '(Unspecified Category)'}</span></span>
+              </div>
+            )}
+
+            <div className="flex border-b border-[#eeddb9]/50 mb-4 font-jakarta gap-2 mt-4 overflow-x-auto whitespace-nowrap scrollbar-none shrink-0">
               <button
                 type="button"
                 onClick={() => setEditActiveTab('basic')}
@@ -1316,7 +1672,7 @@ export default function AdminProductsTab({
               </button>
             </div>
 
-            <div className="mt-2 max-h-[70vh] overflow-y-auto relative space-y-7 pr-1">
+            <div className="mt-2 max-h-[55vh] md:max-h-[70vh] overflow-y-auto relative space-y-7 pr-1">
 
               {editActiveTab === 'basic' && (
                 <>
@@ -1355,7 +1711,7 @@ export default function AdminProductsTab({
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-jakarta">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-jakarta">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-bold text-stone-700">Ribbon Badge (Optional)</label>
                       <input
@@ -1373,6 +1729,34 @@ export default function AdminProductsTab({
                         value={editingProduct.stock}
                         onChange={(e) => setEditingProduct({ ...editingProduct, stock: parseInt(e.target.value) || 0 })}
                         className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-bold text-stone-700">Discount Rate (%)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="99"
+                        value={editingProduct.discount ? parseInt(editingProduct.discount.replace(/[^0-9]/g, '')) || 0 : 0}
+                        onChange={(e) => {
+                          const val = Math.min(99, Math.max(0, parseInt(e.target.value) || 0));
+                          const discountStr = val > 0 ? `${val}% OFF` : undefined;
+                          const updatedWeights = ((editingProduct.weights || []) as any[]).map(w => {
+                            if (typeof w === 'object' && w !== null) {
+                              const origPrice = typeof w.originalPrice === 'number' ? w.originalPrice : (typeof w.price === 'number' ? w.price : 0);
+                              const salePrice = Math.round(origPrice * (1 - val / 100));
+                              return { ...w, originalPrice: origPrice, price: salePrice };
+                            }
+                            return w;
+                          });
+                          setEditingProduct({
+                            ...editingProduct,
+                            discount: discountStr,
+                            weights: updatedWeights
+                          });
+                        }}
+                        className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all font-bold"
+                        placeholder="e.g. 15"
                       />
                     </div>
                   </div>
@@ -1404,11 +1788,12 @@ export default function AdminProductsTab({
                               alert('This variant already exists!');
                               return;
                             }
-                            
-                            const basePrice = editingProduct.price || 0;
+                                                     const basePrice = editingProduct.originalPrice || editingProduct.price || 100;
+                            const discountPercent = editingProduct.discount ? parseInt(editingProduct.discount.replace(/[^0-9]/g, '')) || 0 : 0;
+                            const salePrice = Math.round(basePrice * (1 - discountPercent / 100));
                             setEditingProduct({
                               ...editingProduct,
-                              weights: [...currentWeights, { weight: cleanName, price: basePrice }]
+                              weights: [...currentWeights, { weight: cleanName, originalPrice: basePrice, price: salePrice }]
                             });
                             setCustomWeightEdit('');
                           }}
@@ -1435,15 +1820,15 @@ export default function AdminProductsTab({
                           let currentStockValue = 0;
                           if (hasWeight) {
                             if (typeof matchingItem === 'object' && matchingItem !== null) {
-                              currentPriceValue = typeof matchingItem.price === 'number' ? matchingItem.price : 0;
+                              currentPriceValue = typeof matchingItem.originalPrice === 'number' ? matchingItem.originalPrice : (typeof matchingItem.price === 'number' ? matchingItem.price : 0);
                               currentStockValue = typeof matchingItem.stock === 'number' ? matchingItem.stock : (editingProduct.stock || 50);
                             } else {
-                              const basePrice = editingProduct.price || 0;
+                              const basePrice = editingProduct.originalPrice || editingProduct.price || 100;
                               currentPriceValue = weight === '250 g' ? Math.round(basePrice * 0.6) : weight === '1 kg' ? Math.round(basePrice * 1.8) : basePrice;
                               currentStockValue = editingProduct.stock || 50;
                             }
                           } else {
-                            const basePrice = editingProduct.price || 0;
+                            const basePrice = editingProduct.originalPrice || editingProduct.price || 100;
                             currentPriceValue = weight === '250 g' ? Math.round(basePrice * 0.6) : weight === '1 kg' ? Math.round(basePrice * 1.8) : basePrice;
                             currentStockValue = editingProduct.stock || 50;
                           }
@@ -1457,7 +1842,9 @@ export default function AdminProductsTab({
                                   onChange={(e) => {
                                     let newWeights = [...currentWeights];
                                     if (e.target.checked) {
-                                      newWeights.push({ weight, price: currentPriceValue, stock: currentStockValue });
+                                      const discountPercent = editingProduct.discount ? parseInt(editingProduct.discount.replace(/[^0-9]/g, '')) || 0 : 0;
+                                      const salePrice = Math.round(currentPriceValue * (1 - discountPercent / 100));
+                                      newWeights.push({ weight, originalPrice: currentPriceValue, price: salePrice, stock: currentStockValue });
                                     } else {
                                       newWeights = newWeights.filter((w: any) => {
                                         const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
@@ -1542,19 +1929,21 @@ export default function AdminProductsTab({
 
                               {hasWeight && (
                                 <div className="flex flex-wrap items-center gap-4 shrink-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[11px] text-stone-500 font-bold">Price:</span>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-[11px] text-stone-500 font-bold">Orig Price:</span>
                                     <div className="relative w-20">
                                       <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-505">₹</span>
                                       <input
                                         type="number"
                                         value={currentPriceValue}
                                         onChange={(e) => {
-                                          const val = Number(e.target.value);
+                                          const origVal = Number(e.target.value);
+                                          const discountPercent = editingProduct.discount ? parseInt(editingProduct.discount.replace(/[^0-9]/g, '')) || 0 : 0;
+                                          const salePrice = Math.round(origVal * (1 - discountPercent / 100));
                                           const newWeights = currentWeights.map((w: any) => {
                                             const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
                                             if (name === weight) {
-                                              return { ...w, weight, price: val };
+                                              return { ...w, weight, originalPrice: origVal, price: salePrice };
                                             }
                                             return w;
                                           });
@@ -1563,6 +1952,11 @@ export default function AdminProductsTab({
                                         className="w-full h-7 pl-5 pr-1 bg-stone-50 border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401]"
                                       />
                                     </div>
+                                    {(editingProduct.discount ? parseInt(editingProduct.discount.replace(/[^0-9]/g, '')) || 0 : 0) > 0 && (
+                                      <span className="text-[10px] text-emerald-800 font-extrabold ml-1 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 shrink-0">
+                                        Sale: ₹{Math.round(currentPriceValue * (1 - (editingProduct.discount ? parseInt(editingProduct.discount.replace(/[^0-9]/g, '')) || 0 : 0) / 100))}
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="flex items-center gap-1.5">
                                     <span className="text-[11px] text-stone-500 font-bold">Stock:</span>
@@ -1690,7 +2084,7 @@ export default function AdminProductsTab({
                                 <Trash2 className="w-3.5 h-3.5" /> Delete
                               </button>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <div className="flex flex-col gap-1.5">
                                 <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">Title</label>
                                 <input
@@ -1706,7 +2100,56 @@ export default function AdminProductsTab({
                                 />
                               </div>
                               <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">Description</label>
+                                <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">Icon</label>
+                                <select
+
+                                  value={benefit.icon === 'custom_placeholder' || (benefit.icon && !['bowl', 'digest', 'shield', 'leaf'].includes(benefit.icon)) ? 'custom' : (benefit.icon || '')}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    const updated = [...(editingProduct.benefits as any[])];
+                                    updated[idx] = { ...updated[idx], icon: val === 'custom' ? 'custom_placeholder' : val };
+                                    setEditingProduct({ ...editingProduct, benefits: updated } as any);
+                                  }}
+                                  className="h-10 px-3 bg-stone-50 border border-[#d3c099]/60 rounded-lg text-sm text-stone-900 focus:bg-white focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all cursor-pointer font-bold"
+                                >
+                                  <option value="">Default Indicator (Circle check)</option>
+                                  <option value="bowl">Bowl / Traditional Nutrition</option>
+                                  <option value="digest">Digestive / Easy to Digest</option>
+                                  <option value="shield">Shield / Natural Goodness</option>
+                                  <option value="leaf">Leaf / Sprouted</option>
+                                  <option value="custom">Custom SVG Upload...</option>
+                                </select>
+                              </div>
+
+                              {(benefit.icon === 'custom_placeholder' || (benefit.icon && !['bowl', 'digest', 'shield', 'leaf'].includes(benefit.icon))) && (
+                                <div className="flex flex-col gap-1.5 md:col-span-3 border border-[#eeddb9]/40 rounded-xl p-3 bg-stone-50/55 animate-fade-in">
+                                  <UploadBox
+                                    accept=".svg,image/svg+xml"
+                                    label="Upload Custom SVG Icon (Required: valid SVG, under 20 KB, viewBox 24x24 recommended)" supportedText="Supports SVG files only"
+                                    currentValue={benefit.icon && benefit.icon !== 'custom_placeholder' ? benefit.icon : ''}
+                                    onClear={() => {
+                                      const updated = [...(editingProduct.benefits as any[])];
+                                      updated[idx] = { ...updated[idx], icon: 'custom_placeholder' };
+                                      setEditingProduct({ ...editingProduct, benefits: updated } as any);
+                                    }}
+                                    onFileSelect={async (file) => {
+                                      const isValid = await validateSVGIcon(file);
+                                      if (isValid) {
+                                        const url = await handleFileUpload(file, 'product-images');
+                                        if (url) {
+                                          const updated = [...(editingProduct.benefits as any[])];
+                                          updated[idx] = { ...updated[idx], icon: url };
+                                          setEditingProduct({ ...editingProduct, benefits: updated } as any);
+                                          triggerAlert('Custom SVG icon validated and uploaded!');
+                                        }
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              )}
+
+                              <div className="flex flex-col gap-1.5 md:col-span-3">
+                                <label className="text-xs font-bold text-stone-700 uppercase tracking-wider font-jakarta">Description</label>
                                 <textarea
                                   rows={2}
                                   value={benefit.description || ''}
@@ -1809,44 +2252,29 @@ export default function AdminProductsTab({
                 <>
                   <div className="border border-[#d3c099] rounded-2xl p-6 bg-amber-50/5 space-y-5 font-jakarta text-sm text-stone-900">
                     <span className="text-base font-extrabold text-[#704632] block uppercase tracking-wider font-jakarta">Ingredients Infographics Image Configuration</span>
-                    
-                    <div className="flex flex-col gap-3">
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-bold text-stone-700 font-jakarta">Desktop Ingredients Image URL / Upload</label>
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="text"
-                            value={typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? ((editingProduct.ingredients as any)?.desktop || '') : ''}
-                            onChange={(e) => {
-                              const prevIng = typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? editingProduct.ingredients : {};
-                              setEditingProduct({
-                                ...editingProduct,
-                                ingredients: { ...(prevIng as any), desktop: e.target.value }
-                              });
-                            }}
-                            placeholder="e.g. /images/products/ingredients-image.webp"
-                            className="flex-grow h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
-                          />
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const url = await handleFileUpload(file, 'product-images');
-                                if (url) {
-                                  const prevIng = typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? editingProduct.ingredients : {};
-                                  setEditingProduct({
-                                    ...editingProduct,
-                                    ingredients: { ...(prevIng as any), desktop: url }
-                                  });
-                                }
-                              }
-                            }}
-                            className="text-xs w-48 file:py-2 file:px-3 file:rounded-lg file:bg-stone-100"
-                          />
-                        </div>
-                      </div>
+                                     <div className="flex flex-col gap-4">
+                      <UploadBox
+                        accept="image/*"
+                        label="Desktop Ingredients Image"
+                        currentValue={typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? ((editingProduct.ingredients as any)?.desktop || '') : ''}
+                        onClear={() => {
+                          const prevIng = typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? editingProduct.ingredients : {};
+                          setEditingProduct({
+                            ...editingProduct,
+                            ingredients: { ...(prevIng as any), desktop: '' }
+                          });
+                        }}
+                        onFileSelect={async (file) => {
+                          const url = await handleFileUpload(file, 'product-images');
+                          if (url) {
+                            const prevIng = typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? editingProduct.ingredients : {};
+                            setEditingProduct({
+                              ...editingProduct,
+                              ingredients: { ...(prevIng as any), desktop: url }
+                            });
+                          }
+                        }}
+                      />
                     </div>
 
                     <div className="flex flex-col gap-2.5 border-t border-[#eeddb9]/30 pt-4 mt-3">
@@ -1867,28 +2295,36 @@ export default function AdminProductsTab({
                         <label htmlFor="editProdIngSameTab" className="text-xs font-bold text-stone-755 cursor-pointer select-none">Use same ingredients image for tablet</label>
                       </div>
                       {!(typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? !!((editingProduct.ingredients as any)?.useSameForTab) : true) && (
-                        <div className="flex flex-col gap-1.5 pl-5">
-                          <label className="text-xs font-bold text-stone-505 font-jakarta">Tablet Ingredients Image URL</label>
-                          <input
-                            type="text"
-                            value={typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? ((editingProduct.ingredients as any)?.tablet || '') : ''}
-                            onChange={(e) => {
+                        <div className="flex flex-col gap-1.5 pl-5 pt-2">
+                          <UploadBox
+                            accept="image/*"
+                            label="Tablet Ingredients Image"
+                            currentValue={typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? ((editingProduct.ingredients as any)?.tablet || '') : ''}
+                            onClear={() => {
                               const prevIng = typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? editingProduct.ingredients : {};
                               setEditingProduct({
                                 ...editingProduct,
-                                ingredients: { ...(prevIng as any), tablet: e.target.value }
+                                ingredients: { ...(prevIng as any), tablet: '' }
                               });
                             }}
-                            placeholder="Tablet specific ingredients image URL..."
-                            className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+                            onFileSelect={async (file) => {
+                              const url = await handleFileUpload(file, 'product-images');
+                              if (url) {
+                                const prevIng = typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? editingProduct.ingredients : {};
+                                setEditingProduct({
+                                  ...editingProduct,
+                                  ingredients: { ...(prevIng as any), tablet: url }
+                                });
+                              }
+                            }}
                           />
                         </div>
                       )}
                     </div>
 
-                    <div className="flex flex-col gap-2 border-t border-stone-200/50 pt-2">
+                    <div className="flex flex-col gap-2 border-t border-stone-200/50 pt-3">
                       <div className="flex items-center gap-4">
-                        <label className="text-xs font-bold text-stone-750 font-jakarta">Mobile Option:</label>
+                        <label className="text-xs font-bold text-stone-755 font-jakarta">Mobile Option:</label>
                         <select
                           value={typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? ((editingProduct.ingredients as any)?.useSameForMobile || 'desktop') : 'desktop'}
                           onChange={(e: any) => {
@@ -1898,7 +2334,7 @@ export default function AdminProductsTab({
                               ingredients: { ...(prevIng as any), useSameForMobile: e.target.value }
                             });
                           }}
-                          className="h-9 px-3 bg-white border border-[#d3c099] rounded-lg text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+                          className="h-9 px-3 bg-white border border-[#d3c099] rounded-lg text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all font-bold"
                         >
                           <option value="desktop">Use the same as desktop</option>
                           <option value="tablet">Use the same as tablet</option>
@@ -1906,20 +2342,28 @@ export default function AdminProductsTab({
                         </select>
                       </div>
                       {(typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? ((editingProduct.ingredients as any)?.useSameForMobile || 'desktop') : 'desktop') === 'none' && (
-                        <div className="flex flex-col gap-1.5 pl-5">
-                          <label className="text-xs font-bold text-stone-500 font-jakarta">Mobile Ingredients Image URL</label>
-                          <input
-                            type="text"
-                            value={typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? ((editingProduct.ingredients as any)?.mobile || '') : ''}
-                            onChange={(e) => {
+                        <div className="flex flex-col gap-1.5 pl-5 pt-2">
+                          <UploadBox
+                            accept="image/*"
+                            label="Mobile Ingredients Image"
+                            currentValue={typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? ((editingProduct.ingredients as any)?.mobile || '') : ''}
+                            onClear={() => {
                               const prevIng = typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? editingProduct.ingredients : {};
                               setEditingProduct({
                                 ...editingProduct,
-                                ingredients: { ...(prevIng as any), mobile: e.target.value }
+                                ingredients: { ...(prevIng as any), mobile: '' }
                               });
                             }}
-                            placeholder="Mobile specific ingredients image URL..."
-                            className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+                            onFileSelect={async (file) => {
+                              const url = await handleFileUpload(file, 'product-images');
+                              if (url) {
+                                const prevIng = typeof editingProduct.ingredients === 'object' && !Array.isArray(editingProduct.ingredients) ? editingProduct.ingredients : {};
+                                setEditingProduct({
+                                  ...editingProduct,
+                                  ingredients: { ...(prevIng as any), mobile: url }
+                                });
+                              }
+                            }}
                           />
                         </div>
                       )}
@@ -2124,7 +2568,7 @@ export default function AdminProductsTab({
               )}
             </div>
 
-            <div className="flex justify-end gap-2 mt-5">
+            <div className="flex justify-end gap-2 mt-5 shrink-0">
               <button type="button" onClick={() => { setEditingProduct(null); setEditActiveTab('basic'); }} className="border border-stone-300 hover:bg-stone-50 text-stone-700 text-xs font-bold py-2.5 px-6 rounded-xl cursor-pointer">
                 Cancel
               </button>
@@ -2143,184 +2587,216 @@ export default function AdminProductsTab({
         </div>
       ) : productViewMode === 'card' ? (
         <div className="space-y-8 animate-fade-in">
-          {sortedCategoryNames.map((catName) => (
-            <div key={catName} className="space-y-4">
-              <h3 className="sticky top-[76px] bg-[#fdfbf7] z-10 text-sm font-extrabold text-[#384401] uppercase tracking-wider font-jakarta border-b border-[#eeddb9]/45 py-2">
-                {catName} ({groupedProducts[catName].length})
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {groupedProducts[catName].map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => {
-                      setShowAddProduct(false);
-                      setShowAddCategory(false);
-                      setEditingProduct(p);
-                    }}
-                    className="border border-[#d3c099] hover:border-[#384401] rounded-2xl p-4.5 bg-stone-50/20 flex flex-col justify-between gap-3 cursor-pointer hover:shadow-md transition-all group"
-                  >
-                    <div>
-                      <div className="flex justify-end items-start gap-2">
-                        {p.badge && (
-                          <span className="bg-[#C56C4F]/10 text-[#C56C4F] text-sm font-extrabold px-2 py-0.5 rounded-full font-jakarta">{p.badge}</span>
-                        )}
-                      </div>
-                      <h4 className="font-extrabold text-stone-850 group-hover:text-[#384401] text-sm font-jakarta mt-1.5 transition-colors">{p.name}</h4>
-                      <p className="text-sm text-stone-500 font-jakarta mt-1 line-clamp-2 leading-relaxed">{p.description}</p>
-                    </div>
-                    <div className="flex flex-col gap-3 pt-3 border-t border-stone-150">
-                      {p.weights && p.weights.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-stone-600 font-jakarta">
-                          {((p.weights || []) as any[]).map((w: any, idx: number) => {
-                            const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
-                            const wPrice = typeof w === 'object' && w !== null && typeof w.price === 'number' ? w.price : (
-                              wName === '250 g' ? Math.round(p.price * 0.6) : wName === '1 kg' ? Math.round(p.price * 1.8) : p.price
-                            );
-                            return (
-                              <span key={idx} className="flex items-center gap-2 whitespace-nowrap">
-                                <span>{wName}: <span className="font-bold text-stone-850">₹{wPrice}</span></span>
-                                {idx < (p.weights?.length ?? 0) - 1 && <span className="text-stone-300 font-normal">|</span>}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <div className="flex justify-between items-center w-full">
-                        {p.weights && p.weights.length > 0 ? (
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-stone-500">
-                            <span className="font-bold text-stone-700">Stock:</span>
-                            {((p.weights || []) as any[]).map((w: any, idx: number) => {
-                              const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
-                              const wStock = typeof w === 'object' && w !== null && typeof w.stock === 'number' ? w.stock : p.stock;
-                              return (
-                                <span key={idx} className="whitespace-nowrap font-medium text-stone-650">
-                                  {wName}: <span className="font-bold text-stone-850">{wStock}</span>
-                                  {idx < (p.weights?.length || 0) - 1 && <span className="mx-1 text-stone-300">|</span>}
-                                </span>
-                              );
-                            })}
+          {sortedCategoryNames.map((catName) => {
+            const isCollapsed = !!collapsedCategories[catName];
+            return (
+              <div key={catName} className="space-y-4">
+                <button
+                  type="button"
+                  onClick={() => toggleCategoryCollapse(catName)}
+                  className="w-full flex items-center justify-between sticky top-[76px] bg-[#fdfbf7] z-10 border-b border-[#eeddb9]/45 py-2 group cursor-pointer text-left focus:outline-none"
+                >
+                  <h3 className="text-sm font-extrabold text-[#384401] uppercase tracking-wider font-jakarta flex items-center gap-1.5">
+                    {isCollapsed ? <ChevronRight className="w-4 h-4 text-stone-500 transition-transform" /> : <ChevronDown className="w-4 h-4 text-[#384401] transition-transform" />}
+                    {catName} ({groupedProducts[catName].length})
+                  </h3>
+                  <span className="text-xs text-stone-500 font-jakarta group-hover:text-[#384401] transition-colors font-bold">
+                    {isCollapsed ? 'Show Products' : 'Hide Products'}
+                  </span>
+                </button>
+
+                {!isCollapsed && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 animate-fade-in">
+                    {groupedProducts[catName].map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setShowAddProduct(false);
+                          setShowAddCategory(false);
+                          setEditingProduct(p);
+                        }}
+                        className="border border-[#d3c099] hover:border-[#384401] rounded-2xl p-4.5 bg-stone-50/20 flex flex-col justify-between gap-3 cursor-pointer hover:shadow-md transition-all group"
+                      >
+                        <div>
+                          <div className="flex justify-end items-start gap-2">
+                            {p.badge && (
+                              <span className="bg-[#C56C4F]/10 text-[#C56C4F] text-sm font-extrabold px-2 py-0.5 rounded-full font-jakarta">{p.badge}</span>
+                            )}
                           </div>
-                        ) : (
-                          <span className="text-xs text-stone-455 font-jakarta">Stock: {p.stock} units</span>
-                        )}
-                        <div className="flex gap-3 items-center" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={() => {
-                              setShowAddProduct(false);
-                              setEditingProduct(p);
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                            className="flex items-center gap-1 text-stone-600 hover:text-[#384401] text-sm font-bold cursor-pointer"
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProduct(p.id)}
-                            className="flex items-center gap-1 text-red-655 hover:text-red-800 text-sm font-bold cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            Delete
-                          </button>
+                          <h4 className="font-extrabold text-stone-850 group-hover:text-[#384401] text-sm font-jakarta mt-1.5 transition-colors">{p.name}</h4>
+                          <p className="text-sm text-stone-500 font-jakarta mt-1 line-clamp-2 leading-relaxed">{p.description}</p>
+                        </div>
+                        <div className="flex flex-col gap-3 pt-3 border-t border-stone-150">
+                          {p.weights && p.weights.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-stone-600 font-jakarta">
+                              {((p.weights || []) as any[]).map((w: any, idx: number) => {
+                                const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                                const wPrice = typeof w === 'object' && w !== null && typeof w.price === 'number' ? w.price : (
+                                  wName === '250 g' ? Math.round(p.price * 0.6) : wName === '1 kg' ? Math.round(p.price * 1.8) : p.price
+                                );
+                                return (
+                                  <span key={idx} className="flex items-center gap-2 whitespace-nowrap">
+                                    <span>{wName}: <span className="font-bold text-stone-850">₹{wPrice}</span></span>
+                                    {idx < (p.weights?.length ?? 0) - 1 && <span className="text-stone-300 font-normal">|</span>}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <div className="flex justify-between items-center w-full">
+                            {p.weights && p.weights.length > 0 ? (
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-stone-500">
+                                <span className="font-bold text-stone-700">Stock:</span>
+                                {((p.weights || []) as any[]).map((w: any, idx: number) => {
+                                  const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                                  const wStock = typeof w === 'object' && w !== null && typeof w.stock === 'number' ? w.stock : p.stock;
+                                  return (
+                                    <span key={idx} className="whitespace-nowrap font-medium text-stone-650">
+                                      {wName}: <span className="font-bold text-stone-850">{wStock}</span>
+                                      {idx < (p.weights?.length || 0) - 1 && <span className="mx-1 text-stone-300">|</span>}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-stone-455 font-jakarta">Stock: {p.stock} units</span>
+                            )}
+                            <div className="flex gap-3 items-center" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => {
+                                  setShowAddProduct(false);
+                                  setEditingProduct(p);
+                                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                className="flex items-center gap-1 text-stone-600 hover:text-[#384401] text-sm font-bold cursor-pointer"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteProduct(p.id)}
+                                className="flex items-center gap-1 text-red-655 hover:text-red-800 text-sm font-bold cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Delete
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="space-y-8 animate-fade-in">
-          {sortedCategoryNames.map((catName) => (
-            <div key={catName} className="space-y-4">
-              <h3 className="sticky top-[76px] bg-[#fdfbf7] z-10 text-sm font-extrabold text-[#384401] uppercase tracking-wider font-jakarta border-b border-[#eeddb9]/45 py-2">
-                {catName} ({groupedProducts[catName].length})
-              </h3>
-              <div className="border border-[#eeddb9]/50 rounded-2xl overflow-hidden bg-stone-50/10">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm border border-[#eeddb9] border-collapse font-jakarta">
-                    <thead>
-                      <tr className="bg-stone-50 border-b border-[#eeddb9] text-stone-500 font-extrabold uppercase tracking-wider">
-                        <th className="p-3.5 pl-5 border border-[#eeddb9]">S.No</th>
-                        <th className="p-3.5 border border-[#eeddb9]">Product Name</th>
-                        <th className="p-3.5 border border-[#eeddb9]">Variant</th>
-                        <th className="p-3.5 border border-[#eeddb9]">Price</th>
-                        <th className="p-3.5 border border-[#eeddb9]">Stock</th>
-                        <th className="p-3.5 pr-5 border border-[#eeddb9] text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#eeddb9]">
-                      {groupedProducts[catName].flatMap((p, pIdx) => {
-                        const weightsList = (p.weights && p.weights.length > 0) ? p.weights : [{ weight: 'Default', price: p.price, stock: p.stock }];
-                        const rowSpan = weightsList.length;
+          {sortedCategoryNames.map((catName) => {
+            const isCollapsed = !!collapsedCategories[catName];
+            return (
+              <div key={catName} className="space-y-4">
+                <button
+                  type="button"
+                  onClick={() => toggleCategoryCollapse(catName)}
+                  className="w-full flex items-center justify-between sticky top-[76px] bg-[#fdfbf7] z-10 border-b border-[#eeddb9]/45 py-2 group cursor-pointer text-left focus:outline-none"
+                >
+                  <h3 className="text-sm font-extrabold text-[#384401] uppercase tracking-wider font-jakarta flex items-center gap-1.5">
+                    {isCollapsed ? <ChevronRight className="w-4 h-4 text-stone-500 transition-transform" /> : <ChevronDown className="w-4 h-4 text-[#384401] transition-transform" />}
+                    {catName} ({groupedProducts[catName].length})
+                  </h3>
+                  <span className="text-xs text-stone-500 font-jakarta group-hover:text-[#384401] transition-colors font-bold">
+                    {isCollapsed ? 'Show Table' : 'Hide Table'}
+                  </span>
+                </button>
 
-                        return weightsList.map((w: any, wIdx: number) => {
-                          const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
-                          const wPrice = typeof w === 'object' && w !== null && typeof w.price === 'number' ? w.price : (
-                            wName === '250 g' ? Math.round(p.price * 0.6) : wName === '1 kg' ? Math.round(p.price * 1.8) : p.price
-                          );
-                          const wStock = typeof w === 'object' && w !== null && typeof w.stock === 'number' ? w.stock : p.stock;
+                {!isCollapsed && (
+                  <div className="border border-[#eeddb9]/50 rounded-2xl overflow-hidden bg-stone-50/10 animate-fade-in">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm border border-[#eeddb9] border-collapse font-jakarta">
+                        <thead>
+                          <tr className="bg-stone-50 border-b border-[#eeddb9] text-stone-500 font-extrabold uppercase tracking-wider">
+                            <th className="p-3.5 pl-5 border border-[#eeddb9]">S.No</th>
+                            <th className="p-3.5 border border-[#eeddb9]">Product Name</th>
+                            <th className="p-3.5 border border-[#eeddb9]">Variant</th>
+                            <th className="p-3.5 border border-[#eeddb9]">Price</th>
+                            <th className="p-3.5 border border-[#eeddb9]">Stock</th>
+                            <th className="p-3.5 pr-5 border border-[#eeddb9] text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#eeddb9]">
+                          {groupedProducts[catName].flatMap((p, pIdx) => {
+                            const weightsList = (p.weights && p.weights.length > 0) ? p.weights : [{ weight: 'Default', price: p.price, stock: p.stock }];
+                            const rowSpan = weightsList.length;
 
-                          return (
-                            <tr
-                              key={`${p.id}-${wName}`}
-                              onClick={() => {
-                                setShowAddProduct(false);
-                                setShowAddCategory(false);
-                                setEditingProduct(p);
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                              }}
-                              className="hover:bg-stone-50/60 font-semibold cursor-pointer transition-colors"
-                            >
-                              {wIdx === 0 && (
-                                <>
-                                  <td rowSpan={rowSpan} className="p-3.5 pl-5 text-stone-900 border border-[#eeddb9] align-middle">{pIdx + 1}</td>
-                                  <td rowSpan={rowSpan} className="p-3.5 text-[#384401] font-bold border border-[#eeddb9] align-middle">{p.name}</td>
-                                </>
-                              )}
-                              
-                              <td className="p-3.5 text-stone-700 border border-[#eeddb9]">{wName}</td>
-                              <td className="p-3.5 text-stone-900 border border-[#eeddb9] font-bold">₹{wPrice}</td>
-                              <td className="p-3.5 border border-[#eeddb9]">
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${wStock < 10 ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-700'}`}>
-                                  {wStock} units
-                                </span>
-                              </td>
+                            return weightsList.map((w: any, wIdx: number) => {
+                              const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
+                              const wPrice = typeof w === 'object' && w !== null && typeof w.price === 'number' ? w.price : (
+                                wName === '250 g' ? Math.round(p.price * 0.6) : wName === '1 kg' ? Math.round(p.price * 1.8) : p.price
+                              );
+                              const wStock = typeof w === 'object' && w !== null && typeof w.stock === 'number' ? w.stock : p.stock;
 
-                              {wIdx === 0 && (
-                                <td rowSpan={rowSpan} className="p-3.5 pr-5 border border-[#eeddb9] text-right align-middle" onClick={(e) => e.stopPropagation()}>
-                                  <div className="flex justify-end gap-3.5">
-                                    <button
-                                      onClick={() => {
-                                        setShowAddProduct(false);
-                                        setEditingProduct(p);
-                                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                                      }}
-                                      className="text-stone-600 hover:text-[#384401] font-bold flex items-center gap-1 cursor-pointer"
-                                    >
-                                      <Edit className="w-3.5 h-3.5" /> Edit
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteProduct(p.id)}
-                                      className="text-red-600 hover:text-red-800 font-bold flex items-center gap-1 cursor-pointer"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" /> Delete
-                                    </button>
-                                  </div>
-                                </td>
-                              )}
-                            </tr>
-                          );
-                        });
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                              return (
+                                <tr
+                                  key={`${p.id}-${wName}`}
+                                  onClick={() => {
+                                    setShowAddProduct(false);
+                                    setShowAddCategory(false);
+                                    setEditingProduct(p);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }}
+                                  className="hover:bg-stone-50/60 font-semibold cursor-pointer transition-colors"
+                                >
+                                  {wIdx === 0 && (
+                                    <>
+                                      <td rowSpan={rowSpan} className="p-3.5 pl-5 text-stone-900 border border-[#eeddb9] align-middle">{pIdx + 1}</td>
+                                      <td rowSpan={rowSpan} className="p-3.5 text-[#384401] font-bold border border-[#eeddb9] align-middle">{p.name}</td>
+                                    </>
+                                  )}
+                                  
+                                  <td className="p-3.5 text-stone-700 border border-[#eeddb9]">{wName}</td>
+                                  <td className="p-3.5 text-stone-900 border border-[#eeddb9] font-bold">₹{wPrice}</td>
+                                  <td className="p-3.5 border border-[#eeddb9]">
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${wStock < 10 ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-700'}`}>
+                                      {wStock} units
+                                    </span>
+                                  </td>
+
+                                  {wIdx === 0 && (
+                                    <td rowSpan={rowSpan} className="p-3.5 pr-5 border border-[#eeddb9] text-right align-middle" onClick={(e) => e.stopPropagation()}>
+                                      <div className="flex justify-end gap-3.5">
+                                        <button
+                                          onClick={() => {
+                                            setShowAddProduct(false);
+                                            setEditingProduct(p);
+                                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                                          }}
+                                          className="text-stone-600 hover:text-[#384401] font-bold flex items-center gap-1 cursor-pointer"
+                                        >
+                                          <Edit className="w-3.5 h-3.5" /> Edit
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteProduct(p.id)}
+                                          className="text-red-600 hover:text-red-800 font-bold flex items-center gap-1 cursor-pointer"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" /> Delete
+                                        </button>
+                                      </div>
+                                    </td>
+                                  )}
+                                </tr>
+                              );
+                            });
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

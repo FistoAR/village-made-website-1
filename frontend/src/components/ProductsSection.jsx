@@ -4,10 +4,12 @@ import Image from 'next/image';
 import { Star, ShoppingCart, Minus, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getVariantPrice } from '@/lib/variantPrice';
+import { getVariantPrice, getVariantOriginalPrice } from '@/lib/variantPrice';
+import { useApp } from '@/lib/context/AppContext';
 
 export default function ProductsSection() {
   const router = useRouter();
+  const { products: dbProducts } = useApp();
   const [quantities, setQuantities] = useState({});
   const [selectedWeights, setSelectedWeights] = useState({});
 
@@ -70,6 +72,22 @@ export default function ProductsSection() {
     },
   ];
 
+  const displayProducts = products.map(sp => {
+    const dbProd = dbProducts?.find(p => p.id === sp.id);
+    if (dbProd) {
+      return {
+        ...sp,
+        price: dbProd.price,
+        originalPrice: dbProd.originalPrice,
+        discount: dbProd.discount,
+        weights: dbProd.weights || sp.weights,
+        badge: dbProd.badge || sp.badge,
+        stock: dbProd.stock
+      };
+    }
+    return sp;
+  });
+
   const handleQtyChange = (productId, delta) => {
     setQuantities(prev => ({
       ...prev,
@@ -123,10 +141,18 @@ export default function ProductsSection() {
 
         {/* Products Grid - Displaying only 4 products */}
         <div className="flex flex-wrap justify-center gap-6 md:gap-8 w-full">
-          {products.map((product) => {
+          {displayProducts.map((product) => {
             const currentQty = quantities[product.id] || 1;
             const firstWeight = (typeof product.weights[0] === 'object' && product.weights[0] !== null && product.weights[0].weight) ? product.weights[0].weight : product.weights[0];
             const currentWeight = selectedWeights[product.id] || firstWeight;
+            
+            const discount = product.discount;
+            const hasDiscount = !!discount && discount !== '0%' && discount !== '0% OFF';
+            const displayDiscount = hasDiscount ? discount : undefined;
+            
+            const currentPrice = getVariantPrice(product.price, currentWeight, product.weights);
+            const baseOriginalPrice = product.originalPrice || (hasDiscount ? Math.round(product.price / (1 - (parseInt(discount.replace(/[^0-9]/g, '')) || 20) / 100)) : product.price);
+            const currentOriginalPrice = getVariantOriginalPrice(baseOriginalPrice, currentWeight, product.weights);
             return (
               <div 
                 key={product.id} 
@@ -182,12 +208,16 @@ export default function ProductsSection() {
                   </div>
 
                   {/* Pricing */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-[#1a110a] font-jakarta font-bold text-xl">₹{getVariantPrice(product.price, currentWeight, product.weights)}</span>
-                    <span className="text-[#8e7e6f] font-jakarta text-sm line-through">₹{getVariantPrice(product.originalPrice, currentWeight, product.weights)}</span>
-                    <span className="bg-[#e2edd3] text-[#384401] font-jakarta text-[10px] font-bold px-1.5 py-0.5 rounded-md">
-                      {product.discount}
-                    </span>
+                  <div className="flex items-center gap-2 mb-4 h-7">
+                    <span className="text-[#1a110a] font-jakarta font-bold text-xl">₹{currentPrice}</span>
+                    {hasDiscount && currentOriginalPrice > currentPrice && (
+                      <>
+                        <span className="text-[#8e7e6f] font-jakarta text-sm line-through">₹{currentOriginalPrice}</span>
+                        <span className="bg-[#e2edd3] text-[#384401] font-jakarta text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+                          {displayDiscount}
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   {/* Weight selection and Qty Row */}

@@ -570,7 +570,7 @@ function CategoryDropdown({
 }
 
 export default function ProductsClientContainer({ initialProducts }: { initialProducts: Product[] }) {
-  const { products: dbProducts } = useApp();
+  const { products: dbProducts, categories: dbCategories } = useApp();
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('default');
@@ -587,11 +587,23 @@ export default function ProductsClientContainer({ initialProducts }: { initialPr
       const cat = p.category || 'Malt';
       counts[cat] = (counts[cat] || 0) + 1;
     });
-    return Object.entries(counts).map(([name, count]) => {
+    const list = Object.entries(counts).map(([name, count]) => {
       const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      return { id, name, count };
+      const dbCat = dbCategories?.find((c) => c.id === id);
+      return { 
+        id, 
+        name, 
+        count, 
+        displayOrder: dbCat?.display_order !== undefined ? dbCat.display_order : (dbCat?.displayOrder !== undefined ? dbCat.displayOrder : 999) 
+      };
     });
-  }, [productsList]);
+    return list.sort((a, b) => {
+      if (a.displayOrder !== b.displayOrder) {
+        return a.displayOrder - b.displayOrder;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [productsList, dbCategories]);
 
   const dynamicCategoryMap = useMemo(() => {
     const map: Record<string, string> = {};

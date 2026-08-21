@@ -351,6 +351,36 @@ productRouter.put('/categories/reorder', async (req, res, next) => {
 });
 
 /**
+ * GET /api/products/reviews/all
+ * Fetch all reviews from the database across all products
+ */
+productRouter.get('/reviews/all', async (req, res, next) => {
+  try {
+    const result = await query(`
+      SELECT r.id, r.user_id, r.product_id, r.product_name, r.rating, r.comment, r.date, r.title, r.helpful, u.name as author
+      FROM reviews r
+      JOIN users u ON r.user_id = u.id
+      ORDER BY r.id DESC
+    `);
+    const reviews = result.rows.map(row => ({
+      id: row.id,
+      userId: row.user_id,
+      productId: row.product_id,
+      productName: row.product_name,
+      rating: Number(row.rating),
+      comment: row.comment,
+      date: row.date,
+      title: row.title,
+      helpful: row.helpful,
+      author: row.author
+    }));
+    return res.status(200).json({ success: true, reviews });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * GET /api/products/:id/reviews
  * Fetch all reviews for a product
  */
@@ -417,7 +447,7 @@ productRouter.post('/:id/reviews', async (req, res, next) => {
       [reviewId, userId, productId, productName, rating, comment, dateStr, title || 'Verified Purchase Review']
     );
 
-    return res.status(201).json({ success: true, message: 'Review saved successfully.' });
+    return res.status(201).json({ success: true, message: 'Review saved successfully.', reviewId });
   } catch (error) {
     next(error);
   }

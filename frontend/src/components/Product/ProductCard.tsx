@@ -134,7 +134,8 @@ export default function ProductCard({ product, highlighted, heroMode = false }: 
       price: currentPrice,
       originalPrice: currentOriginalPrice,
       weight: selectedWeight,
-      category: category
+      category: category,
+      image: product.image
     }, qty);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
@@ -148,7 +149,8 @@ export default function ProductCard({ product, highlighted, heroMode = false }: 
       price: currentPrice,
       originalPrice: currentOriginalPrice,
       weight: selectedWeight,
-      category: category
+      category: category,
+      image: product.image
     }, qty);
     router.push('/cart');
   };

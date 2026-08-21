@@ -51,7 +51,8 @@ const fetchUserData = async (dbUser) => {
       productName: r.product_name,
       rating: Number(r.rating),
       comment: r.comment,
-      date: r.date
+      date: r.date,
+      title: r.title || 'Verified Purchase Review'
     })),
     notifications: notificationsRes.rows.map(n => ({
       id: n.id,
@@ -289,10 +290,10 @@ authRouter.put('/profile', async (req, res, next) => {
       await query('DELETE FROM reviews WHERE user_id = $1', [userId]);
       for (const rev of reviews) {
         await query(
-          `INSERT INTO reviews (id, user_id, product_id, product_name, rating, comment, date)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `INSERT INTO reviews (id, user_id, product_id, product_name, rating, comment, date, title)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            ON CONFLICT (id) DO NOTHING`,
-          [rev.id, userId, rev.productId, rev.productName, rev.rating, rev.comment, rev.date]
+          [rev.id, userId, rev.productId, rev.productName, rev.rating, rev.comment, rev.date, rev.title || 'Verified Purchase Review']
         );
       }
     }

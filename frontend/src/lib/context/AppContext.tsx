@@ -53,6 +53,7 @@ export interface UserReview {
   rating: number;
   comment: string;
   date: string;
+  title?: string;
 }
 
 export interface UserNotification {
@@ -973,13 +974,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         showToast('Review submitted successfully!', 'success');
         
         // Link to user session review log if active
+        const dbProduct = products.find(p => p.id === productId);
         const userReview: UserReview = {
-          id: generateRandomId(),
+          id: data.reviewId || generateRandomId(),
           productId,
-          productName: title || 'Product Review',
+          productName: dbProduct?.name || 'Product Review',
           rating,
           comment,
-          date: new Date().toLocaleDateString('en-IN')
+          date: new Date().toLocaleDateString('en-IN'),
+          title: title || 'Verified Purchase Review'
         };
         setUser(prev => {
           if (!prev) return null;
@@ -1015,13 +1018,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('village_made_global_reviews', JSON.stringify(allReviews));
 
       if (user) {
+        const dbProduct = products.find(p => p.id === productId);
         const userReview: UserReview = {
           id: newProductReview.id,
           productId,
-          productName: title || 'Product Review',
+          productName: dbProduct?.name || 'Product Review',
           rating,
           comment,
-          date: new Date().toLocaleDateString('en-IN')
+          date: new Date().toLocaleDateString('en-IN'),
+          title: title || 'Verified Purchase Review'
         };
         setUser(prev => {
           if (!prev) return null;
@@ -1058,7 +1063,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setUser(prev => {
           if (!prev) return null;
           const reviews = prev.reviews.map(r => 
-            r.id === reviewId ? { ...r, rating, comment, productName: title || r.productName } : r
+            (r.id === reviewId || r.productId === productId) ? { ...r, rating, comment, title: title || r.title } : r
           );
           return { ...prev, reviews };
         });

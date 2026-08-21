@@ -109,17 +109,38 @@ export default function ProductDetailPage({
 
   const currentStock = useMemo(() => {
     if (!product) return 0;
-    if (!product.weights || !Array.isArray(product.weights)) return product.stock;
+    const stockVal = typeof product.stock === 'number' ? product.stock : parseInt(String(product.stock), 10);
+    const safeBaseStock = isNaN(stockVal) ? 0 : stockVal;
+
+    if (!product.weights || !Array.isArray(product.weights)) return safeBaseStock;
     const cleanWeight = selectedWeight.toLowerCase().replace(/\s+/g, '');
     const variant = product.weights.find((w: any) => {
       const wName = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
       return typeof wName === 'string' && wName.toLowerCase().replace(/\s+/g, '') === cleanWeight;
     });
-    if (typeof variant === 'object' && variant !== null && typeof variant.stock === 'number') {
-      return variant.stock;
+    if (typeof variant === 'object' && variant !== null && variant.stock !== undefined) {
+      const vStock = typeof variant.stock === 'number' ? variant.stock : parseInt(String(variant.stock), 10);
+      return isNaN(vStock) ? 0 : vStock;
     }
-    return product.stock;
+    return safeBaseStock;
   }, [product, selectedWeight]);
+
+  // Clamp quantity to stock limits of newly selected variant
+  useEffect(() => {
+    const stockNum = typeof currentStock === 'number' ? currentStock : parseInt(String(currentStock), 10);
+    const safeStock = isNaN(stockNum) ? 0 : stockNum;
+
+    if (safeStock <= 0) {
+      setQuantity(0);
+    } else {
+      setQuantity(prev => {
+        const prevNum = typeof prev === 'number' ? prev : parseInt(String(prev), 10);
+        const safePrev = isNaN(prevNum) ? 1 : prevNum;
+        const clamped = Math.min(Math.max(1, safePrev), safeStock);
+        return isNaN(clamped) ? 1 : clamped;
+      });
+    }
+  }, [currentStock]);
 
   const similarProducts = useMemo(() => {
     if (!product) return [];
@@ -153,14 +174,18 @@ export default function ProductDetailPage({
   useEffect(() => {
     const video = detailVideoRef.current;
     const wrap = detailVideoWrapRef.current;
-    if (!video || !wrap) return;
+    if (!video || !wrap || !product) return;
+
+    // Resolve and set correct source live
+    const targetSrc = product.video || '/videos/products/product-sample-video.webm';
+    if (video.src !== window.location.origin + targetSrc && video.src !== targetSrc) {
+      video.src = targetSrc;
+      video.load();
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          if (!video.src) {
-            video.src = product?.video || '/videos/products/product-sample-video.webm';
-          }
           video.play().catch(() => {});
         } else {
           video.pause();
@@ -170,7 +195,10 @@ export default function ProductDetailPage({
     );
 
     observer.observe(wrap);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (video) video.pause();
+    };
   }, [product]);
 
 
@@ -280,6 +308,20 @@ export default function ProductDetailPage({
       setNewReviewAuthor(user.name);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      const write = params.get('write');
+      if (tab === 'reviews') {
+        setActiveTab('reviews');
+        if (write === 'true' && hasPurchased && !alreadyReviewed) {
+          setShowReviewForm(true);
+        }
+      }
+    }
+  }, [hasPurchased, alreadyReviewed]);
 
   const handleStarClick = (ratingValue: number) => {
     setNewReviewRating(ratingValue);
@@ -422,22 +464,14 @@ export default function ProductDetailPage({
           {/* Left Column: Video or Image Showcase */}
           <div className="w-full lg:w-[47.5%] flex flex-col">
             <div className="relative w-full h-full aspect-square sm:aspect-[4/3] lg:aspect-auto min-h-[350px] lg:min-h-0 bg-[#FAF4E6]/20 rounded-[32px] overflow-hidden border border-[#eeddb9]/40 shadow-xs flex-grow flex items-center justify-center" ref={detailVideoWrapRef}>
-              {product?.video || (!product?.image) ? (
-                <video
-                  ref={detailVideoRef}
-                  muted
-                  loop
-                  playsInline
-                  preload="none"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              ) : (
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              )}
+              <video
+                ref={detailVideoRef}
+                muted
+                loop
+                playsInline
+                preload="none"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
             </div>
           </div>
 
@@ -1052,7 +1086,7 @@ export default function ProductDetailPage({
                         ✨ You have already reviewed this product. You can modify or remove your existing review below.
                       </p>
                     </div>
-                  ) : !showReviewForm ? (
+                  ) : (
                     <button
                       onClick={() => setShowReviewForm(true)}
                       className="w-full py-3 bg-[#384401] hover:bg-[#252d00] text-white font-black text-xs sm:text-sm uppercase rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs font-jakarta"
@@ -1060,109 +1094,6 @@ export default function ProductDetailPage({
                       <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" /></svg>
                       Write a Review
                     </button>
-                  ) : (
-                    <form onSubmit={handleReviewSubmit} className="flex flex-col gap-3 mt-2 border-t border-stone-200 pt-4 font-jakarta text-xs text-stone-900">
-                      
-                      {/* Name input */}
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-stone-700 uppercase tracking-wide block">Your Name</label>
-                        <input
-                          type="text"
-                          required
-                          value={newReviewAuthor}
-                          onChange={(e) => setNewReviewAuthor(e.target.value)}
-                          readOnly={true}
-                          placeholder="e.g. Priyan"
-                          className="w-full h-9 px-3 bg-white border border-[#eeddb9]/80 focus:border-[#384401] rounded-lg text-xs"
-                        />
-                      </div>
-
-                      {/* Rating GUI star selector + decimal inputs */}
-                      <div className="flex flex-col gap-1.5 my-1">
-                        <label className="text-[10px] font-bold text-stone-700 uppercase tracking-wide block">Rating *</label>
-                        <div className="flex items-center gap-3">
-                          {/* Visual Star GUI */}
-                          <div className="flex text-[#f3a847] gap-1 select-none">
-                            {[1, 2, 3, 4, 5].map((val) => (
-                              <button
-                                type="button"
-                                key={val}
-                                onClick={() => handleStarClick(val)}
-                                className="focus:outline-none hover:scale-110 transition-transform cursor-pointer"
-                                title={`Rate ${val} Stars`}
-                              >
-                                <Star 
-                                  className={`w-5.5 h-5.5 fill-current ${
-                                    val <= Math.round(newReviewRating) ? 'text-[#f3a847]' : 'text-stone-200'
-                                  }`}
-                                />
-                              </button>
-                            ))}
-                          </div>
-                          
-                          {/* Point input (keyboard support) */}
-                          <div className="flex items-center gap-1 shrink-0">
-                            <input
-                              type="number"
-                              min="1"
-                              max="5"
-                              step="0.1"
-                              value={newReviewRating}
-                              onChange={(e) => {
-                                const num = parseFloat(e.target.value);
-                                if (!isNaN(num) && num >= 1 && num <= 5) {
-                                  setNewReviewRating(num);
-                                }
-                              }}
-                              className="w-12 h-7 px-1.5 border border-[#DBDBDB] bg-white rounded-md text-xs font-bold text-center text-stone-900 focus:outline-none"
-                            />
-                            <span className="text-[9px] text-stone-600 font-bold uppercase tracking-wide">Points</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Title input */}
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-stone-700 uppercase tracking-wide block">Review Title</label>
-                        <input
-                          type="text"
-                          value={newReviewTitle}
-                          onChange={(e) => setNewReviewTitle(e.target.value)}
-                          placeholder="e.g. Highly nutritious and tasty"
-                          className="w-full h-9 px-3 bg-white border border-[#eeddb9]/80 focus:border-[#384401] rounded-lg text-xs"
-                        />
-                      </div>
-
-                      {/* Comment textarea */}
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-stone-700 uppercase tracking-wide block">Comment *</label>
-                        <textarea
-                          required
-                          rows={3}
-                          value={newReviewComment}
-                          onChange={(e) => setNewReviewComment(e.target.value)}
-                          placeholder="What did you like or dislike about this provision?"
-                          className="w-full px-3 py-2 bg-white border border-[#eeddb9]/80 focus:border-[#384401] rounded-lg text-xs resize-none"
-                        />
-                      </div>
-
-                      {/* Form CTAs */}
-                      <div className="flex gap-2 justify-end mt-1">
-                        <button
-                          type="button"
-                          onClick={() => setShowReviewForm(false)}
-                          className="bg-white border border-[#eeddb9] hover:bg-[#FAF4E6]/50 text-stone-750 font-bold px-3 py-1.5 rounded-lg text-[10px] transition-colors cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          className="bg-[#384401] hover:bg-[#252d00] text-white font-bold px-3 py-1.5 rounded-lg text-[10px] transition-colors cursor-pointer"
-                        >
-                          Submit Review
-                        </button>
-                      </div>
-                    </form>
                   )}
                 </div>
               </div>
@@ -1178,83 +1109,106 @@ export default function ProductDetailPage({
                     return name.substring(0, 2).toUpperCase();
                   };
 
-                  const isMyReview = user && user.reviews?.some(ur => ur.id === rev.id);
+                  const isMyReview = user && (user.reviews?.some(ur => ur.id === rev.id) || rev.mobile === user.mobile || rev.author === user.name);
 
                   if (editingReviewId === rev.id) {
                     return (
                       <form 
                         key={idx} 
                         onSubmit={(e) => handleEditSubmit(e, rev.id)} 
-                        className="bg-[#FEFAF5] border border-[#384401] rounded-[20px] p-5 flex flex-col shadow-xs gap-3 font-jakarta"
+                        className="bg-[#FEFAF5] border border-[#384401] rounded-[20px] p-5 flex flex-col shadow-xs gap-4.5 font-jakarta text-stone-900"
                       >
-                        <h4 className="text-xs font-black text-stone-950 uppercase tracking-wider">Edit Your Review</h4>
+                        <h4 className="text-sm sm:text-base font-black text-[#384401] uppercase tracking-wider">Edit Your Review</h4>
                         
                         {/* Edit Rating */}
-                        <div className="flex items-center gap-3">
-                          <div className="flex text-[#f3a847] gap-1 select-none">
-                            {[1, 2, 3, 4, 5].map((val) => (
-                              <button
-                                type="button"
-                                key={val}
-                                onClick={() => setEditRating(val)}
-                                className="focus:outline-none hover:scale-110 transition-transform cursor-pointer"
-                              >
-                                <Star 
-                                  className={`w-4 h-4 fill-current ${
-                                    val <= Math.round(editRating) ? 'text-[#f3a847]' : 'text-stone-200'
-                                  }`}
-                                />
-                              </button>
-                            ))}
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <input
-                              type="number"
-                              min="1"
-                              max="5"
-                              step="0.1"
-                              value={editRating}
-                              onChange={(e) => {
-                                const num = parseFloat(e.target.value);
-                                if (!isNaN(num) && num >= 1 && num <= 5) setEditRating(num);
-                              }}
-                              className="w-10 h-6 border border-stone-300 bg-white rounded text-[10px] font-bold text-center text-stone-900"
-                            />
-                            <span className="text-[8px] text-stone-500 font-bold uppercase tracking-wider">Pts</span>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-stone-700 uppercase tracking-wide block">Rating *</label>
+                          <div className="flex items-center gap-3">
+                            <div className="flex text-[#f3a847] gap-1.5 select-none">
+                              {[1, 2, 3, 4, 5].map((val) => {
+                                const fill = Math.min(1, Math.max(0, editRating - (val - 1)));
+                                const gradId = `edit-star-${val}`;
+                                return (
+                                  <button
+                                    type="button"
+                                    key={val}
+                                    onClick={() => setEditRating(val)}
+                                    className="focus:outline-hidden hover:scale-110 transition-transform cursor-pointer"
+                                  >
+                                    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <defs>
+                                        <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="0">
+                                          <stop offset={`${fill * 100}%`} stopColor="#f3a847" />
+                                          <stop offset={`${fill * 100}%`} stopColor="#e5e7eb" />
+                                        </linearGradient>
+                                      </defs>
+                                      <polygon
+                                        points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                                        fill={`url(#${gradId})`}
+                                        stroke={fill > 0 ? '#f3a847' : '#d1d5db'}
+                                        strokeWidth="1.5"
+                                        strokeLinejoin="round"
+                                      />
+                                    </svg>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <input
+                                type="number"
+                                min="1"
+                                max="5"
+                                step="0.1"
+                                value={editRating}
+                                onChange={(e) => {
+                                  const num = parseFloat(e.target.value);
+                                  if (!isNaN(num) && num >= 1 && num <= 5) setEditRating(num);
+                                }}
+                                className="w-14 h-8 px-2 border border-[#DBDBDB] bg-white rounded-lg text-xs sm:text-sm font-black text-center text-stone-900 focus:outline-hidden"
+                              />
+                              <span className="text-[10px] text-stone-600 font-bold uppercase tracking-wide">Points</span>
+                            </div>
                           </div>
                         </div>
 
                         {/* Edit Title */}
-                        <input
-                          type="text"
-                          value={editTitle}
-                          onChange={(e) => setEditTitle(e.target.value)}
-                          placeholder="Review Title"
-                          className="w-full h-8 px-3 bg-white border border-[#eeddb9]/80 focus:border-[#384401] rounded-lg text-xs"
-                        />
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-stone-700 uppercase tracking-wide block">Review Title</label>
+                          <input
+                            type="text"
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            placeholder="Review Title"
+                            className="w-full h-10 px-3.5 bg-white border border-[#eeddb9]/80 focus:border-[#384401] rounded-xl text-xs sm:text-sm font-medium focus:outline-hidden"
+                          />
+                        </div>
 
                         {/* Edit Comment */}
-                        <textarea
-                          required
-                          rows={2}
-                          value={editComment}
-                          onChange={(e) => setEditComment(e.target.value)}
-                          placeholder="Comment"
-                          className="w-full px-3 py-1.5 bg-white border border-[#eeddb9]/80 focus:border-[#384401] rounded-lg text-xs resize-none"
-                        />
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-stone-700 uppercase tracking-wide block">Your Comment *</label>
+                          <textarea
+                            required
+                            rows={3}
+                            value={editComment}
+                            onChange={(e) => setEditComment(e.target.value)}
+                            placeholder="Comment"
+                            className="w-full px-3.5 py-2.5 bg-white border border-[#eeddb9]/80 focus:border-[#384401] rounded-xl text-xs sm:text-sm font-medium resize-none focus:outline-hidden"
+                          />
+                        </div>
 
                         {/* Buttons */}
-                        <div className="flex gap-2 justify-end">
+                        <div className="flex gap-2 justify-end mt-1">
                           <button
                             type="button"
                             onClick={() => setEditingReviewId(null)}
-                            className="bg-white border border-[#eeddb9] hover:bg-[#FAF4E6]/50 text-stone-750 font-bold px-3 py-1 rounded-md text-[9px] cursor-pointer"
+                            className="bg-white border border-[#eeddb9] hover:bg-stone-50 text-stone-750 font-black px-4 py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
                           >
                             Cancel
                           </button>
                           <button
                             type="submit"
-                            className="bg-[#384401] hover:bg-[#252d00] text-white font-bold px-3 py-1 rounded-md text-[9px] cursor-pointer"
+                            className="bg-[#384401] hover:bg-[#252d00] text-white font-black px-5 py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
                           >
                             Save
                           </button>
@@ -1300,16 +1254,7 @@ export default function ProductDetailPage({
 
                       {/* Stars row — filled + empty up to 5 */}
                       <div className="flex text-[#f3a847] gap-0.5 mb-3 items-center">
-                        <div className="flex text-[#f3a847] gap-0.5">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-3.5 h-3.5 fill-current ${
-                                i < Math.round(rev.rating) ? 'text-[#f3a847]' : 'text-stone-200'
-                              }`}
-                            />
-                          ))}
-                        </div>
+                        <StarRating rating={rev.rating} size={14} gap={1} />
                         <span className="text-[10px] font-bold text-stone-900 ml-1.5 bg-[#FAF4E6] px-1.5 py-0.5 rounded border border-[#eeddb9] font-jakarta">
                           {rev.rating}★
                         </span>
@@ -1319,19 +1264,6 @@ export default function ProductDetailPage({
                       <h4 className="font-bold text-stone-950 text-sm mb-1.5 font-jakarta">{rev.title}</h4>
                       <p className="text-stone-700 text-xs leading-relaxed mb-4 font-jakarta flex-1">{rev.comment}</p>
 
-                      {/* Was this helpful feedback row */}
-                      <div className="flex items-center gap-3 text-stone-750 text-xs self-end mt-auto">
-                        <span>Was this helpful?</span>
-                        <button className="flex items-center gap-1.5 hover:text-stone-900 transition-colors cursor-pointer font-jakarta">
-                          <ThumbsUp className="w-4 h-4 text-stone-900" />
-                          <span className="font-bold text-stone-700">{rev.helpful || 0}</span>
-                        </button>
-                        <span className="text-stone-300">|</span>
-                        <button className="flex items-center gap-1.5 hover:text-stone-900 transition-colors cursor-pointer font-jakarta">
-                          <ThumbsDown className="w-4 h-4 text-stone-900" />
-                          <span className="font-bold text-stone-700">0</span>
-                        </button>
-                      </div>
                     </div>
                   );
                 })}
@@ -1579,6 +1511,142 @@ export default function ProductDetailPage({
         )}
 
       </main>
+
+      {/* Review Modal Popup */}
+      {showReviewForm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4 animate-fade-in font-jakarta">
+          <div className="bg-[#FAF9F5] border border-[#eeddb9] rounded-2xl max-w-lg w-full p-6 shadow-2xl relative text-stone-900">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowReviewForm(false)}
+              className="absolute top-4 right-4 text-stone-400 hover:text-stone-700 transition-colors cursor-pointer"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <h3 className="text-lg font-black text-[#384401] uppercase tracking-wide mb-1">Write a Review</h3>
+            <p className="text-xs text-stone-500 font-semibold mb-4">Share your feedback about <span className="font-bold text-stone-800">{product?.name}</span></p>
+
+            <form onSubmit={handleReviewSubmit} className="flex flex-col gap-4 text-xs font-semibold">
+              {/* Name input */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-stone-700 uppercase tracking-wide">Your Name</label>
+                <input
+                  type="text"
+                  required
+                  value={newReviewAuthor}
+                  onChange={(e) => setNewReviewAuthor(e.target.value)}
+                  readOnly={true}
+                  placeholder="e.g. Priyan"
+                  className="w-full h-10 px-3.5 bg-stone-100 border border-[#eeddb9]/80 focus:border-[#384401] rounded-xl text-xs sm:text-sm font-medium focus:outline-hidden"
+                />
+              </div>
+
+              {/* Rating GUI star selector + decimal inputs */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-stone-700 uppercase tracking-wide">Rating *</label>
+                <div className="flex items-center gap-4">
+                  {/* Visual Star GUI */}
+                  <div className="flex text-[#f3a847] gap-1.5 select-none">
+                    {[1, 2, 3, 4, 5].map((val) => {
+                      const fill = Math.min(1, Math.max(0, newReviewRating - (val - 1)));
+                      const gradId = `write-star-${val}`;
+                      return (
+                        <button
+                          type="button"
+                          key={val}
+                          onClick={() => handleStarClick(val)}
+                          className="focus:outline-hidden hover:scale-110 transition-transform cursor-pointer"
+                          title={`Rate ${val} Stars`}
+                        >
+                          <svg width="26" height="26" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                              <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="0">
+                                <stop offset={`${fill * 100}%`} stopColor="#f3a847" />
+                                <stop offset={`${fill * 100}%`} stopColor="#e5e7eb" />
+                              </linearGradient>
+                            </defs>
+                            <polygon
+                              points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                              fill={`url(#${gradId})`}
+                              stroke={fill > 0 ? '#f3a847' : '#d1d5db'}
+                              strokeWidth="1.5"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Point input (keyboard support) */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <input
+                      type="number"
+                      min="1"
+                      max="5"
+                      step="0.1"
+                      value={newReviewRating}
+                      onChange={(e) => {
+                        const num = parseFloat(e.target.value);
+                        if (!isNaN(num) && num >= 1 && num <= 5) {
+                          setNewReviewRating(num);
+                        }
+                      }}
+                      className="w-14 h-8 px-2 border border-[#DBDBDB] bg-white rounded-lg text-xs sm:text-sm font-black text-center text-stone-900 focus:outline-hidden"
+                    />
+                    <span className="text-[10px] text-stone-600 font-bold uppercase tracking-wide">Points</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Title input */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-stone-700 uppercase tracking-wide">Review Title</label>
+                <input
+                  type="text"
+                  value={newReviewTitle}
+                  onChange={(e) => setNewReviewTitle(e.target.value)}
+                  placeholder="e.g. Highly nutritious and tasty"
+                  className="w-full h-10 px-3.5 bg-white border border-[#eeddb9]/80 focus:border-[#384401] rounded-xl text-xs sm:text-sm font-medium focus:outline-hidden"
+                />
+              </div>
+
+              {/* Comment textarea */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-stone-700 uppercase tracking-wide">Your Comment *</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={newReviewComment}
+                  onChange={(e) => setNewReviewComment(e.target.value)}
+                  placeholder="Tell us what you and your baby thought of this product..."
+                  className="w-full px-3.5 py-2.5 bg-white border border-[#eeddb9]/80 focus:border-[#384401] rounded-xl text-xs sm:text-sm font-medium resize-none focus:outline-hidden"
+                />
+              </div>
+
+              {/* Form CTAs */}
+              <div className="flex gap-2 justify-end mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowReviewForm(false)}
+                  className="bg-white border border-[#eeddb9] hover:bg-stone-50 text-stone-750 font-black px-4 py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-[#384401] hover:bg-[#252d00] text-white font-black px-5 py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  Submit Review
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

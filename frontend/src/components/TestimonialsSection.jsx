@@ -1,33 +1,82 @@
-import Image from 'next/image';
+'use client';
+import React, { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 
+const DEFAULT_TESTIMONIALS = [
+  {
+    name: 'Priya S',
+    rating: 5,
+    text: "The taste reminds me of my grandmother's recipe. Pure, healthy and authentic.",
+  },
+  {
+    name: 'Arun R',
+    rating: 5,
+    text: "The taste reminds me of my grandmother's recipe. Pure, healthy and authentic.",
+  },
+  {
+    name: 'Maya S',
+    rating: 5,
+    text: "The taste reminds me of my grandmother's recipe. Pure, healthy and authentic.",
+  },
+  {
+    name: 'Anu C',
+    rating: 5,
+    text: "The taste reminds me of my grandmother's recipe. Pure, healthy and authentic.",
+  },
+];
+
+function getInitials(name) {
+  if (!name) return 'VM';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.trim().slice(0, 2).toUpperCase();
+}
+
 export default function TestimonialsSection() {
-  const testimonials = [
-    {
-      name: 'Priya S',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150',
-      rating: 5,
-      text: "The taste reminds me of my grandmother's recipe. Pure, healthy and authentic.",
-    },
-    {
-      name: 'Arun R',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150',
-      rating: 5,
-      text: "The taste reminds me of my grandmother's recipe. Pure, healthy and authentic.",
-    },
-    {
-      name: 'Maya S',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150',
-      rating: 5,
-      text: "The taste reminds me of my grandmother's recipe. Pure, healthy and authentic.",
-    },
-    {
-      name: 'Anu C',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150',
-      rating: 5,
-      text: "The taste reminds me of my grandmother's recipe. Pure, healthy and authentic.",
-    },
-  ];
+  const [testimonials, setTestimonials] = useState(DEFAULT_TESTIMONIALS);
+
+  useEffect(() => {
+    async function loadReviews() {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+        const response = await fetch(`${baseUrl}/products/reviews/all`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data.success && data.reviews && data.reviews.length > 0) {
+          // Filter reviews with rating >= 4
+          const highRatingReviews = data.reviews.filter(r => r.rating >= 4);
+          
+          let combined = highRatingReviews.map(r => ({
+            name: r.author || 'Verified Buyer',
+            rating: r.rating,
+            text: r.comment || r.title || "Pure, healthy and authentic.",
+          }));
+
+          // Fill up to exactly 4 using defaults if database has fewer
+          if (combined.length < 4) {
+            const needed = 4 - combined.length;
+            combined = [...combined, ...DEFAULT_TESTIMONIALS.slice(0, needed)];
+          }
+
+          // Shuffle dynamically
+          const shuffled = [...combined].sort(() => 0.5 - Math.random());
+
+          // Limit to exactly 4
+          setTestimonials(shuffled.slice(0, 4));
+        } else {
+          setTestimonials(DEFAULT_TESTIMONIALS);
+        }
+      } catch (error) {
+        console.error('Failed to load testimonials, falling back to defaults:', error);
+        setTestimonials(DEFAULT_TESTIMONIALS);
+      }
+    }
+    loadReviews();
+  }, []);
 
   return (
     <section
@@ -91,22 +140,17 @@ export default function TestimonialsSection() {
                     </div>
 
                     {/* Review Text - Centered */}
-                    <p className="text-[#3d2b1f] font-body text-[13px] leading-relaxed font-semibold text-center w-full px-2 mb-4 max-w-[200px]">
+                    <p className="text-[#3d2b1f] font-body text-[13px] leading-relaxed font-semibold text-center w-full px-2 mb-4 max-w-[200px] line-clamp-4 overflow-hidden h-[80px]">
                       {test.text}
                     </p>
                   </div>
 
                   {/* Reviewer Details - Left Aligned */}
                   <div className="flex items-center justify-start gap-3 pt-3 border-t border-[#eeddb9]/50 w-[90%] mx-auto mt-2 pl-1 mb-3">
-                    <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#c5b799]/40 shadow-sm flex-shrink-0">
-                      <Image
-                        src={test.avatar}
-                        alt={test.name}
-                        fill
-                        className="object-cover"
-                      />
+                    <div className="w-10 h-10 rounded-full border border-[#c5b799]/40 shadow-xs flex-shrink-0 bg-[#384401] text-[#FAF4E6] flex items-center justify-center font-black text-xs font-jakarta tracking-wider select-none uppercase">
+                      {getInitials(test.name)}
                     </div>
-                    <span className="text-[#3d2b1f] font-body font-bold text-[13px]">
+                    <span className="text-[#3d2b1f] font-body font-bold text-[13px] truncate max-w-[100px]">
                       {test.name}
                     </span>
                   </div>
@@ -119,4 +163,3 @@ export default function TestimonialsSection() {
     </section>
   );
 }
-

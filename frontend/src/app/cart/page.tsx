@@ -52,6 +52,32 @@ function CartQtyInput({ item, updateQuantity }: { item: any; updateQuantity: any
   );
 }
 
+function CartItemImage({ src, alt }: { src: string; alt: string }) {
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center">
+      {loading && (
+        <div className="absolute inset-0 bg-[#EFE6DB]/30 animate-pulse flex items-center justify-center rounded-lg">
+          <div className="w-5 h-5 border border-[#384401]/20 border-t-[#384401] rounded-full animate-spin"></div>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${
+          loading ? 'opacity-0' : 'opacity-100'
+        }`}
+        onLoad={() => setLoading(false)}
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=120&h=120";
+          setLoading(false);
+        }}
+      />
+    </div>
+  );
+}
+
 // Checkout Steps Enum/Types
 type CheckoutMainStep = 'cart' | 'checkout' | 'create_order' | 'payment_gateway' | 'payment_verification' | 'order_confirmed' | 'success';
 
@@ -64,7 +90,7 @@ interface AddressData {
 
 export default function CartPage() {
   const router = useRouter();
-  const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, cartCount, user, addOrder, createOrder, showAlert, showConfirm, showToast, fetchProducts, addAddress } = useApp();
+  const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, cartCount, user, addOrder, createOrder, showAlert, showConfirm, showToast, fetchProducts, addAddress, products } = useApp();
   const [mounted, setMounted] = useState(false);
   
   // Steps control
@@ -467,35 +493,60 @@ export default function CartPage() {
                 
                 {/* Cart Items List */}
                 <div className="w-full lg:w-[65%] flex flex-col gap-4">
-                  {cart.map((item) => (
-                    <div
-                      key={`${item.id}-${item.weight}`}
-                      className="bg-white border border-[#eeddb9]/70 hover:border-[#eeddb9] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-3 sm:gap-6 sm:items-center shadow-sm transition-all animate-fade-in"
-                    >
-                      {/* Top Row / Content part */}
-                      <div className="flex gap-4 items-center w-full min-w-0">
-                        {/* Product Thumbnail Image */}
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white border border-[#eeddb9]/30 rounded-xl overflow-hidden shrink-0 relative">
-                          <img 
-                            src="https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=120&h=120" 
-                            alt={item.name} 
-                            className="w-full h-full object-cover" 
-                          />
-                        </div>
+                  {cart.map((item) => {
+                    const dbProduct = products?.find(p => p.id === item.id);
+                    const imageUrl = dbProduct?.image || item.image || `/images/products/${item.id}.webp`;
+                    return (
+                      <div
+                        key={`${item.id}-${item.weight}`}
+                        className="bg-[#FAF9F5]/40 hover:bg-white border border-[#eeddb9]/50 hover:border-[#eeddb9] rounded-[24px] p-4 sm:p-5 flex flex-col sm:flex-row gap-3 sm:gap-6 sm:items-center shadow-xs hover:shadow-md transition-all duration-300 animate-fade-in"
+                      >
+                        {/* Top Row / Content part */}
+                        <div className="flex gap-4 items-center w-full min-w-0">
+                          {/* Product Thumbnail Image */}
+                          <div 
+                            onClick={() => router.push(`/products/${item.id}`)}
+                            className="w-16 h-16 sm:w-20 sm:h-20 bg-white border border-[#eeddb9]/30 hover:border-[#C56C4F] rounded-xl overflow-hidden shrink-0 relative flex items-center justify-center p-1 cursor-pointer transition-all duration-300 hover:scale-105 shadow-xs"
+                            title="View Product Details"
+                          >
+                            <CartItemImage src={imageUrl} alt={item.name} />
+                          </div>
 
-                        {/* Item Details */}
-                        <div className="flex-grow min-w-0">
-                          <span className="text-[#394308] text-[10px] sm:text-xs font-black tracking-wider uppercase block mb-0.5">
-                            {item.category}
-                          </span>
-                          <h3 className="text-stone-950 font-extrabold text-xs sm:text-sm md:text-base font-jakarta leading-snug break-words">
-                            {item.name}
-                          </h3>
-                          <span className="text-stone-750 text-[11px] sm:text-xs font-bold font-jakarta block mt-0.5">
-                            Size: <span className="text-stone-900 font-extrabold">{item.weight}</span>
-                          </span>
+                          {/* Item Details */}
+                          <div className="flex-grow min-w-0">
+                            <span className="bg-[#EFE6D5]/60 text-[#704632] px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black tracking-wider uppercase w-fit block mb-1 font-jakarta">
+                              {item.category}
+                            </span>
+                            <h3 
+                              onClick={() => router.push(`/products/${item.id}`)}
+                              className="text-stone-955 font-extrabold text-xs sm:text-sm md:text-base font-jakarta leading-snug break-words cursor-pointer hover:text-[#384401] transition-colors"
+                              title="View Product Details"
+                            >
+                              {item.name}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 mt-1">
+                              <span className="text-stone-750 text-[11px] sm:text-xs font-bold font-jakarta">
+                                Size: <span className="text-stone-900 font-extrabold">{item.weight}</span>
+                              </span>
+                              {item.quantity > 1 && (
+                                <>
+                                  <span className="text-stone-300 text-xs select-none">•</span>
+                                  <span className="text-[11px] sm:text-xs text-stone-500 font-bold font-jakarta">
+                                    ₹{item.price}/unit
+                                  </span>
+                                </>
+                              )}
+                              {item.originalPrice && item.originalPrice > item.price && (
+                                <>
+                                  <span className="text-stone-300 text-xs select-none">•</span>
+                                  <span className="text-[10px] sm:text-[11px] text-emerald-800 font-extrabold font-jakarta bg-emerald-50/70 border border-emerald-100/50 px-2 py-0.5 rounded-lg shrink-0">
+                                    Save ₹{(item.originalPrice - item.price) * item.quantity}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
 
                       {/* Bottom Row / Controls part */}
                       <div className="flex justify-between sm:justify-end items-center gap-4 sm:gap-8 w-full sm:w-auto mt-3 sm:mt-0 pt-3 sm:pt-0 border-t border-stone-100 sm:border-t-0 shrink-0">
@@ -521,12 +572,12 @@ export default function CartPage() {
                         {/* Price and Action items grouping */}
                         <div className="flex items-center gap-4 sm:gap-6">
                           {/* Price */}
-                          <div className="flex flex-col items-end min-w-[70px]">
+                          <div className="flex flex-col items-end min-w-[70px] sm:min-w-[80px]">
                             <span className="font-jakarta font-black text-stone-955 text-right text-sm sm:text-base">
                               ₹{item.price * item.quantity}
                             </span>
                             {item.originalPrice && item.originalPrice > item.price && (
-                              <span className="text-stone-400 line-through text-[10px] sm:text-xs font-semibold">
+                              <span className="text-stone-400 line-through text-[10px] sm:text-xs font-semibold text-right">
                                 ₹{item.originalPrice * item.quantity}
                               </span>
                             )}
@@ -535,7 +586,7 @@ export default function CartPage() {
                           {/* Remove button */}
                           <button
                             onClick={() => removeFromCart(item.id, item.weight)}
-                            className="p-1.5 text-stone-500 hover:text-red-700 transition-colors cursor-pointer rounded-lg hover:bg-stone-50"
+                            className="p-2 text-stone-400 hover:text-red-700 hover:bg-red-50/60 rounded-full transition-all duration-300 active:scale-90 cursor-pointer shadow-xs"
                             aria-label="Remove item"
                           >
                             <Trash2 className="w-4.5 h-4.5" />
@@ -543,7 +594,8 @@ export default function CartPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
 
                   {/* Continue Shopping and Clear Cart button row */}
                   <div className="mt-2 flex justify-between items-center gap-4">

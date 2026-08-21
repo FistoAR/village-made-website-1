@@ -2,13 +2,15 @@ import Image from 'next/image';
 
 export default function CertificationSection() {
   const certificates = [
-    { name: 'FSSAI', src: '/images/certificates/fssai.webp' },
-    { name: 'ISO 22000', src: '/images/certificates/iso.webp' },
-    { name: 'USDA Organic', src: '/images/certificates/usda-organic.webp' },
-    { name: 'APEDA', src: '/images/certificates/apeda.webp' },
-    { name: 'HALAL', src: '/images/certificates/halal.webp' },
-    { name: 'GMP', src: '/images/certificates/gmp.webp' },
-    { name: 'Green Leaf', src: '/images/certificates/green-leaf.webp' },
+    { name: 'FSSAI', src: '/images/certificates/new/fssai.webp' },
+    { name: 'MSME', src: '/images/certificates/new/msme.webp' },
+    { name: 'PURE VEG', src: '/images/certificates/new/pure-veg.webp' },
+    // { name: 'ISO 22000', src: '/images/certificates/iso.webp' },
+    // { name: 'USDA Organic', src: '/images/certificates/usda-organic.webp' },
+    // { name: 'APEDA', src: '/images/certificates/apeda.webp' },
+    // { name: 'HALAL', src: '/images/certificates/halal.webp' },
+    // { name: 'GMP', src: '/images/certificates/gmp.webp' },
+    // { name: 'Green Leaf', src: '/images/certificates/green-leaf.webp' },
   ];
 
   return (

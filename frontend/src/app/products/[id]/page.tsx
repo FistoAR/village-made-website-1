@@ -9,7 +9,7 @@ import Footer from '@/components/Footer';
 import ProductCard from '@/components/Product/ProductCard';
 import { PRODUCTS, Product } from '@/data/products-list';
 import categoriesData from '@/data/categories.json';
-import { Star, Minus, Plus, ArrowLeft, Heart, Share2, Calendar, MessageSquare, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, ShieldCheck, Pencil, Trash2 } from 'lucide-react';
+import { Star, Minus, Plus, ArrowLeft, Heart, Share2, Calendar, MessageSquare, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, ShieldCheck, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Category } from '@/types';
 import { useApp } from '@/lib/context/AppContext';
 import { getVariantPrice, getVariantOriginalPrice } from '@/lib/variantPrice';
@@ -52,7 +52,7 @@ export default function ProductDetailPage({
   // Unwrap the params promise
   const { id } = use(params);
 
-  const { addToCart, addProductReview, editProductReview, deleteProductReview, showConfirm, user, cart, products: dbProducts } = useApp();
+  const { addToCart, addProductReview, editProductReview, deleteProductReview, showConfirm, showToast, user, cart, products: dbProducts } = useApp();
 
   const products = useMemo(() => {
     return dbProducts && dbProducts.length > 0 ? dbProducts : (PRODUCTS as unknown as Product[]);
@@ -124,9 +124,21 @@ export default function ProductDetailPage({
   const similarProducts = useMemo(() => {
     if (!product) return [];
     return products
-      .filter((p) => p.category === product.category && p.id !== product.id)
-      .slice(0, 4);
+      .filter((p) => p.category === product.category && p.id !== product.id);
   }, [products, product]);
+
+  const similarScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollSimilar = (direction: 'left' | 'right') => {
+    if (similarScrollRef.current) {
+      const { scrollLeft, clientWidth } = similarScrollRef.current;
+      const scrollAmount = clientWidth * 0.75;
+      similarScrollRef.current.scrollTo({
+        left: direction === 'left' ? scrollLeft - scrollAmount : scrollLeft + scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   const [activeTab, setActiveTab] = useState('recipes');
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(0);
@@ -169,6 +181,19 @@ export default function ProductDetailPage({
       item.weight.replace(/\s+/g, '') === selectedWeight.replace(/\s+/g, '')
     );
   }, [cart, product, selectedWeight]);
+
+  const hasPurchased = useMemo(() => {
+    if (!user || !product) return false;
+    const reviewableStatuses = ['Delivered', 'Returned', 'Return Requested', 'Return Rejected'];
+    return user.orders?.some(
+      (order) => reviewableStatuses.includes(order.status) && order.items?.some((item) => item.id === product.id)
+    ) ?? false;
+  }, [user, product]);
+
+  const alreadyReviewed = useMemo(() => {
+    if (!user || !product) return false;
+    return user.reviews?.some((r) => r.productId === product.id) ?? false;
+  }, [user, product]);
 
   // Dynamic reviews states
   const [productReviews, setProductReviews] = useState<any[]>([]);
@@ -263,6 +288,16 @@ export default function ProductDetailPage({
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product || !newReviewComment.trim()) return;
+
+    if (!hasPurchased) {
+      showToast("Only verified purchasers can write a review.", "error");
+      return;
+    }
+
+    if (alreadyReviewed) {
+      showToast("You have already reviewed this product.", "error");
+      return;
+    }
 
     const res = await addProductReview(
       product.id,
@@ -990,27 +1025,39 @@ export default function ProductDetailPage({
                   </div>
                 </div>
 
-                {/* Write a review box */}
-                <div className="p-5 bg-[#FCF9F5] border border-[#DBDBDB] rounded-[16px] mt-2 shadow-2xs">
-                  <span className="text-stone-900 font-bold text-sm block mb-1 font-jakarta">Share your experience</span>
-                  <span className="text-stone-900 text-xs block mb-5 font-jakarta">Your review helps other parents make the right choice.</span>
+                 {/* Write a review box */}
+                <div className="p-6 bg-[#FCF9F5] border border-[#DBDBDB] rounded-[16px] mt-2 shadow-2xs">
+                  <span className="text-stone-950 font-black text-base sm:text-lg block mb-1.5 font-jakarta">Share your experience</span>
+                  <span className="text-stone-700 text-xs sm:text-sm font-semibold block mb-5 font-jakarta">Your review helps other parents make the right choice.</span>
                   
                   {!user ? (
-                    <div className="text-center py-2">
-                      <p className="text-xs text-stone-500 font-semibold mb-3 font-jakarta">Please log in to share your experience with this provision.</p>
+                    <div className="text-center py-3">
+                      <p className="text-sm text-stone-600 font-bold mb-4 font-jakarta">Please log in to share your experience with this provision.</p>
                       <button
                         onClick={() => router.push(`/login?redirect=/products/${product.id}`)}
-                        className="w-full py-2.5 bg-[#704632] hover:bg-[#5b3827] text-white text-xs font-bold uppercase rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs font-jakarta"
+                        className="w-full py-3 bg-[#704632] hover:bg-[#5b3827] text-white text-xs sm:text-sm font-black uppercase rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs font-jakarta"
                       >
                         Log In to Write Review
                       </button>
                     </div>
+                  ) : !hasPurchased ? (
+                    <div className="text-center py-5 bg-amber-50/50 border border-amber-200/60 rounded-xl px-4">
+                      <p className="text-xs sm:text-sm md:text-base text-stone-700 font-bold font-jakarta leading-relaxed">
+                        🔒 Reviews can only be submitted by customers who have purchased, received, and used <span className="font-black text-stone-950">{product.name}</span>
+                      </p>
+                    </div>
+                  ) : alreadyReviewed ? (
+                    <div className="text-center py-5 bg-stone-50 border border-stone-200 rounded-xl px-4">
+                      <p className="text-xs sm:text-sm md:text-base text-stone-700 font-bold font-jakarta leading-relaxed">
+                        ✨ You have already reviewed this product. You can modify or remove your existing review below.
+                      </p>
+                    </div>
                   ) : !showReviewForm ? (
                     <button
                       onClick={() => setShowReviewForm(true)}
-                      className="w-full py-2.5 bg-[#384401] hover:bg-[#252d00] text-white font-bold text-xs uppercase rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs font-jakarta"
+                      className="w-full py-3 bg-[#384401] hover:bg-[#252d00] text-white font-black text-xs sm:text-sm uppercase rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs font-jakarta"
                     >
-                      <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" /></svg>
+                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" /></svg>
                       Write a Review
                     </button>
                   ) : (
@@ -1467,12 +1514,66 @@ export default function ProductDetailPage({
                   <h2 className="text-xl sm:text-2xl font-black text-stone-900 uppercase tracking-tight">You May Also Like</h2>
                   <p className="text-xs sm:text-sm text-stone-500 font-semibold mt-1">Discover other hand-crafted, nutrient-rich provisions from our {product?.category} range.</p>
                 </div>
+                {/* Arrow navigation buttons */}
+                {similarProducts.length > 1 && (
+                  <div className={`flex gap-2 self-end sm:self-center ${
+                    similarProducts.length <= 2 ? 'sm:hidden' : ''
+                  } ${
+                    similarProducts.length <= 3 ? 'md:hidden' : ''
+                  } ${
+                    similarProducts.length <= 4 ? 'lg:hidden' : ''
+                  }`}>
+                    <button
+                      onClick={() => scrollSimilar('left')}
+                      className="w-9 h-9 rounded-full border border-stone-300 hover:border-[#384401] bg-[#FAF9F5] hover:bg-white text-stone-700 hover:text-[#384401] flex items-center justify-center transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
+                      aria-label="Previous Products"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => scrollSimilar('right')}
+                      className="w-9 h-9 rounded-full border border-stone-300 hover:border-[#384401] bg-[#FAF9F5] hover:bg-white text-stone-700 hover:text-[#384401] flex items-center justify-center transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
+                      aria-label="Next Products"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {similarProducts.map((p) => (
-                  <ProductCard key={p.id} product={p as any} />
-                ))}
-              </div>
+
+              {similarProducts.length <= 4 ? (
+                <>
+                  {/* Desktop grid for 4 or fewer items */}
+                  <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {similarProducts.map((p) => (
+                      <ProductCard key={p.id} product={p as any} />
+                    ))}
+                  </div>
+                  {/* Mobile & Tab carousel for 4 or fewer items */}
+                  <div 
+                    ref={similarScrollRef}
+                    className="flex lg:hidden overflow-x-auto gap-6 pb-6 scroll-smooth snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                  >
+                    {similarProducts.map((p) => (
+                      <div key={p.id} className="w-[80%] sm:w-[45%] md:w-[35%] shrink-0 snap-start">
+                        <ProductCard product={p as any} />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                /* Always Carousel if more than 4 items */
+                <div 
+                  ref={similarScrollRef}
+                  className="flex overflow-x-auto gap-6 pb-6 scroll-smooth snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                >
+                  {similarProducts.map((p) => (
+                    <div key={p.id} className="w-[80%] sm:w-[45%] md:w-[30%] lg:w-[23.5%] shrink-0 snap-start">
+                      <ProductCard product={p as any} />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

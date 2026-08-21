@@ -133,13 +133,7 @@ export default function AdminPage() {
   const [newCatDesc, setNewCatDesc] = useState('');
 
   // Purchase Entry Form
-  const [purchaseProdId, setPurchaseProdId] = useState('');
-  const [purchaseQty, setPurchaseQty] = useState(10);
-  const [purchaseCost, setPurchaseCost] = useState(150);
-  const [purchaseHistory, setPurchaseHistory] = useState<PurchaseRecord[]>([
-    { id: 'PE-1092', productName: 'BANANA BABY MALT', quantity: 30, unitCost: 150, totalCost: 4500, date: '12/08/2026' },
-    { id: 'PE-4821', productName: 'SWEET POTATO MALT', quantity: 20, unitCost: 170, totalCost: 3400, date: '11/08/2026' }
-  ]);
+  const [purchaseHistory, setPurchaseHistory] = useState<PurchaseRecord[]>([]);
 
   // Banners State
   const [banners, setBanners] = useState<OfferBanner[]>([
@@ -239,6 +233,19 @@ export default function AdminPage() {
     }
   };
 
+  const fetchPurchaseHistory = async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const purchaseRes = await fetch(`${baseUrl}/admin/inventory/purchase`);
+      const purchaseData = await purchaseRes.json();
+      if (purchaseData.success) {
+        setPurchaseHistory(purchaseData.purchases);
+      }
+    } catch (err) {
+      console.error('⚠️ Failed to load purchase history:', err);
+    }
+  };
+
   // Initial Auth Check
   useEffect(() => {
     setMounted(true);
@@ -304,7 +311,7 @@ export default function AdminPage() {
         if (activeTab === 'dashboard') {
           await Promise.all([fetchDashboardData(), fetchProducts()]);
         } else if (activeTab === 'inventory') {
-          await fetchProducts();
+          await Promise.all([fetchProducts(), fetchPurchaseHistory()]);
         } else if (activeTab === 'customers') {
           await fetchCustomersData();
         } else if (activeTab === 'products') {
@@ -338,10 +345,14 @@ export default function AdminPage() {
       console.log('🔌 Admin connected to real-time updates socket');
     });
 
-    socket.on('inventory-update', (data: { productId: string; stock: number }) => {
+    socket.on('inventory-update', (data: { productId: string; stock: number; weights?: any }) => {
       console.log('📡 Admin: Real-time inventory update received:', data);
       setLocalProducts((prev) =>
-        prev.map((p) => (p.id === data.productId ? { ...p, stock: data.stock } : p))
+        prev.map((p) =>
+          p.id === data.productId
+            ? { ...p, stock: data.stock, weights: data.weights !== undefined ? data.weights : p.weights }
+            : p
+        )
       );
     });
 
@@ -620,36 +631,39 @@ export default function AdminPage() {
   };
 
   // Purchase Entry Submission
-  const handlePurchaseSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!purchaseProdId || purchaseQty <= 0 || purchaseCost <= 0) {
-      triggerAlert('Please choose a product and fill accurate purchase figures.', true);
-      return;
+  const handlePurchaseSubmit = async (
+    batchNumber: string,
+    items: { productId: string; weight: string | null; quantity: number }[]
+  ): Promise<boolean> => {
+    try {
+      setLoading(true);
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const response = await fetch(`${baseUrl}/admin/inventory/purchase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          batchNumber,
+          items
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        triggerAlert('Batch purchase inventory log recorded successfully!');
+        // Reload purchase logs & fresh stock counts
+        await Promise.all([fetchPurchaseHistory(), fetchProducts()]);
+        return true;
+      } else {
+        triggerAlert(data.error || 'Failed to log batch purchase entry.', true);
+        return false;
+      }
+    } catch (err) {
+      console.error(err);
+      triggerAlert('Failed to connect to inventory API.', true);
+      return false;
+    } finally {
+      setLoading(false);
     }
-    const targetProd = localProducts.find(p => p.id === purchaseProdId);
-    if (!targetProd) return;
-
-    // Increment inventory stock
-    setLocalProducts(prev => prev.map(p => 
-      p.id === purchaseProdId 
-        ? { ...p, stock: p.stock + purchaseQty, purchasePrice: purchaseCost } 
-        : p
-    ));
-
-    const newRecord: PurchaseRecord = {
-      id: `PE-${Math.floor(1000 + Math.random() * 9000)}`,
-      productName: targetProd.name,
-      quantity: purchaseQty,
-      unitCost: purchaseCost,
-      totalCost: purchaseCost * purchaseQty,
-      date: new Date().toLocaleDateString('en-IN')
-    };
-
-    setPurchaseHistory(prev => [newRecord, ...prev]);
-    setPurchaseProdId('');
-    setPurchaseQty(10);
-    setPurchaseCost(150);
-    triggerAlert('Purchase inventory log recorded successfully!');
   };
 
   const handleFileUpload = async (file: File, bucket: 'product-images' | 'product-videos'): Promise<string | null> => {
@@ -1114,16 +1128,8 @@ export default function AdminPage() {
 
             {activeTab === 'inventory' && (
               <AdminInventoryTab
-                totalInventoryVal={totalInventoryVal}
                 lowStockProducts={lowStockProducts}
                 localProducts={localProducts}
-                setLocalProducts={setLocalProducts}
-                purchaseProdId={purchaseProdId}
-                setPurchaseProdId={setPurchaseProdId}
-                purchaseQty={purchaseQty}
-                setPurchaseQty={setPurchaseQty}
-                purchaseCost={purchaseCost}
-                setPurchaseCost={setPurchaseCost}
                 purchaseHistory={purchaseHistory}
                 handlePurchaseSubmit={handlePurchaseSubmit}
               />

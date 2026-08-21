@@ -53,10 +53,14 @@ export interface AdminCustomer {
 
 export interface PurchaseRecord {
   id: string;
+  productId?: string;
   productName: string;
+  weight?: string | null;
+  batchNumber?: string;
   quantity: number;
   unitCost: number;
   totalCost: number;
+  barcodes?: string[];
   date: string;
 }
 
@@ -75,9 +79,10 @@ export interface ProductBenefit {
   icon?: string;
 }
 
-export interface ExtendedProduct extends Product {
+export interface ExtendedProduct extends Omit<Product, 'weights'> {
   stock: number;
   purchasePrice?: number;
+  weights?: any[];
   image?: string;
   video?: string;
   benefits?: ProductBenefit[];

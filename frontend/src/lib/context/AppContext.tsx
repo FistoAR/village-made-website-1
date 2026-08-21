@@ -203,11 +203,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.log('🔌 Connected to real-time inventory socket');
     });
 
-    socket.on('inventory-update', (data: { productId: string; stock: number }) => {
+    socket.on('inventory-update', (data: { productId: string; stock: number; weights?: any }) => {
       console.log('📡 Real-time inventory update received:', data);
       setProducts((prevProducts) =>
         prevProducts.map((p) =>
-          p.id === data.productId ? { ...p, stock: data.stock } : p
+          p.id === data.productId
+            ? { ...p, stock: data.stock, weights: data.weights !== undefined ? data.weights : p.weights }
+            : p
         )
       );
     });

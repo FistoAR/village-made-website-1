@@ -158,6 +158,39 @@ productRouter.put('/:id', async (req, res, next) => {
       return res.status(404).json({ success: false, error: 'Product not found.' });
     }
 
+    const currentProduct = checkExist.rows[0];
+    const currentStock = Number(currentProduct.stock);
+    const currentWeights = typeof currentProduct.weights === 'string' ? JSON.parse(currentProduct.weights) : (currentProduct.weights || []);
+
+    // Merge incoming weights with existing weights to preserve their stocks.
+    // If a weight variant did not exist previously, its stock starts at 0.
+    let finalWeights = [];
+    if (Array.isArray(weights)) {
+      finalWeights = weights.map(w => {
+        const weightName = typeof w === 'object' && w !== null ? w.weight : w;
+        
+        // Search for existing variant to preserve stock
+        const existingVariant = Array.isArray(currentWeights) && currentWeights.find(cw => {
+          const cwName = typeof cw === 'object' && cw !== null ? cw.weight : cw;
+          return String(cwName).toLowerCase().replace(/\s+/g, '') === String(weightName).toLowerCase().replace(/\s+/g, '');
+        });
+
+        const existingStock = (existingVariant && typeof existingVariant === 'object' && typeof existingVariant.stock === 'number')
+          ? existingVariant.stock
+          : 0;
+
+        if (typeof w === 'object' && w !== null) {
+          return { ...w, stock: existingStock };
+        } else {
+          return { weight: w, price: price, stock: existingStock };
+        }
+      });
+    } else {
+      finalWeights = currentWeights;
+    }
+
+    const finalStock = currentStock;
+
     await query(
       `UPDATE products 
        SET category_id = $1, name = $2, description = $3, price = $4, original_price = $5, discount = $6,
@@ -173,10 +206,10 @@ productRouter.put('/:id', async (req, res, next) => {
         price,
         originalPrice || null,
         discount || null,
-        JSON.stringify(weights || ['250 g', '500 g', '1 kg']),
+        JSON.stringify(finalWeights),
         badge || null,
-        stock || 50,
-        purchasePrice || null,
+        finalStock,
+        purchasePrice || currentProduct.purchase_price || null,
         imageUrl || null,
         videoUrl || null,
         JSON.stringify(benefits || []),
@@ -192,7 +225,7 @@ productRouter.put('/:id', async (req, res, next) => {
       ]
     );
 
-    broadcastInventoryUpdate(productId, stock || 50);
+    broadcastInventoryUpdate(productId, finalStock, finalWeights);
 
     return res.status(200).json({ success: true, message: 'Product updated successfully.' });
   } catch (error) {

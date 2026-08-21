@@ -822,12 +822,13 @@ export default function AdminProductsTab({
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-bold text-stone-700">Initial Stock</label>
+                      <label className="text-sm font-bold text-stone-400">Initial Stock (Managed in Inventory)</label>
                       <input
                         type="number"
-                        value={newProdStock}
-                        onChange={(e) => setNewProdStock(parseInt(e.target.value) || 0)}
-                        className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+                        disabled
+                        readOnly
+                        value={0}
+                        className="h-11 px-4 bg-stone-100 border border-[#d3c099] rounded-xl text-sm text-stone-400 font-jakarta outline-none cursor-not-allowed"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
@@ -1044,22 +1045,9 @@ export default function AdminProductsTab({
                                   </div>
                                   <div className="flex items-center gap-1.5">
                                     <span className="text-[11px] text-stone-500 font-bold">Stock:</span>
-                                    <input
-                                      type="number"
-                                      value={currentStockValue}
-                                      onChange={(e) => {
-                                        const val = Number(e.target.value);
-                                        const newWeights = currentNewProdWeights.map((w: any) => {
-                                          const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
-                                          if (name === weight) {
-                                            return { ...w, weight, stock: val };
-                                          }
-                                          return w;
-                                        });
-                                        setNewProdWeights(newWeights);
-                                      }}
-                                      className="w-16 h-7 px-1.5 bg-stone-50 border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401]"
-                                    />
+                                    <span className="text-xs font-extrabold text-stone-700 bg-stone-100 px-2.5 py-1 rounded-lg border border-[#eeddb9]">
+                                      {hasWeight ? currentStockValue : 0} Units
+                                    </span>
                                   </div>
                                 </div>
                               )}
@@ -1725,12 +1713,13 @@ export default function AdminProductsTab({
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-bold text-stone-700">Stock</label>
+                      <label className="text-sm font-bold text-stone-500">Stock (Managed in Inventory)</label>
                       <input
                         type="number"
+                        disabled
+                        readOnly
                         value={editingProduct.stock}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, stock: parseInt(e.target.value) || 0 })}
-                        className="h-11 px-4 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-jakarta focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+                        className="h-11 px-4 bg-stone-100 border border-[#d3c099] rounded-xl text-sm text-stone-500 font-jakarta outline-none cursor-not-allowed"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
@@ -1832,7 +1821,7 @@ export default function AdminProductsTab({
                           } else {
                             const basePrice = editingProduct.originalPrice || editingProduct.price || 100;
                             currentPriceValue = weight === '250 g' ? Math.round(basePrice * 0.6) : weight === '1 kg' ? Math.round(basePrice * 1.8) : basePrice;
-                            currentStockValue = editingProduct.stock || 50;
+                            currentStockValue = 0;
                           }
 
                           return (
@@ -1962,22 +1951,9 @@ export default function AdminProductsTab({
                                   </div>
                                   <div className="flex items-center gap-1.5">
                                     <span className="text-[11px] text-stone-500 font-bold">Stock:</span>
-                                    <input
-                                      type="number"
-                                      value={currentStockValue}
-                                      onChange={(e) => {
-                                        const val = Number(e.target.value);
-                                        const newWeights = currentWeights.map((w: any) => {
-                                          const name = typeof w === 'object' && w !== null && w.weight ? w.weight : w;
-                                          if (name === weight) {
-                                            return { ...w, weight, stock: val };
-                                          }
-                                          return w;
-                                        });
-                                        setEditingProduct({ ...editingProduct, weights: newWeights });
-                                      }}
-                                      className="w-16 h-7 px-1.5 bg-stone-50 border border-[#eeddb9] rounded-lg text-xs font-bold focus:outline-none focus:border-[#384401]"
-                                    />
+                                    <span className="text-xs font-extrabold text-stone-700 bg-stone-100 px-2.5 py-1 rounded-lg border border-[#eeddb9]">
+                                      {currentStockValue} Units
+                                    </span>
                                   </div>
                                 </div>
                               )}

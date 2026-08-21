@@ -278,3 +278,159 @@ adminRouter.get('/sales', async (req, res, next) => {
     next(error);
   }
 });
+
+/**
+ * GET /api/admin/inventory/purchase
+ * Get all purchase/inventory entry logs
+ */
+adminRouter.get('/inventory/purchase', async (req, res, next) => {
+  try {
+    const result = await query(`
+      SELECT ib.*, p.name as product_name
+      FROM inventory_batches ib
+      JOIN products p ON ib.product_id = p.id
+      ORDER BY ib.id DESC
+    `);
+    
+    return res.status(200).json({
+      success: true,
+      purchases: result.rows.map(row => ({
+        id: row.entry_id,
+        productId: row.product_id,
+        productName: row.product_name,
+        weight: row.weight,
+        batchNumber: row.batch_number,
+        quantity: row.quantity,
+        unitCost: parseFloat(row.unit_cost) || 0,
+        totalCost: parseFloat(row.total_cost) || 0,
+        barcodes: typeof row.barcodes === 'string' ? JSON.parse(row.barcodes) : row.barcodes,
+        date: new Date(row.created_at).toLocaleDateString('en-IN')
+      }))
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/admin/inventory/purchase
+ * Record a purchase entry (receives a batch with multiple products/quantities)
+ */
+adminRouter.post('/inventory/purchase', async (req, res, next) => {
+  const { batchNumber, items } = req.body;
+
+  if (!batchNumber || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ success: false, error: 'Batch number and a non-empty items list are required.' });
+  }
+
+  try {
+    await query('BEGIN');
+
+    // Generate a single entry_id for the entire batch
+    const entryId = `PE-${Math.floor(1000 + Math.random() * 9000)}`;
+    const savedPurchases = [];
+
+    for (const item of items) {
+      const { productId, weight, quantity } = item;
+
+      if (!productId || typeof quantity !== 'number' || quantity <= 0) {
+        await query('ROLLBACK');
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Each item must have a product ID and a valid stock quantity value.' 
+        });
+      }
+
+      // Retrieve product
+      const prodRes = await query('SELECT weights, stock, name FROM products WHERE id = $1', [productId]);
+      if (prodRes.rows.length === 0) {
+        await query('ROLLBACK');
+        return res.status(404).json({ success: false, error: `Product not found: ${productId}` });
+      }
+
+      const product = prodRes.rows[0];
+      const weights = typeof product.weights === 'string' ? JSON.parse(product.weights) : product.weights;
+      let stock = Number(product.stock);
+      let nextWeights = weights;
+      let nextStock = stock;
+      let variantFound = false;
+
+      if (Array.isArray(weights) && weight) {
+        const cleanWeight = weight.toLowerCase().replace(/\s+/g, '');
+        nextWeights = weights.map(w => {
+          if (typeof w === 'object' && w !== null && w.weight && w.weight.toLowerCase().replace(/\s+/g, '') === cleanWeight) {
+            variantFound = true;
+            const currentVarStock = typeof w.stock === 'number' ? w.stock : stock;
+            return { ...w, stock: currentVarStock + Number(quantity) };
+          }
+          return w;
+        });
+      }
+
+      if (variantFound) {
+        const allHaveStock = nextWeights.every(w => typeof w === 'object' && w !== null && typeof w.stock === 'number');
+        if (allHaveStock) {
+          nextStock = nextWeights.reduce((sum, w) => sum + w.stock, 0);
+        } else {
+          nextStock = stock + Number(quantity);
+        }
+      } else {
+        nextStock = stock + Number(quantity);
+      }
+
+      // Update product stock and weights in DB (NO purchase_price update!)
+      await query(
+        `UPDATE products 
+         SET weights = $1, stock = $2 
+         WHERE id = $3`,
+        [JSON.stringify(nextWeights), nextStock, productId]
+      );
+
+      // Insert purchase entry batch log (with 0 unit_cost and total_cost)
+      await query(
+        `INSERT INTO inventory_batches (entry_id, product_id, weight, batch_number, quantity, unit_cost, total_cost, barcodes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [entryId, productId, weight || null, batchNumber, quantity, 0, 0, JSON.stringify([])]
+      );
+
+      savedPurchases.push({
+        id: entryId,
+        productId,
+        productName: product.name,
+        weight: weight || null,
+        batchNumber,
+        quantity,
+        unitCost: 0,
+        totalCost: 0,
+        barcodes: [],
+        date: new Date().toLocaleDateString('en-IN')
+      });
+    }
+
+    await query('COMMIT');
+
+    // Broadcast inventory update via socket for each updated product
+    for (const item of items) {
+      // Fetch fresh values to broadcast
+      const prodRes = await query('SELECT weights, stock FROM products WHERE id = $1', [item.productId]);
+      if (prodRes.rows.length > 0) {
+        const product = prodRes.rows[0];
+        const nextWeights = typeof product.weights === 'string' ? JSON.parse(product.weights) : product.weights;
+        broadcastInventoryUpdate(item.productId, Number(product.stock), nextWeights);
+      }
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Batch purchase entry recorded successfully.',
+      purchases: savedPurchases
+    });
+  } catch (error) {
+    await query('ROLLBACK');
+    next(error);
+  }
+});
+
+
+
+

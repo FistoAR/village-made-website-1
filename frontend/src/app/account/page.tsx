@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -56,6 +56,47 @@ export default function AccountPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+
+  const reviewableProducts = useMemo(() => {
+    if (!user) return [];
+    const allowedStatuses = ['Delivered', 'Returned', 'Return Requested', 'Return Rejected'];
+    const productsMap = new Map<string, { id: string; name: string; category: string }>();
+    
+    // Find all products that have been delivered or returned
+    user.orders?.forEach(order => {
+      if (allowedStatuses.includes(order.status)) {
+        order.items?.forEach(item => {
+          const pInfo = PRODUCTS.find(p => p.id === item.id);
+          if (pInfo) {
+            productsMap.set(pInfo.id, {
+              id: pInfo.id,
+              name: pInfo.name,
+              category: pInfo.category
+            });
+          }
+        });
+      }
+    });
+
+    // Filter out products that the user has already reviewed,
+    // but if we are editing, we should keep the editing product in the map.
+    const reviewedProductIds = new Set(user.reviews?.map(r => r.productId) || []);
+    
+    return Array.from(productsMap.values()).filter(p => {
+      // If we are editing, keep the product being edited
+      if (editingReviewId) {
+        const editingRev = user.reviews.find(r => r.id === editingReviewId);
+        if (editingRev && editingRev.productId === p.id) {
+          return true;
+        }
+      }
+      return !reviewedProductIds.has(p.id);
+    });
+  }, [user, editingReviewId]);
+
+  const reviewableCategories = useMemo(() => {
+    return Array.from(new Set(reviewableProducts.map(p => p.category)));
+  }, [reviewableProducts]);
 
   // Expanded order details tracker
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
@@ -414,6 +455,11 @@ export default function AccountPage() {
       triggerNotification('Review updated successfully!');
       setEditingReviewId(null);
     } else {
+      const isEligible = reviewableProducts.some(p => p.id === reviewProdId);
+      if (!isEligible) {
+        triggerNotification('You can only review products you have purchased and received.', true);
+        return;
+      }
       const product = PRODUCTS.find(p => p.id === reviewProdId);
       if (!product) return;
       addReview(reviewProdId, product.name, reviewRating, reviewComment);
@@ -1045,135 +1091,143 @@ export default function AccountPage() {
                 </div>
 
                 {/* Optional Review form for testing */}
-                <form onSubmit={handleAddReviewSubmit} className="bg-[#FAF4E6]/50 border border-[#eeddb9]/60 rounded-xl p-5 flex flex-col gap-4">
-                  <h3 className="text-xs sm:text-sm font-extrabold text-[#3E2C1C] uppercase tracking-wider block mb-2">
-                    {editingReviewId ? 'Edit Review' : 'Write a Review'}
-                  </h3>
+                {reviewableProducts.length === 0 && !editingReviewId ? (
+                  <div className="bg-[#FAF4E6]/40 border border-[#eeddb9]/50 rounded-xl p-6 text-center">
+                    <p className="text-stone-700 text-xs sm:text-sm font-bold leading-relaxed font-jakarta">
+                      🔒 You don't have any products eligible for review. Only products that have been delivered to you and haven't been reviewed yet can be reviewed.
+                    </p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleAddReviewSubmit} className="bg-[#FAF4E6]/50 border border-[#eeddb9]/60 rounded-xl p-5 flex flex-col gap-4">
+                    <h3 className="text-xs sm:text-sm font-extrabold text-[#3E2C1C] uppercase tracking-wider block mb-2">
+                      {editingReviewId ? 'Edit Review' : 'Write a Review'}
+                    </h3>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_1fr] items-end gap-4">
-                    {/* Category Selector */}
-                    <div className="flex flex-col gap-1.5 w-full">
-                      <span className="text-[10px] sm:text-xs font-extrabold text-[#3E2C1C] uppercase tracking-wider block">Category</span>
-                      <select
-                        required
-                        disabled={!!editingReviewId}
-                        value={reviewCategory}
-                        onChange={(e) => {
-                          setReviewCategory(e.target.value);
-                          setReviewProdId('');
-                        }}
-                        className="h-10.5 px-3.5 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-850 focus:outline-hidden disabled:bg-stone-100 disabled:cursor-not-allowed w-full font-medium"
-                      >
-                        <option value="">Select Category...</option>
-                        {Array.from(new Set(PRODUCTS.map(p => p.category))).map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Product Selector */}
-                    <div className="flex flex-col gap-1.5 w-full">
-                      <span className="text-[10px] sm:text-xs font-extrabold text-[#3E2C1C] uppercase tracking-wider block">Target Product</span>
-                      <select
-                        required
-                        disabled={!!editingReviewId || !reviewCategory}
-                        value={reviewProdId}
-                        onChange={(e) => setReviewProdId(e.target.value)}
-                        className="h-10.5 px-3.5 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-850 focus:outline-hidden disabled:bg-stone-100 disabled:cursor-not-allowed w-full font-medium"
-                      >
-                        <option value="">
-                          {!reviewCategory ? 'Select Category First...' : 'Select Product...'}
-                        </option>
-                        {PRODUCTS.filter(p => p.category === reviewCategory).map(p => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5 justify-end w-full">
-                      <span className="text-[10px] sm:text-xs font-extrabold text-[#3E2C1C] uppercase tracking-wider block">Rating Star</span>
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="number"
-                          min="1"
-                          max="5"
-                          step="0.1"
+                    <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_1fr] items-end gap-4">
+                      {/* Category Selector */}
+                      <div className="flex flex-col gap-1.5 w-full">
+                        <span className="text-[10px] sm:text-xs font-extrabold text-[#3E2C1C] uppercase tracking-wider block">Category</span>
+                        <select
                           required
-                          value={reviewRating || ''}
+                          disabled={!!editingReviewId}
+                          value={reviewCategory}
                           onChange={(e) => {
-                            let valStr = e.target.value;
-                            if (valStr.includes('.')) {
-                              const [integerPart, decimalPart] = valStr.split('.');
-                              valStr = `${integerPart}.${decimalPart.slice(0, 1)}`;
-                            }
-                            const val = valStr === '' ? 0 : Number(valStr);
-                            setReviewRating(val > 5 ? 5 : val);
+                            setReviewCategory(e.target.value);
+                            setReviewProdId('');
                           }}
-                          onBlur={() => {
-                            if (reviewRating < 1) setReviewRating(1);
-                          }}
-                          className="h-10.5 w-18 px-2 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-900 font-bold text-center focus:outline-hidden focus:border-[#384401] focus:ring-1 focus:ring-[#384401]"
-                          placeholder="4.5"
-                        />
+                          className="h-10.5 px-3.5 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-850 focus:outline-hidden disabled:bg-stone-100 disabled:cursor-not-allowed w-full font-medium"
+                        >
+                          <option value="">Select Category...</option>
+                          {reviewableCategories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      </div>
 
-                        <div className="flex items-center gap-1 h-10 select-none">
-                          {[1, 2, 3, 4, 5].map((i) => {
-                            let fillWidth = '0%';
-                            if (reviewRating >= i) {
-                              fillWidth = '100%';
-                            } else if (reviewRating > i - 1) {
-                              fillWidth = `${(reviewRating - (i - 1)) * 100}%`;
-                            }
+                      {/* Product Selector */}
+                      <div className="flex flex-col gap-1.5 w-full">
+                        <span className="text-[10px] sm:text-xs font-extrabold text-[#3E2C1C] uppercase tracking-wider block">Target Product</span>
+                        <select
+                          required
+                          disabled={!!editingReviewId || !reviewCategory}
+                          value={reviewProdId}
+                          onChange={(e) => setReviewProdId(e.target.value)}
+                          className="h-10.5 px-3.5 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-850 focus:outline-hidden disabled:bg-stone-100 disabled:cursor-not-allowed w-full font-medium"
+                        >
+                          <option value="">
+                            {!reviewCategory ? 'Select Category First...' : 'Select Product...'}
+                          </option>
+                          {reviewableProducts.filter(p => p.category === reviewCategory).map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          ))}
+                        </select>
+                      </div>
 
-                            return (
-                              <div key={i} className="relative inline-block text-xl text-stone-200">
-                                <span>★</span>
-                                <div
-                                  className="absolute top-0 left-0 overflow-hidden h-full text-amber-500"
-                                  style={{ width: fillWidth }}
-                                >
+                      <div className="flex flex-col gap-1.5 justify-end w-full">
+                        <span className="text-[10px] sm:text-xs font-extrabold text-[#3E2C1C] uppercase tracking-wider block">Rating Star</span>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="number"
+                            min="1"
+                            max="5"
+                            step="0.1"
+                            required
+                            value={reviewRating || ''}
+                            onChange={(e) => {
+                              let valStr = e.target.value;
+                              if (valStr.includes('.')) {
+                                const [integerPart, decimalPart] = valStr.split('.');
+                                valStr = `${integerPart}.${decimalPart.slice(0, 1)}`;
+                              }
+                              const val = valStr === '' ? 0 : Number(valStr);
+                              setReviewRating(val > 5 ? 5 : val);
+                            }}
+                            onBlur={() => {
+                              if (reviewRating < 1) setReviewRating(1);
+                            }}
+                            className="h-10.5 w-18 px-2 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-900 font-bold text-center focus:outline-hidden focus:border-[#384401] focus:ring-1 focus:ring-[#384401]"
+                            placeholder="4.5"
+                          />
+
+                          <div className="flex items-center gap-1 h-10 select-none">
+                            {[1, 2, 3, 4, 5].map((i) => {
+                              let fillWidth = '0%';
+                              if (reviewRating >= i) {
+                                fillWidth = '100%';
+                              } else if (reviewRating > i - 1) {
+                                fillWidth = `${(reviewRating - (i - 1)) * 100}%`;
+                              }
+
+                              return (
+                                <div key={i} className="relative inline-block text-xl text-stone-200">
                                   <span>★</span>
+                                  <div
+                                    className="absolute top-0 left-0 overflow-hidden h-full text-amber-500"
+                                    style={{ width: fillWidth }}
+                                  >
+                                    <span>★</span>
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <textarea
-                    required
-                    value={reviewComment}
-                    onChange={(e) => setReviewComment(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-900 h-16 resize-none focus:outline-hidden font-jakarta"
-                    placeholder="Write your honest comments about this organic goods product..."
-                  />
+                    <textarea
+                      required
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      className="w-full px-3.5 py-2 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-900 h-16 resize-none focus:outline-hidden font-jakarta"
+                      placeholder="Write your honest comments about this organic goods product..."
+                    />
 
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      className="w-fit bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-2.5 px-5 rounded-xl transition-colors cursor-pointer shadow-xs"
-                    >
-                      {editingReviewId ? 'Update Review' : 'Submit Review'}
-                    </button>
-                    {editingReviewId && (
+                    <div className="flex gap-2">
                       <button
-                        type="button"
-                        onClick={() => {
-                          setEditingReviewId(null);
-                          setReviewCategory('');
-                          setReviewProdId('');
-                          setReviewComment('');
-                          setReviewRating(5);
-                        }}
-                        className="w-fit bg-white border border-[#eeddb9] hover:bg-[#FAF4E6]/50 text-stone-700 text-xs font-bold py-2.5 px-5 rounded-xl transition-colors cursor-pointer shadow-xs"
+                        type="submit"
+                        className="w-fit bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold py-2.5 px-5 rounded-xl transition-colors cursor-pointer shadow-xs"
                       >
-                        Cancel
+                        {editingReviewId ? 'Update Review' : 'Submit Review'}
                       </button>
-                    )}
-                  </div>
-                </form>
+                      {editingReviewId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingReviewId(null);
+                            setReviewCategory('');
+                            setReviewProdId('');
+                            setReviewComment('');
+                            setReviewRating(5);
+                          }}
+                          className="w-fit bg-white border border-[#eeddb9] hover:bg-[#FAF4E6]/50 text-stone-700 text-xs font-bold py-2.5 px-5 rounded-xl transition-colors cursor-pointer shadow-xs"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                )}
 
                 <div className="flex flex-col gap-4">
                   {user.reviews.length === 0 ? (

@@ -137,6 +137,7 @@ export async function initDb() {
     ALTER TABLE products ADD COLUMN IF NOT EXISTS recipes JSONB;
     ALTER TABLE products ADD COLUMN IF NOT EXISTS description_image VARCHAR(512);
     ALTER TABLE categories ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0;
+    ALTER TABLE inventory_batches DROP CONSTRAINT IF EXISTS inventory_batches_entry_id_key;
 
     -- Drop old JSONB columns from the users table if they exist
     ALTER TABLE users DROP COLUMN IF EXISTS addresses;
@@ -154,6 +155,20 @@ export async function initDb() {
       display_order INTEGER DEFAULT 0,
       active BOOLEAN DEFAULT true,
       last_updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Inventory Batches Table
+    CREATE TABLE IF NOT EXISTS inventory_batches (
+      id SERIAL PRIMARY KEY,
+      entry_id VARCHAR(50) NOT NULL,
+      product_id VARCHAR(100) REFERENCES products(id) ON DELETE CASCADE,
+      weight VARCHAR(50),
+      batch_number VARCHAR(100) NOT NULL,
+      quantity INTEGER NOT NULL,
+      unit_cost DECIMAL(10,2) NOT NULL,
+      total_cost DECIMAL(10,2) NOT NULL,
+      barcodes JSONB DEFAULT '[]'::jsonb,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
 
     -- Indexing for Optimization

@@ -21,7 +21,7 @@ export default function AccountPage() {
   const {
     user, logoutUser, updateUserProfile, addAddress, deleteAddress, addReview, showConfirm, isHydrated,
     markAllNotificationsAsRead, markNotificationAsRead, deleteNotification, clearAllNotifications,
-    updateOrderStatus, showToast, fetchProducts, tickets, refreshUserProfile
+    updateOrderStatus, showToast, fetchProducts, tickets, refreshUserProfile, addProductReview
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<AccountTab>('dashboard');
@@ -55,6 +55,7 @@ export default function AccountPage() {
   const [reviewProdId, setReviewProdId] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
+  const [reviewTitle, setReviewTitle] = useState('');
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
 
   const reviewableProducts = useMemo(() => {
@@ -438,7 +439,7 @@ export default function AccountPage() {
     setShowAddAddress(false);
   };
 
-  const handleAddReviewSubmit = (e: React.FormEvent) => {
+  const handleAddReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reviewProdId || !reviewComment) {
       triggerNotification('Please select a product and write a review.', true);
@@ -448,7 +449,7 @@ export default function AccountPage() {
     if (editingReviewId) {
       const updatedReviews = user.reviews.map(r =>
         r.id === editingReviewId
-          ? { ...r, rating: reviewRating, comment: reviewComment }
+          ? { ...r, rating: reviewRating, comment: reviewComment, title: reviewTitle }
           : r
       );
       updateUserProfile({ reviews: updatedReviews });
@@ -462,12 +463,16 @@ export default function AccountPage() {
       }
       const product = PRODUCTS.find(p => p.id === reviewProdId);
       if (!product) return;
-      addReview(reviewProdId, product.name, reviewRating, reviewComment);
-      triggerNotification('Review submitted successfully!');
+      
+      const res = await addProductReview(reviewProdId, user.name || 'Verified Buyer', reviewRating, reviewTitle, reviewComment);
+      if (res && res.success) {
+        // Successful submit is already handled via showToast inside addProductReview context
+      }
     }
 
     setReviewCategory('');
     setReviewProdId('');
+    setReviewTitle('');
     setReviewComment('');
     setReviewRating(5);
   };
@@ -1195,6 +1200,18 @@ export default function AccountPage() {
                       </div>
                     </div>
 
+                    <div className="flex flex-col gap-1.5 w-full">
+                      <span className="text-[10px] sm:text-xs font-extrabold text-[#3E2C1C] uppercase tracking-wider block">Review Title</span>
+                      <input
+                        type="text"
+                        required
+                        value={reviewTitle}
+                        onChange={(e) => setReviewTitle(e.target.value)}
+                        placeholder="Summarize your experience (e.g. Delicious flavour, High quality malt)"
+                        className="h-10 px-3.5 bg-white border border-[#eeddb9] rounded-xl text-xs sm:text-sm text-stone-900 focus:outline-hidden w-full font-medium"
+                      />
+                    </div>
+
                     <textarea
                       required
                       value={reviewComment}
@@ -1217,10 +1234,11 @@ export default function AccountPage() {
                             setEditingReviewId(null);
                             setReviewCategory('');
                             setReviewProdId('');
+                            setReviewTitle('');
                             setReviewComment('');
                             setReviewRating(5);
                           }}
-                          className="w-fit bg-white border border-[#eeddb9] hover:bg-[#FAF4E6]/50 text-stone-700 text-xs font-bold py-2.5 px-5 rounded-xl transition-colors cursor-pointer shadow-xs"
+                          className="w-fit bg-white border border-[#eeddb9] hover:bg-[#FAF4E6]/50 text-stone-750 text-xs font-bold py-2.5 px-5 rounded-xl transition-colors cursor-pointer shadow-xs"
                         >
                           Cancel
                         </button>
@@ -1243,6 +1261,9 @@ export default function AccountPage() {
                         <div className="flex justify-between items-start gap-4 flex-wrap">
                           <div>
                             <span className="font-bold text-stone-955 text-sm sm:text-base font-jakarta">{rev.productName}</span>
+                            {rev.title && (
+                              <span className="font-bold text-[#A45338] text-xs sm:text-sm block mt-0.5 select-none">{rev.title}</span>
+                            )}
                             <span className="text-[10px] text-stone-500 font-jakarta block mt-0.5">{rev.date}</span>
                           </div>
 
@@ -1256,6 +1277,7 @@ export default function AccountPage() {
                                 }
                                 setReviewProdId(rev.productId);
                                 setReviewRating(rev.rating);
+                                setReviewTitle(rev.title || '');
                                 setReviewComment(rev.comment);
                               }}
                               className="p-1.5 text-stone-400 hover:text-[#384401] transition-colors cursor-pointer rounded-lg hover:bg-stone-100"

@@ -1,6 +1,6 @@
 import { Product } from '@/data/products-list';
 
-export type AdminTab = 'dashboard' | 'inventory' | 'customers' | 'products' | 'orders' | 'sales' | 'banners' | 'media' | 'admin-profile';
+export type AdminTab = 'dashboard' | 'inventory' | 'customers' | 'products' | 'orders' | 'sales' | 'banners' | 'media' | 'admin-profile' | 'reviews';
 
 export interface OrderItem {
   id: string;

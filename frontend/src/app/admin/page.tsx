@@ -5,7 +5,7 @@ import { io } from 'socket.io-client';
 import { 
   BarChart3, Users, ShoppingBag, DollarSign, Package, 
   Check, AlertCircle, RefreshCw, ShieldCheck, Sparkles, FolderOpen,
-  Layers, Settings
+  Layers, Settings, MessageSquare
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -31,6 +31,7 @@ import AdminSalesTab from '@/components/admin/AdminSalesTab';
 import AdminBannersTab from '@/components/admin/AdminBannersTab';
 import AdminMediaTab from '@/components/admin/AdminMediaTab';
 import AdminProfileTab from '@/components/admin/AdminProfileTab';
+import AdminReviewsTab from '@/components/admin/AdminReviewsTab';
 
 export default function AdminPage() {
   const { loginUser, showConfirm, user, updateUserProfile, logoutUser, products, fetchProducts, categories, fetchCategories } = useApp();
@@ -1080,6 +1081,7 @@ export default function AdminPage() {
               { id: 'products', label: 'Products', icon: Package },
               { id: 'orders', label: 'Orders', icon: ShoppingBag },
               { id: 'sales', label: 'Sales', icon: DollarSign },
+              { id: 'reviews', label: 'Reviews', icon: MessageSquare },
               { id: 'banners', label: 'Banners', icon: Sparkles },
               { id: 'media', label: 'Media', icon: FolderOpen },
               { id: 'admin-profile', label: 'Profile', icon: Settings }
@@ -1247,6 +1249,10 @@ export default function AdminPage() {
                 totalSales={stats.totalSales}
                 orders={orders}
               />
+            )}
+
+            {activeTab === 'reviews' && (
+              <AdminReviewsTab />
             )}
 
             {activeTab === 'banners' && (

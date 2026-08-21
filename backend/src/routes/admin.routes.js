@@ -431,6 +431,21 @@ adminRouter.post('/inventory/purchase', async (req, res, next) => {
   }
 });
 
+/**
+ * DELETE /api/admin/reviews/:reviewId
+ * Admin deletes a review
+ */
+adminRouter.delete('/reviews/:reviewId', async (req, res, next) => {
+  const { reviewId } = req.params;
+  try {
+    await query('DELETE FROM reviews WHERE id = $1', [reviewId]);
+    return res.status(200).json({ success: true, message: 'Review deleted successfully by Admin.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
 
 
 

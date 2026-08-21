@@ -357,7 +357,8 @@ productRouter.put('/categories/reorder', async (req, res, next) => {
 productRouter.get('/reviews/all', async (req, res, next) => {
   try {
     const result = await query(`
-      SELECT r.id, r.user_id, r.product_id, r.product_name, r.rating, r.comment, r.date, r.title, r.helpful, u.name as author
+      SELECT r.id, r.user_id, r.product_id, r.product_name, r.rating, r.comment, r.date, r.title, r.helpful, 
+             u.name as author, u.email as author_email, u.mobile as author_mobile
       FROM reviews r
       JOIN users u ON r.user_id = u.id
       ORDER BY r.id DESC
@@ -372,7 +373,9 @@ productRouter.get('/reviews/all', async (req, res, next) => {
       date: row.date,
       title: row.title,
       helpful: row.helpful,
-      author: row.author
+      author: row.author,
+      authorEmail: row.author_email,
+      authorMobile: row.author_mobile
     }));
     return res.status(200).json({ success: true, reviews });
   } catch (error) {

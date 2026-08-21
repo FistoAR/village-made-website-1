@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/Product/ProductCard';
 import { useApp } from '@/lib/context/AppContext';
+import MusicToggleButton from '@/components/MusicToggleButton';
 
 interface Product {
   id: string;
@@ -839,6 +840,9 @@ export default function ProductsClientContainer({ initialProducts }: { initialPr
       </main>
 
       <Footer />
+
+      {/* Background ambient music toggle */}
+      <MusicToggleButton />
     </div>
   );
 }

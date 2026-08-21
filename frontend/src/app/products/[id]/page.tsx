@@ -13,6 +13,7 @@ import { Star, Minus, Plus, ArrowLeft, Heart, Share2, Calendar, MessageSquare, C
 import { Category } from '@/types';
 import { useApp } from '@/lib/context/AppContext';
 import { getVariantPrice, getVariantOriginalPrice } from '@/lib/variantPrice';
+import MusicToggleButton from '@/components/MusicToggleButton';
 
 /** Renders N/5 stars with accurate partial fill using SVG linearGradient per star */
 function StarRating({ rating, size = 16, gap = 2 }: { rating: number; size?: number; gap?: number }) {
@@ -1649,6 +1650,9 @@ export default function ProductDetailPage({
       )}
 
       <Footer />
+
+      {/* Background ambient music toggle */}
+      <MusicToggleButton />
     </div>
   );
 }

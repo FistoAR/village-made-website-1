@@ -73,7 +73,7 @@ function HelpCenterContent() {
       id: 4,
       category: 'products',
       q: 'Are your products chemical-free and organic?',
-      a: 'Absolutely. All Village Made products are certified organic, stone-ground, traditionally prepared, and completely free from artificial sweeteners, chemicals, and preservatives.'
+      a: 'Absolutely. All Village Made Organics products are certified organic, stone-ground, traditionally prepared, and completely free from artificial sweeteners, chemicals, and preservatives.'
     },
     {
       id: 5,
@@ -150,7 +150,7 @@ function HelpCenterContent() {
         <div className="bg-[#462617] rounded-[24px] p-8 md:p-12 text-white mb-10 shadow-md relative overflow-hidden text-center">
           <div className="absolute inset-0 opacity-10 bg-cover" style={{ backgroundImage: "url('/images/product-section/bottom-paper-texture.webp')" }}></div>
           <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center">
-            <span className="text-[#D4E47A] text-xs font-bold uppercase tracking-widest block mb-2">VILLAGE MADE CUSTOMER SUPPORT</span>
+            <span className="text-[#D4E47A] text-xs font-bold uppercase tracking-widest block mb-2">VILLAGE MADE ORGANICS CUSTOMER SUPPORT</span>
             <h1 className="font-poetsen text-3xl md:text-5xl text-white mb-4 tracking-tight">
               How Can We Help You?
             </h1>

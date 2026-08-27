@@ -134,14 +134,14 @@ export default function Navbar({
               if (onReturnClick) onReturnClick();
             }}
           >
-            VILLAGE MADE
+            VILLAGE MADE ORGANICS
           </a>
         ) : (
           <Link
             href="/"
             className="font-display text-xl md:text-2xl tracking-[0.22em] font-semibold cursor-pointer select-none text-[#4f5a30] hover:text-[#3e2c1c] transition-colors duration-300"
           >
-            VILLAGE MADE
+            VILLAGE MADE ORGANICS
           </Link>
         )}
       </div>

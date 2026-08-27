@@ -64,7 +64,7 @@ export default function AboutSection() {
             <div className="w-full max-w-[460px] h-[1px] bg-[#c5b799] mb-8" />
             
             <p className="text-[#5d5449] font-body text-base sm:text-lg lg:text-xl leading-relaxed mb-8 max-w-xl">
-              Village Made began with a simple belief - Our families deserve food that is pure, natural and made the traditional way. What started in a small village kitchen is today a promise we share with thousands of families across the country.
+              Village Made Organics began with a simple belief - Our families deserve food that is pure, natural and made the traditional way. What started in a small village kitchen is today a promise we share with thousands of families across the country.
             </p>
             
             <div className="inline-flex items-center gap-3 bg-[#f5ebd9] border border-[#ebdcc1] px-4 md:px-8 lg:px-8 py-4 rounded-full text-[#3d2b1f] font-body text-sm md:text-lg lg:md:text-lg font-medium shadow-xs">

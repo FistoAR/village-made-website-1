@@ -498,7 +498,7 @@ export default function HeroSection() {
                 className="text-4xl md:text-[46px] text-[#3d2b1f] tracking-[0.2em] font-bold uppercase mt-2"
                 style={{ fontFamily: "'Poetsen One', sans-serif" }}
               >
-                Village Made
+                Village Made Organics
               </h1>
             </div>
             
@@ -523,7 +523,7 @@ export default function HeroSection() {
                     boxShadow: '0 10px 25px rgba(43, 60, 12, 0.25)'
                   }}
                 >
-                  Explore Village Made
+                  Explore Village Made Organics
                 </button>
                 <p className="font-body text-[10px] text-[#5d5449] font-bold tracking-widest uppercase">
                   Click to enter with sound enabled 🔊

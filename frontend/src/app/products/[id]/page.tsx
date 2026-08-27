@@ -391,8 +391,8 @@ export default function ProductDetailPage({
   const handleShare = async () => {
     if (!product) return;
     const shareData = {
-      title: `Village Made - ${product.name}`,
-      text: `Check out ${product.name} on Village Made!`,
+      title: `Village Made Organics - ${product.name}`,
+      text: `Check out ${product.name} on Village Made Organics!`,
       url: window.location.href
     };
     try {

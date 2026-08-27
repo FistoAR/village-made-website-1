@@ -17,7 +17,7 @@ const httpServer = createServer(app);
 initSocket(httpServer);
 
 const server = httpServer.listen(env.PORT, () => {
-  console.log(`\n🚀  Village Made API`);
+  console.log(`\n🚀  Village Made Organics API`);
   console.log(`   ► Environment : ${env.NODE_ENV}`);
   console.log(`   ► Listening on: http://localhost:${env.PORT}`);
   console.log(`   ► API base    : http://localhost:${env.PORT}/api\n`);

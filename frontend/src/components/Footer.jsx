@@ -168,7 +168,7 @@ export default function Footer() {
                     </svg>
                   </div>
                   <span className="text-[#6d5e50] font-body text-sm font-semibold leading-normal">
-                    Support@gmail.com
+                    ferrywellfoods@gmail.com
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
@@ -188,7 +188,7 @@ export default function Footer() {
                     </svg>
                   </div>
                   <span className="text-[#6d5e50] font-body text-sm font-semibold leading-normal">
-                    123, Organic Street, Tamil Nadu -641401
+                    26/C Kanagapuram Road, Thasanaickenpalayam, Erode, Tamilnadu 638112
                   </span>
                 </li>
               </ul>
@@ -211,7 +211,7 @@ export default function Footer() {
       <div className="bg-[#fbf6eb] py-6 border-t border-[#ebdcc1]/40 -mt-8">
         <div className="mx-auto px-6 sm:px-12 lg:px-16 flex flex-col md:flex-row items-center justify-between gap-4">
           <span className="text-[#8e7e6f] font-body text-sm text-center md:text-left font-semibold">
-            @ 2026 Village Made. All Rights Reserved.
+            @ 2026 Village Made Organics. All Rights Reserved.
           </span>
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[#8e7e6f] font-body text-sm font-semibold">
             {[

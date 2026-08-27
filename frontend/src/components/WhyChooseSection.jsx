@@ -35,7 +35,7 @@ export default function WhyChooseSection() {
       <div className="w-full xl:w-1/2 min-h-[300px] sm:min-h-[400px] xl:min-h-full relative xl:absolute xl:left-0 xl:top-0 xl:bottom-0">
         <Image
           src="/images/why-choose/why-choose-product-image.webp"
-          alt="Village Made products showcase"
+          alt="Village Made Organics products showcase"
           fill
           className="object-cover object-center xl:object-left"
           priority
@@ -67,7 +67,7 @@ export default function WhyChooseSection() {
                 className="text-2xl sm:text-4xl xl:text-[48px] text-[#000000] leading-tight text-center xl:text-left"
                 style={{ fontFamily: "'Poetsen One', sans-serif" }}
               >
-                Why Choose <span className="text-[#b85c37]">Village Made</span> ?
+                Why Choose <span className="text-[#b85c37]">Village Made Organics</span> ?
               </h2>
               <div className="hidden sm:block flex-grow h-[1px] bg-[#c5b799]/60 ml-4" />
             </div>

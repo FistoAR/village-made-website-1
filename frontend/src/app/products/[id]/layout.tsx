@@ -20,12 +20,12 @@ export async function generateMetadata(
   return {
     title: product.name,
     description: product.description,
-    keywords: [product.name, product.category, 'village made', 'organic products', 'buy ' + product.name],
+    keywords: [product.name, product.category, 'village made organics', 'organic products', 'buy ' + product.name],
     alternates: {
       canonical: `/products/${product.id}`,
     },
     openGraph: {
-      title: `${product.name} | Village Made`,
+      title: `${product.name} | Village Made Organics`,
       description: product.description,
     },
   };

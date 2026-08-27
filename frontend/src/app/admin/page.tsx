@@ -1026,7 +1026,7 @@ export default function AdminPage() {
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-6 h-6 text-[#384401]" />
               <h1 className="font-poetsen text-3xl font-medium tracking-relaxed text-stone-900">
-                Village Made Admin panel
+                Village Made Organics Admin panel
               </h1>
             </div>
             <p className="text-stone-700 text-xs sm:text-sm font-jakarta font-medium mt-1">

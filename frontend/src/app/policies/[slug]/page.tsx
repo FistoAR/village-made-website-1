@@ -45,7 +45,7 @@ const POLICIES: Record<string, Policy> = {
     sections: [
       {
         heading: '1. General Terms',
-        content: 'By browsing the Village Made marketplace, you acknowledge and agree to comply with our conditions of use. Our services are intended for personal, non-commercial culinary consumption.',
+        content: 'By browsing the Village Made Organics marketplace, you acknowledge and agree to comply with our conditions of use. Our services are intended for personal, non-commercial culinary consumption.',
       },
       {
         heading: '2. Product Descriptions',
@@ -91,7 +91,7 @@ const POLICIES: Record<string, Policy> = {
       },
       {
         heading: '3. Contacting Returns Support',
-        content: 'To initiate a return request, please email support@villagemade.com or ping us on WhatsApp with photos of the delivered box and packing slip.',
+        content: 'To initiate a return request, please email ferrywellfoods@gmail.com or ping us on WhatsApp with photos of the delivered box and packing slip.',
       },
     ],
   },
@@ -110,7 +110,7 @@ const POLICIES: Record<string, Policy> = {
       },
       {
         heading: '3. Automated Cancellations',
-        content: 'Village Made reserves the right to cancel orders due to stock shortages, incorrect pricing info, or bulk commercial transactions that exceed retail limits.',
+        content: 'Village Made Organics reserves the right to cancel orders due to stock shortages, incorrect pricing info, or bulk commercial transactions that exceed retail limits.',
       },
     ],
   },
@@ -135,7 +135,7 @@ const POLICIES: Record<string, Policy> = {
   },
   'sitemap': {
     title: 'Sitemap',
-    tagline: 'Complete index of pages and links on the Village Made portal.',
+    tagline: 'Complete index of pages and links on the Village Made Organics portal.',
     icon: Map,
     sections: [
       {

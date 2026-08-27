@@ -149,7 +149,7 @@ export default function AdminOrdersTab({
     // Title Row
     worksheet.mergeCells('A1:K1');
     const titleCell = worksheet.getCell('A1');
-    titleCell.value = 'Village Made Provisions - Detailed Orders Report';
+    titleCell.value = 'Village Made Organics - Detailed Orders Report';
     titleCell.font = { name: 'Segoe UI', size: 16, bold: true, color: { argb: 'FF384401' } };
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -353,7 +353,7 @@ export default function AdminOrdersTab({
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(56, 68, 1); // #384401
-    doc.text('VILLAGE MADE PROVISIONS - DETAILED ORDERS REPORT', 40, 40);
+    doc.text('VILLAGE MADE ORGANICS - DETAILED ORDERS REPORT', 40, 40);
 
     // Add Metadata
     doc.setFont('helvetica', 'normal');

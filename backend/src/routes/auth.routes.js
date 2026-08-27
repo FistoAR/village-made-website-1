@@ -112,7 +112,7 @@ authRouter.post('/register', async (req, res, next) => {
       [
         notifId,
         newUser.id,
-        'Welcome to Village Made!',
+        'Welcome to Village Made Organics!',
         'Thank you for registering. Explore our organic village-crafted malts, millets, and cookies.',
         new Date().toLocaleDateString('en-IN')
       ]

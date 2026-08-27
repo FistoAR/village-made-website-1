@@ -50,7 +50,7 @@ export default function CheckoutSimulations({
       doc.setFont("helvetica", "bold");
       doc.setTextColor(56, 68, 1); // Accent Green (#384401)
       doc.setFontSize(22);
-      doc.text("VILLAGE MADE", 20, 20);
+      doc.text("VILLAGE MADE ORGANICS", 20, 20);
       
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);

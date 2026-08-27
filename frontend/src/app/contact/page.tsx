@@ -62,7 +62,7 @@ export default function ContactPage() {
           {/* Left Column: Contact Cards */}
           <div className="lg:col-span-5 space-y-6">
             <h2 className="text-2xl font-bold font-display text-stone-900 mb-6">
-              Village Made Headquarters
+              Village Made Organics Headquarters
             </h2>
 
             {/* Phone Card */}
@@ -84,7 +84,7 @@ export default function ContactPage() {
               </span>
               <div>
                 <h4 className="font-bold text-stone-800 text-sm tracking-wide uppercase mb-1">Email Address</h4>
-                <p className="text-stone-600 font-semibold font-body text-base">Support@gmail.com</p>
+                <p className="text-stone-600 font-semibold font-body text-base">ferrywellfoods@gmail.com</p>
                 <p className="text-stone-400 text-xs mt-0.5">Response within 24 hours</p>
               </div>
             </div>
@@ -97,7 +97,7 @@ export default function ContactPage() {
               <div>
                 <h4 className="font-bold text-stone-800 text-sm tracking-wide uppercase mb-1">Main Store & Farms</h4>
                 <p className="text-stone-600 font-semibold font-body text-base leading-relaxed">
-                  123, Organic Street, Tamil Nadu - 641401
+                  26/C Kanagapuram Road, Thasanaickenpalayam, Erode, Tamilnadu 638112
                 </p>
               </div>
             </div>
@@ -127,7 +127,7 @@ export default function ContactPage() {
                 <CheckCircle2 className="w-12 h-12 text-[#5a6a34]" />
                 <h4 className="text-lg font-bold">Message Sent Successfully!</h4>
                 <p className="text-stone-600 text-sm">
-                  Thank you for contacting Village Made. We appreciate your inquiry and will respond as soon as possible.
+                  Thank you for contacting Village Made Organics. We appreciate your inquiry and will respond as soon as possible.
                 </p>
               </div>
             ) : (

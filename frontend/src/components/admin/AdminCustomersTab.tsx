@@ -141,7 +141,7 @@ export default function AdminCustomersTab({
     // Title Row
     worksheet.mergeCells('A1:F1');
     const titleCell = worksheet.getCell('A1');
-    titleCell.value = 'Village Made Provisions - System Registered Customers';
+    titleCell.value = 'Village Made Organics - System Registered Customers';
     titleCell.font = { name: 'Segoe UI', size: 16, bold: true, color: { argb: 'FF384401' } };
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -264,7 +264,7 @@ export default function AdminCustomersTab({
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(56, 68, 1); // #384401
-    doc.text('VILLAGE MADE PROVISIONS - REGISTERED CUSTOMERS REPORT', 40, 40);
+    doc.text('VILLAGE MADE ORGANICS - REGISTERED CUSTOMERS REPORT', 40, 40);
 
     // Add Metadata
     doc.setFont('helvetica', 'normal');

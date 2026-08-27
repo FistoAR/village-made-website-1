@@ -16,14 +16,14 @@ export async function generateMetadata(
   
   return {
     title: `${title}`,
-    description: `Read the ${title} of Village Made.`,
-    keywords: [title, 'village made policy', 'terms', 'privacy policy', 'refund policy'],
+    description: `Read the ${title} of Village Made Organics.`,
+    keywords: [title, 'village made organics policy', 'terms', 'privacy policy', 'refund policy'],
     alternates: {
       canonical: `/policies/${slug}`,
     },
     openGraph: {
-      title: `${title} | Village Made`,
-      description: `Read the ${title} of Village Made.`,
+      title: `${title} | Village Made Organics`,
+      description: `Read the ${title} of Village Made Organics.`,
     },
   };
 }

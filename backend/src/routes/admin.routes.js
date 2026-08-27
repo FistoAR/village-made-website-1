@@ -333,11 +333,11 @@ adminRouter.post('/inventory/purchase', async (req, res, next) => {
     for (const item of items) {
       const { productId, weight, quantity } = item;
 
-      if (!productId || typeof quantity !== 'number' || quantity <= 0) {
+      if (!productId || typeof quantity !== 'number' || quantity === 0) {
         await query('ROLLBACK');
         return res.status(400).json({ 
           success: false, 
-          error: 'Each item must have a product ID and a valid stock quantity value.' 
+          error: 'Each item must have a product ID and a non-zero quantity value.' 
         });
       }
 
@@ -361,7 +361,7 @@ adminRouter.post('/inventory/purchase', async (req, res, next) => {
           if (typeof w === 'object' && w !== null && w.weight && w.weight.toLowerCase().replace(/\s+/g, '') === cleanWeight) {
             variantFound = true;
             const currentVarStock = typeof w.stock === 'number' ? w.stock : stock;
-            return { ...w, stock: currentVarStock + Number(quantity) };
+            return { ...w, stock: Math.max(0, currentVarStock + Number(quantity)) };
           }
           return w;
         });
@@ -372,10 +372,10 @@ adminRouter.post('/inventory/purchase', async (req, res, next) => {
         if (allHaveStock) {
           nextStock = nextWeights.reduce((sum, w) => sum + w.stock, 0);
         } else {
-          nextStock = stock + Number(quantity);
+          nextStock = Math.max(0, stock + Number(quantity));
         }
       } else {
-        nextStock = stock + Number(quantity);
+        nextStock = Math.max(0, stock + Number(quantity));
       }
 
       // Update product stock and weights in DB (NO purchase_price update!)

@@ -2572,7 +2572,7 @@ export default function AdminProductsTab({
                 <button
                   type="button"
                   onClick={() => toggleCategoryCollapse(catName)}
-                  className="w-full flex items-center justify-between sticky top-[76px] bg-[#fdfbf7] z-10 border-b border-[#eeddb9]/45 py-2 group cursor-pointer text-left focus:outline-none"
+                  className="w-full flex items-center justify-between border-b border-[#eeddb9]/45 py-2 group cursor-pointer text-left focus:outline-none"
                 >
                   <h3 className="text-sm font-extrabold text-[#384401] uppercase tracking-wider font-jakarta flex items-center gap-1.5">
                     {isCollapsed ? <ChevronRight className="w-4 h-4 text-stone-500 transition-transform" /> : <ChevronDown className="w-4 h-4 text-[#384401] transition-transform" />}
@@ -2678,7 +2678,7 @@ export default function AdminProductsTab({
                 <button
                   type="button"
                   onClick={() => toggleCategoryCollapse(catName)}
-                  className="w-full flex items-center justify-between sticky top-[76px] bg-[#fdfbf7] z-10 border-b border-[#eeddb9]/45 py-2 group cursor-pointer text-left focus:outline-none"
+                  className="w-full flex items-center justify-between border-b border-[#eeddb9]/45 py-2 group cursor-pointer text-left focus:outline-none"
                 >
                   <h3 className="text-sm font-extrabold text-[#384401] uppercase tracking-wider font-jakarta flex items-center gap-1.5">
                     {isCollapsed ? <ChevronRight className="w-4 h-4 text-stone-500 transition-transform" /> : <ChevronDown className="w-4 h-4 text-[#384401] transition-transform" />}

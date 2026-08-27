@@ -128,7 +128,7 @@ export default function GallerySection() {
             >
               Our Village
             </span>
-            <span className="font-poetsen text-stone-900 font-bold">Gallery</span>
+            <span className="font-poetsen text-stone-900 font-normal">Gallery</span>
           </h2>
         </div>
       </div>
@@ -140,7 +140,7 @@ export default function GallerySection() {
         </p>
       </div>
 
-      <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 group/carousel">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 group/carousel">
         {/* Navigation Buttons */}
         <button
           onClick={() => scroll('left')}

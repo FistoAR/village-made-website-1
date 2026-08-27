@@ -314,7 +314,7 @@ export default function AdminPage() {
         } else if (activeTab === 'inventory') {
           await Promise.all([fetchProducts(), fetchPurchaseHistory()]);
         } else if (activeTab === 'customers') {
-          await fetchCustomersData();
+          await Promise.all([fetchCustomersData(), fetchOrdersData()]);
         } else if (activeTab === 'products') {
           await Promise.all([fetchProducts(), fetchCategories()]);
         } else if (activeTab === 'orders') {
@@ -1018,7 +1018,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#FDFBF7] text-[#3E2C1C] flex flex-col justify-between">
       <Navbar />
 
-      <main className="flex-grow pt-27 pb-20 px-4 sm:px-6 md:px-8 w-full">
+      <main className="flex-grow pt-27 pb-20 px-4 sm:px-6 md:px-8 lg:pl-[292px] lg:pr-8 w-full">
         
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -1026,7 +1026,8 @@ export default function AdminPage() {
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-6 h-6 text-[#384401]" />
               <h1 className="font-poetsen text-3xl font-medium tracking-relaxed text-stone-900">
-                Village Made Organics Admin panel
+                <span className="lg:hidden">Village Made Organics Admin panel</span>
+                <span className="hidden lg:inline">Admin Control Panel</span>
               </h1>
             </div>
             <p className="text-stone-700 text-xs sm:text-sm font-jakarta font-medium mt-1">
@@ -1034,7 +1035,7 @@ export default function AdminPage() {
             </p>
           </div>
           
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap lg:hidden">
             <button
               onClick={handleSync}
               className="flex items-center gap-2 bg-white border border-[#eeddb9] hover:bg-[#FAF4E6]/50 text-stone-850 text-xs font-bold py-2.5 px-4 rounded-xl shadow-2xs transition-colors cursor-pointer"
@@ -1070,45 +1071,78 @@ export default function AdminPage() {
         )}
 
         {/* Grid Layout: Sidebar & Content Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4 lg:gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 lg:gap-8 items-start">
           
           {/* Sidebar Nav controls */}
-          <nav className="flex flex-row lg:flex-col gap-2 lg:gap-2.5 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 scrollbar-none select-none">
-            {[
-              { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-              { id: 'inventory', label: 'Inventory', icon: Layers },
-              { id: 'customers', label: 'Customers', icon: Users },
-              { id: 'products', label: 'Products', icon: Package },
-              { id: 'orders', label: 'Orders', icon: ShoppingBag },
-              { id: 'sales', label: 'Sales', icon: DollarSign },
-              { id: 'reviews', label: 'Reviews', icon: MessageSquare },
-              { id: 'banners', label: 'Banners', icon: Sparkles },
-              { id: 'media', label: 'Media', icon: FolderOpen },
-              { id: 'admin-profile', label: 'Profile', icon: Settings }
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as AdminTab)}
-                  className={`flex items-center gap-2 lg:gap-3 px-3 lg:px-4.5 py-2.5 lg:py-3 rounded-xl lg:rounded-2xl text-xs lg:text-sm font-bold uppercase tracking-wider shrink-0 transition-all cursor-pointer ${
-                    isActive 
-                      ? 'bg-[#384401] text-white shadow-md' 
-                      : 'bg-white border border-[#d3c099] text-stone-700 hover:bg-[#FAF4E6]/50'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5 lg:w-4 lg:h-4 shrink-0" />
-                  {tab.label}
-                </button>
-              );
-            })}
+          <nav className="flex flex-row lg:flex-col gap-1.5 lg:gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 scrollbar-none select-none lg:fixed lg:left-0 lg:top-[108px] lg:bottom-0 lg:w-[260px] lg:z-40 lg:bg-[#FAF8F5] lg:border-r lg:border-[#d3c099]/50 lg:p-6 lg:rounded-none lg:shadow-none justify-start">
+            {/* Top Branding Section on Desktop */}
+            <div className="hidden lg:flex flex-col gap-1.5 px-2 mb-4">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5.5 h-5.5 text-[#384401]" />
+                <span className="font-poetsen text-lg text-[#3E2C1C]">Village Made</span>
+              </div>
+              <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Admin Workspace</span>
+            </div>
+
+            {/* Nav Links list container */}
+            <div className="flex flex-row lg:flex-col gap-1.5 lg:gap-2 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden flex-grow w-full scrollbar-none pr-1 lg:max-h-[calc(100vh-340px)]">
+              {[
+                { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+                { id: 'inventory', label: 'Inventory', icon: Layers },
+                { id: 'customers', label: 'Customers', icon: Users },
+                { id: 'products', label: 'Products', icon: Package },
+                { id: 'orders', label: 'Orders', icon: ShoppingBag },
+                { id: 'sales', label: 'Sales', icon: DollarSign },
+                { id: 'reviews', label: 'Reviews', icon: MessageSquare },
+                { id: 'banners', label: 'Banners', icon: Sparkles },
+                { id: 'media', label: 'Media', icon: FolderOpen },
+                { id: 'admin-profile', label: 'Profile', icon: Settings }
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as AdminTab)}
+                    className={`flex items-center gap-3 px-4.5 py-3 text-[11px] lg:text-[13px] xl:text-sm font-extrabold uppercase tracking-wider shrink-0 transition-all duration-300 cursor-pointer text-left lg:w-full rounded-xl relative ${
+                      isActive 
+                        ? 'bg-gradient-to-r from-[#384401] to-[#4d5a02] text-white shadow-md shadow-[#384401]/15 scale-[1.02] pl-6' 
+                        : 'bg-white lg:bg-transparent border border-[#eeddb9]/65 lg:border-none text-stone-600 hover:bg-[#FAF4E6]/75 hover:text-[#384401] hover:pl-5.5 hover:scale-[1.01]'
+                    }`}
+                  >
+                    <Icon className={`w-3.5 h-3.5 lg:w-4 lg:h-4 shrink-0 transition-all duration-300 ${isActive ? 'text-white scale-110' : 'text-[#384401]/60'}`} />
+                    <span className="transition-all duration-300">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Bottom Actions Section on Desktop */}
+            <div className="hidden lg:flex flex-col gap-2 pt-4 border-t border-[#eeddb9]/50 w-full">
+              <button
+                onClick={handleSync}
+                className="flex items-center gap-2.5 bg-white border border-[#eeddb9] hover:bg-[#FAF4E6]/50 text-stone-850 text-xs font-bold py-2.5 px-4 rounded-xl shadow-3xs transition-colors cursor-pointer w-full"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                <span>Sync Data</span>
+              </button>
+              <button
+                onClick={() => {
+                  sessionStorage.removeItem('is_admin_auth');
+                  setIsAdminAuthenticated(false);
+                  logoutUser();
+                }}
+                className="flex items-center gap-2.5 bg-red-50 border border-red-200 hover:bg-red-100/50 text-red-700 text-xs font-bold py-2.5 px-4 rounded-xl shadow-3xs transition-colors cursor-pointer w-full"
+              >
+                Log Out
+              </button>
+            </div>
           </nav>
 
           {/* Core Content Window */}
-          <div className="bg-white border border-[#d3c099] rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 lg:p-8 shadow-xs min-h-[500px] relative overflow-x-hidden">
+          <div className="bg-white border border-[#d3c099] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-xs min-h-[500px] lg:max-h-[75vh] lg:overflow-y-auto overflow-x-hidden relative">
             {loading && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1.5px] rounded-[32px] z-50">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1.5px] rounded-xl sm:rounded-2xl z-50">
                 <div className="flex flex-col items-center gap-3">
                   <div className="relative w-14 h-14">
                     <div className="absolute inset-0 rounded-full border-4 border-[#384401]/10"></div>
@@ -1302,7 +1336,9 @@ export default function AdminPage() {
 
       </main>
 
-      <Footer />
+      <div className="w-full lg:pl-[260px]">
+        <Footer />
+      </div>
     </div>
   );
 }

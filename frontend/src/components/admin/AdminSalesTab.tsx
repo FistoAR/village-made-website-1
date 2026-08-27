@@ -197,25 +197,25 @@ export default function AdminSalesTab({
   }
 
   return (
-    <div className="space-y-4 font-jakarta">
+    <div className="space-y-6 font-jakarta">
       
       {/* 1. Header Filters Panel */}
-      <div className="flex flex-col gap-3 bg-white border border-[#d3c099] rounded-2xl p-3.5">
-        <div className="flex items-center gap-2 text-stone-850 border-b border-stone-100 pb-2 mb-0.5">
-          <SlidersHorizontal className="w-3.5 h-3.5 text-[#384401]" />
-          <span className="text-xs font-extrabold uppercase tracking-wider">Configure Analytics Metrics Range</span>
+      <div className="flex flex-col gap-4 bg-white border border-[#d3c099] rounded-2xl p-4.5">
+        <div className="flex items-center gap-2.5 text-stone-850 border-b border-stone-100 pb-2.5 mb-0.5">
+          <SlidersHorizontal className="w-4 h-4 text-[#384401]" />
+          <span className="text-sm font-extrabold uppercase tracking-wider text-[#384401]">Configure Analytics Metrics Range</span>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
           {/* Date range filter */}
-          <div className="space-y-1">
-            <label className="text-xs font-extrabold uppercase text-stone-500 tracking-wider flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-[#384401]" /> Date Range
+          <div className="space-y-1.5">
+            <label className="text-xs font-extrabold uppercase text-stone-500 tracking-wider flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-[#384401]" /> Date Range
             </label>
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full h-9 px-2 bg-white border border-[#d3c099] rounded-xl text-xs text-stone-755 font-semibold focus:outline-none focus:border-[#384401] cursor-pointer"
+              className="w-full h-11 px-3 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-755 font-bold focus:outline-none focus:border-[#384401] cursor-pointer"
             >
               <option value="All">All Time</option>
               <option value="today">Today</option>
@@ -226,14 +226,14 @@ export default function AdminSalesTab({
           </div>
 
           {/* Payment Method Filter */}
-          <div className="space-y-1">
-            <label className="text-xs font-extrabold uppercase text-stone-500 tracking-wider flex items-center gap-1">
-              <CreditCard className="w-3.5 h-3.5 text-[#384401]" /> Payment Method
+          <div className="space-y-1.5">
+            <label className="text-xs font-extrabold uppercase text-stone-500 tracking-wider flex items-center gap-1.5">
+              <CreditCard className="w-4 h-4 text-[#384401]" /> Payment Method
             </label>
             <select
               value={paymentFilter}
               onChange={(e) => setPaymentFilter(e.target.value)}
-              className="w-full h-9 px-2 bg-white border border-[#d3c099] rounded-xl text-xs text-stone-755 font-semibold focus:outline-none focus:border-[#384401] cursor-pointer"
+              className="w-full h-11 px-3 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-755 font-bold focus:outline-none focus:border-[#384401] cursor-pointer"
             >
               <option value="All">All Methods</option>
               {uniquePaymentMethods.map(m => (
@@ -243,14 +243,14 @@ export default function AdminSalesTab({
           </div>
 
           {/* Location Filter */}
-          <div className="space-y-1">
-            <label className="text-xs font-extrabold uppercase text-stone-500 tracking-wider flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-[#384401]" /> Delivery Location
+          <div className="space-y-1.5">
+            <label className="text-xs font-extrabold uppercase text-stone-500 tracking-wider flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-[#384401]" /> Delivery Location
             </label>
             <select
               value={cityFilter}
               onChange={(e) => setCityFilter(e.target.value)}
-              className="w-full h-9 px-2 bg-white border border-[#d3c099] rounded-xl text-xs text-stone-755 font-semibold focus:outline-none focus:border-[#384401] cursor-pointer"
+              className="w-full h-11 px-3 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-755 font-bold focus:outline-none focus:border-[#384401] cursor-pointer"
             >
               <option value="All">All Cities</option>
               {uniqueCities.map(city => (
@@ -262,23 +262,23 @@ export default function AdminSalesTab({
 
         {/* Custom date range picker sub-panel */}
         {dateFilter === 'custom' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2.5 border-t border-stone-100">
-            <div className="space-y-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3.5 border-t border-stone-100">
+            <div className="space-y-1.5">
               <label className="text-xs font-extrabold uppercase text-stone-500 tracking-wider">From Date</label>
               <input
                 type="date"
                 value={customFromDate}
                 onChange={(e) => setCustomFromDate(e.target.value)}
-                className="w-full h-9 px-2.5 bg-stone-50/50 hover:bg-stone-50 border border-[#d3c099] rounded-xl text-xs focus:outline-none font-medium focus:border-[#384401] focus:ring-1 focus:ring-[#384401]"
+                className="w-full h-11 px-3.5 bg-stone-50/50 hover:bg-stone-50 border border-[#d3c099] rounded-xl text-sm focus:outline-none font-bold focus:border-[#384401] focus:ring-1 focus:ring-[#384401]"
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-extrabold uppercase text-stone-500 tracking-wider">To Date</label>
               <input
                 type="date"
                 value={customToDate}
                 onChange={(e) => setCustomToDate(e.target.value)}
-                className="w-full h-9 px-2.5 bg-stone-50/50 hover:bg-stone-50 border border-[#d3c099] rounded-xl text-xs focus:outline-none font-medium focus:border-[#384401] focus:ring-1 focus:ring-[#384401]"
+                className="w-full h-11 px-3.5 bg-stone-50/50 hover:bg-stone-50 border border-[#d3c099] rounded-xl text-sm focus:outline-none font-bold focus:border-[#384401] focus:ring-1 focus:ring-[#384401]"
               />
             </div>
           </div>
@@ -286,81 +286,81 @@ export default function AdminSalesTab({
       </div>
 
       {/* 2. Key Metrics Overview Grid */}
-      <div className="bg-white border border-[#d3c099] rounded-2xl p-4 space-y-3.5">
-        <h4 className="text-xs font-black uppercase tracking-wider text-stone-700 pb-2 border-b border-stone-100 flex items-center gap-1.5">
-          <TrendingUp className="w-3.5 h-3.5 text-[#384401]" /> Sales Performance Overview
+      <div className="bg-white border border-[#d3c099] rounded-2xl p-5 space-y-4">
+        <h4 className="text-sm font-black uppercase tracking-wider text-stone-800 pb-2 border-b border-stone-100 flex items-center gap-1.5">
+          <TrendingUp className="w-4 h-4 text-[#384401]" /> Sales Performance Overview
         </h4>
         
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {/* Gross Sales */}
-          <div className="bg-[#FAF4EE]/40 border border-[#eeddb9]/70 rounded-xl p-3">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-stone-550 block mb-0.5">Gross Sales</span>
-            <span className="text-lg font-bold text-stone-900">₹{grossSales.toLocaleString('en-IN')}</span>
+          <div className="bg-[#FAF4EE]/40 border border-[#eeddb9]/70 rounded-xl p-4">
+            <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-stone-500 block mb-1">Gross Sales</span>
+            <span className="text-xl lg:text-2xl font-black text-stone-900">₹{grossSales.toLocaleString('en-IN')}</span>
           </div>
 
           {/* Refunds */}
-          <div className="bg-[#FAF4EE]/40 border border-[#eeddb9]/70 rounded-xl p-3">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-stone-550 block mb-0.5">Refunds</span>
-            <span className="text-lg font-bold text-stone-900">₹{totalRefunds.toLocaleString('en-IN')}</span>
+          <div className="bg-[#FAF4EE]/40 border border-[#eeddb9]/70 rounded-xl p-4">
+            <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-stone-500 block mb-1">Refunds</span>
+            <span className="text-xl lg:text-2xl font-black text-stone-900">₹{totalRefunds.toLocaleString('en-IN')}</span>
           </div>
 
           {/* Net Sales */}
-          <div className="bg-[#FAF4EE]/60 border border-[#eeddb9] rounded-xl p-3">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-stone-550 block mb-0.5">Net Sales</span>
-            <span className="text-lg font-black text-[#384401]">₹{netSales.toLocaleString('en-IN')}</span>
+          <div className="bg-[#FAF4EE]/60 border border-[#eeddb9] rounded-xl p-4">
+            <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-stone-500 block mb-1">Net Sales</span>
+            <span className="text-xl lg:text-2xl font-black text-[#384401]">₹{netSales.toLocaleString('en-IN')}</span>
           </div>
 
           {/* Average Order Value */}
-          <div className="bg-[#FAF4EE]/40 border border-[#eeddb9]/70 rounded-xl p-3">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-stone-550 block mb-0.5">Avg. Order Value</span>
-            <span className="text-lg font-bold text-stone-900">₹{Math.round(averageOrderValue).toLocaleString('en-IN')}</span>
+          <div className="bg-[#FAF4EE]/40 border border-[#eeddb9]/70 rounded-xl p-4">
+            <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-stone-500 block mb-1">Avg. Order Value</span>
+            <span className="text-xl lg:text-2xl font-black text-stone-900">₹{Math.round(averageOrderValue).toLocaleString('en-IN')}</span>
           </div>
         </div>
 
         {/* Secondary parameters */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="text-center py-2 bg-stone-50/50 border border-stone-200 rounded-xl">
-            <span className="text-xs font-extrabold uppercase text-stone-500 tracking-wider block mb-0.5">Total Orders</span>
-            <span className="text-sm font-bold text-stone-850">{totalOrdersCount}</span>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center py-3 bg-stone-50/50 border border-stone-200 rounded-xl">
+            <span className="text-xs font-extrabold uppercase text-stone-500 tracking-wider block mb-1">Total Orders</span>
+            <span className="text-base font-black text-stone-900">{totalOrdersCount}</span>
           </div>
-          <div className="text-center py-2 bg-stone-50/50 border border-stone-200 rounded-xl">
-            <span className="text-xs font-extrabold uppercase text-stone-500 tracking-wider block mb-0.5">Items Sold</span>
-            <span className="text-sm font-bold text-stone-850">{itemsSold} units</span>
+          <div className="text-center py-3 bg-stone-50/50 border border-stone-200 rounded-xl">
+            <span className="text-xs font-extrabold uppercase text-stone-500 tracking-wider block mb-1">Items Sold</span>
+            <span className="text-base font-black text-stone-900">{itemsSold} units</span>
           </div>
-          <div className="text-center py-2 bg-stone-50/50 border border-stone-200 rounded-xl">
-            <span className="text-xs font-extrabold uppercase text-stone-500 tracking-wider block mb-0.5">Discounts</span>
-            <span className="text-sm font-bold text-stone-850">₹{totalDiscounts.toLocaleString('en-IN')}</span>
+          <div className="text-center py-3 bg-stone-50/50 border border-stone-200 rounded-xl">
+            <span className="text-xs font-extrabold uppercase text-stone-500 tracking-wider block mb-1">Discounts</span>
+            <span className="text-base font-black text-stone-900">₹{totalDiscounts.toLocaleString('en-IN')}</span>
           </div>
         </div>
       </div>
 
       {/* 3. Combined Trends & Breakdown Switcher Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
         {/* Left Side: Trends Over Time */}
-        <div className="lg:col-span-5 border border-[#d3c099] rounded-2xl p-4 bg-white space-y-3.5">
+        <div className="lg:col-span-5 border border-[#d3c099] rounded-2xl p-5 bg-white space-y-4">
           <div className="flex items-center justify-between border-b border-stone-100 pb-2">
-            <h4 className="text-xs font-black uppercase tracking-wider text-[#384401] flex items-center gap-1.5">
-              <BarChart3 className="w-3.5 h-3.5" /> Sales Trends
+            <h4 className="text-sm font-black uppercase tracking-wider text-[#384401] flex items-center gap-1.5">
+              <BarChart3 className="w-4 h-4" /> Sales Trends
             </h4>
-            <span className="text-xs text-stone-400">Total by date</span>
+            <span className="text-xs text-stone-500 font-bold">Total by date</span>
           </div>
 
           {sortedTrend.length === 0 ? (
-            <div className="text-center py-12 text-stone-400 text-xs font-semibold">No data logged.</div>
+            <div className="text-center py-12 text-stone-400 text-sm font-semibold">No data logged.</div>
           ) : (
-            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+            <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1">
               {sortedTrend.map(([date, val]) => {
                 const percentage = Math.max(8, (val / maxTrendVal) * 100);
                 return (
-                  <div key={date} className="flex items-center gap-2">
-                    <span className="text-xs text-stone-500 font-bold w-[75px] shrink-0 text-center">{date}</span>
-                    <div className="flex-grow h-5 bg-stone-50 rounded-lg overflow-hidden relative border border-stone-200/50">
+                  <div key={date} className="flex items-center gap-3">
+                    <span className="text-xs text-stone-600 font-bold w-[75px] shrink-0 text-center">{date}</span>
+                    <div className="flex-grow h-6 bg-stone-50 rounded-lg overflow-hidden relative border border-stone-200/50">
                       <div 
                         className="h-full bg-linear-to-r from-[#FAF4EE] to-[#eeddb9] rounded-r-lg transition-all duration-300" 
                         style={{ width: `${percentage}%` }}
                       />
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-855">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-black text-stone-850">
                         ₹{val.toLocaleString('en-IN')}
                       </span>
                     </div>
@@ -372,10 +372,10 @@ export default function AdminSalesTab({
         </div>
 
         {/* Right Side: Tabbed breakdown panels */}
-        <div className="lg:col-span-7 bg-white border border-[#d3c099] rounded-2xl p-4 space-y-3">
+        <div className="lg:col-span-7 bg-white border border-[#d3c099] rounded-2xl p-5 space-y-4">
           
           {/* Navigation Selector Tabs for Breakdowns */}
-          <div className="flex border-b border-stone-200 overflow-x-auto scrollbar-none pb-1.5 gap-1.5">
+          <div className="flex border-b border-stone-200 overflow-x-auto scrollbar-none pb-2 gap-2">
             {[
               { id: 'products', label: 'Products', icon: ShoppingBag },
               { id: 'categories', label: 'Categories', icon: Tag },
@@ -388,13 +388,13 @@ export default function AdminSalesTab({
                 <button
                   key={tab.id}
                   onClick={() => setBreakdownTab(tab.id as any)}
-                  className={`flex items-center gap-1.5 px-3 py-1 border-b-2 font-bold uppercase tracking-wider text-xs whitespace-nowrap transition-all cursor-pointer ${
+                  className={`flex items-center gap-2 px-4 py-1.5 border-b-2 font-extrabold uppercase tracking-wider text-xs lg:text-[13px] whitespace-nowrap transition-all cursor-pointer ${
                     isActive 
                       ? 'border-[#384401] text-[#384401]' 
-                      : 'border-transparent text-stone-400 hover:text-stone-700'
+                      : 'border-transparent text-stone-500 hover:text-stone-700'
                   }`}
                 >
-                  <Icon className="w-3 h-3" />
+                  <Icon className="w-3.5 h-3.5" />
                   {tab.label}
                 </button>
               );
@@ -402,33 +402,33 @@ export default function AdminSalesTab({
           </div>
 
           {/* Tab Panels */}
-          <div className="max-h-[300px] overflow-y-auto pr-1">
+          <div className="max-h-[320px] overflow-y-auto pr-1">
             {/* A. Product Breakdown */}
             {breakdownTab === 'products' && (
-              <div className="border border-[#d3c099] rounded-xl overflow-hidden">
-                <table className="w-full text-left text-xs border-collapse font-jakarta">
+              <div className="border border-[#d3c099] rounded-xl overflow-hidden bg-white">
+                <table className="w-full text-left text-sm border-collapse font-jakarta">
                   <thead>
-                    <tr className="bg-stone-50 border-b border-[#d3c099] text-stone-600 font-extrabold uppercase text-xs tracking-wider">
-                      <th className="p-2 pl-3">Rank</th>
-                      <th className="p-2">Name</th>
-                      <th className="p-2 text-center">Qty</th>
-                      <th className="p-2 text-right pr-3">Revenue</th>
+                    <tr className="bg-stone-50 border-b border-[#d3c099] text-[#3E2C1C] font-extrabold uppercase text-xs tracking-wider">
+                      <th className="p-3.5 pl-4">Rank</th>
+                      <th className="p-3.5">Name</th>
+                      <th className="p-3.5 text-center">Qty</th>
+                      <th className="p-3.5 text-right pr-4">Revenue</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#d3c099]">
                     {Object.keys(productBreakdown).length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="p-6 text-center text-stone-400 italic">No sales logs.</td>
+                        <td colSpan={4} className="p-8 text-center text-stone-400 italic font-bold">No sales logs.</td>
                       </tr>
                     ) : (
                       Object.entries(productBreakdown)
                         .sort((a, b) => b[1].revenue - a[1].revenue)
                         .map(([name, data], idx) => (
-                          <tr key={name} className="hover:bg-stone-50/40">
-                            <td className="p-2 pl-3 font-bold text-stone-500">#{idx+1}</td>
-                            <td className="p-2 font-bold text-stone-900 truncate max-w-[130px]" title={name}>{name}</td>
-                            <td className="p-2 text-center font-semibold text-stone-600">{data.qty}</td>
-                            <td className="p-2 text-right font-black text-[#384401] pr-3">₹{data.revenue.toLocaleString('en-IN')}</td>
+                          <tr key={name} className="hover:bg-stone-50/40 font-semibold text-stone-850">
+                            <td className="p-3.5 pl-4 font-extrabold text-stone-500">#{idx+1}</td>
+                            <td className="p-3.5 font-bold text-stone-900 truncate max-w-[200px]" title={name}>{name}</td>
+                            <td className="p-3.5 text-center font-extrabold text-stone-600">{data.qty}</td>
+                            <td className="p-3.5 text-right font-black text-[#384401] pr-4">₹{data.revenue.toLocaleString('en-IN')}</td>
                           </tr>
                         ))
                     )}
@@ -439,21 +439,21 @@ export default function AdminSalesTab({
 
             {/* B. Category Breakdown */}
             {breakdownTab === 'categories' && (
-              <div className="space-y-3.5 pt-1">
+              <div className="space-y-4 pt-1">
                 {Object.keys(categoryBreakdown).length === 0 ? (
-                  <div className="text-center py-6 text-stone-400 italic text-xs">No category logs.</div>
+                  <div className="text-center py-8 text-stone-400 italic font-bold text-sm">No category logs.</div>
                 ) : (
                   Object.entries(categoryBreakdown)
                     .sort((a, b) => b[1] - a[1])
                     .map(([cat, rev]) => {
                       const percentage = Math.max(3, Math.round((rev / (netSales || 1)) * 100));
                       return (
-                        <div key={cat} className="space-y-1">
-                          <div className="flex justify-between text-xs font-bold text-stone-850">
+                        <div key={cat} className="space-y-1.5">
+                          <div className="flex justify-between text-sm font-extrabold text-stone-850">
                             <span className="font-jakarta">{cat}</span>
                             <span className="text-[#384401]">₹{rev.toLocaleString('en-IN')} ({percentage}%)</span>
                           </div>
-                          <div className="h-2 bg-stone-100 border border-stone-200/50 rounded-full overflow-hidden">
+                          <div className="h-2.5 bg-stone-100 border border-stone-200/50 rounded-full overflow-hidden">
                             <div 
                               className="h-full bg-[#384401] rounded-full" 
                               style={{ width: `${percentage}%` }}
@@ -468,26 +468,26 @@ export default function AdminSalesTab({
 
             {/* C. Payment breakdown */}
             {breakdownTab === 'payments' && (
-              <div className="border border-[#d3c099] rounded-xl overflow-hidden">
-                <table className="w-full text-left text-xs border-collapse font-jakarta">
+              <div className="border border-[#d3c099] rounded-xl overflow-hidden bg-white">
+                <table className="w-full text-left text-sm border-collapse font-jakarta">
                   <thead>
-                    <tr className="bg-stone-50 border-b border-[#d3c099] text-stone-600 font-extrabold uppercase text-xs tracking-wider">
-                      <th className="p-2 pl-3">Payment Method</th>
-                      <th className="p-2 text-right pr-3">Value</th>
+                    <tr className="bg-stone-50 border-b border-[#d3c099] text-[#3E2C1C] font-extrabold uppercase text-xs tracking-wider">
+                      <th className="p-3.5 pl-4">Payment Method</th>
+                      <th className="p-3.5 text-right pr-4">Value</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#d3c099]">
                     {Object.keys(paymentBreakdown).length === 0 ? (
                       <tr>
-                        <td colSpan={2} className="p-6 text-center text-stone-400 italic">No transaction records.</td>
+                        <td colSpan={2} className="p-8 text-center text-stone-400 italic font-bold">No transaction records.</td>
                       </tr>
                     ) : (
                       Object.entries(paymentBreakdown)
                         .sort((a, b) => b[1] - a[1])
                         .map(([method, rev]) => (
-                          <tr key={method} className="hover:bg-stone-50/40">
-                            <td className="p-2 pl-3 font-bold text-stone-800 uppercase tracking-wider text-xs">{method}</td>
-                            <td className="p-2 text-right font-black text-[#384401] pr-3">₹{rev.toLocaleString('en-IN')}</td>
+                          <tr key={method} className="hover:bg-stone-50/40 font-semibold text-stone-850">
+                            <td className="p-3.5 pl-4 font-bold text-stone-800 uppercase tracking-wider">{method}</td>
+                            <td className="p-3.5 text-right font-black text-[#384401] pr-4">₹{rev.toLocaleString('en-IN')}</td>
                           </tr>
                         ))
                     )}
@@ -498,26 +498,26 @@ export default function AdminSalesTab({
 
             {/* D. Location breakdown */}
             {breakdownTab === 'locations' && (
-              <div className="border border-[#d3c099] rounded-xl overflow-hidden">
-                <table className="w-full text-left text-xs border-collapse font-jakarta">
+              <div className="border border-[#d3c099] rounded-xl overflow-hidden bg-white">
+                <table className="w-full text-left text-sm border-collapse font-jakarta">
                   <thead>
-                    <tr className="bg-stone-50 border-b border-[#d3c099] text-stone-600 font-extrabold uppercase text-xs tracking-wider">
-                      <th className="p-2 pl-3">Delivery City</th>
-                      <th className="p-2 text-right pr-3">Amount</th>
+                    <tr className="bg-stone-50 border-b border-[#d3c099] text-[#3E2C1C] font-extrabold uppercase text-xs tracking-wider">
+                      <th className="p-3.5 pl-4">Delivery City</th>
+                      <th className="p-3.5 text-right pr-4">Amount</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#d3c099]">
                     {Object.keys(locationBreakdown).length === 0 ? (
                       <tr>
-                        <td colSpan={2} className="p-6 text-center text-stone-400 italic">No records.</td>
+                        <td colSpan={2} className="p-8 text-center text-stone-400 italic font-bold">No records.</td>
                       </tr>
                     ) : (
                       Object.entries(locationBreakdown)
                         .sort((a, b) => b[1] - a[1])
                         .map(([city, rev]) => (
-                          <tr key={city} className="hover:bg-stone-550/5">
-                            <td className="p-2 pl-3 font-bold text-stone-800">{city}</td>
-                            <td className="p-2 text-right font-black text-[#384401] pr-3">₹{rev.toLocaleString('en-IN')}</td>
+                          <tr key={city} className="hover:bg-stone-50/40 font-semibold text-stone-850">
+                            <td className="p-3.5 pl-4 font-bold text-stone-800">{city}</td>
+                            <td className="p-3.5 text-right font-black text-[#384401] pr-4">₹{rev.toLocaleString('en-IN')}</td>
                           </tr>
                         ))
                     )}

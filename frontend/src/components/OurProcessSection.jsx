@@ -69,8 +69,8 @@ export default function OurProcessSection() {
           </span>
           <h2 className="text-3xl sm:text-4xl font-poetsen leading-tight mb-4">
             <span className="text-[#384401]">From Our Village</span>
-            <span 
-              className="text-[#C56C4F] block mt-1 normal-case tracking-normal" 
+            <span
+              className="text-[#C56C4F] block mt-1 normal-case tracking-normal"
               style={{ fontFamily: "'Splash', cursive", fontSize: '42px', fontWeight: 'normal' }}
             >
               To Your Home
@@ -86,7 +86,7 @@ export default function OurProcessSection() {
           {steps.map((step) => (
             <div key={step.num} className="flex flex-col bg-white/40 border border-stone-200/50 rounded-2xl p-6 shadow-xs">
               <div className="flex items-baseline gap-3 mb-3">
-                <span 
+                <span
                   className="font-poetsen text-3xl font-extrabold"
                   style={{ color: step.color }}
                 >
@@ -111,109 +111,109 @@ export default function OurProcessSection() {
       </div>
 
       {/* 2. Desktop Layout (>=lg) - Pixel-perfect alignment over background */}
-      <div 
+      <div
         className="hidden lg:block w-full relative aspect-[1920/1080] bg-cover bg-center select-none"
         style={{
           backgroundImage: "url('/images/our-process.webp')",
         }}
       >
         {/* Winding Connecting Path SVG */}
-        <svg 
-          className="absolute z-10 pointer-events-none" 
+        <svg
+          className="absolute z-10 pointer-events-none"
           style={{
             left: '40.05%',
             top: '5.09%',
             width: '26.77%',
             height: '92.31%'
           }}
-          viewBox="-20 -20 514 997" 
-          fill="none" 
+          viewBox="-20 -20 514 997"
+          fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
           {/* Curve */}
-          <path 
-            d="M1 0C1.00031 32 2.38203 138.467 147.231 148.934C328.292 162.018 273.592 273.39 241.767 288.725C194.5 311.5 0.619183 325.222 55.8989 438.156C111.179 551.09 406.004 431.27 443.658 592.407C449.171 616 418.021 645.431 382.77 661.958C338.707 682.617 71.922 702.587 86.3428 796.928C97.8794 872.401 219.869 881.17 279.421 876.12C328.292 872.447 435.326 883.281 472.5 956" 
-            stroke="#384401" 
-            strokeWidth="2" 
+          <path
+            d="M1 0C1.00031 32 2.38203 138.467 147.231 148.934C328.292 162.018 273.592 273.39 241.767 288.725C194.5 311.5 0.619183 325.222 55.8989 438.156C111.179 551.09 406.004 431.27 443.658 592.407C449.171 616 418.021 645.431 382.77 661.958C338.707 682.617 71.922 702.587 86.3428 796.928C97.8794 872.401 219.869 881.17 279.421 876.12C328.292 872.447 435.326 883.281 472.5 956"
+            stroke="#384401"
+            strokeWidth="2"
             strokeDasharray="6 6"
             opacity="0.8"
           />
 
           {/* Helper nodes along curve */}
           {/* Node 1 */}
-          <circle 
-            cx="1" 
-            cy="0" 
-            r={activeStep === 0 ? "13" : "10"} 
-            fill="#fdfaf3" 
-            stroke={activeStep === 0 ? "#C56C4F" : "#384401"} 
-            strokeWidth={activeStep === 0 ? "4" : "3"} 
-            className="transition-all duration-300 pointer-events-auto cursor-pointer" 
+          <circle
+            cx="1"
+            cy="0"
+            r={activeStep === 0 ? "13" : "10"}
+            fill="#fdfaf3"
+            stroke={activeStep === 0 ? "#C56C4F" : "#384401"}
+            strokeWidth={activeStep === 0 ? "4" : "3"}
+            className="transition-all duration-300 pointer-events-auto cursor-pointer"
             onMouseEnter={() => setActiveStep(0)}
           />
           <circle cx="1" cy="0" r={activeStep === 0 ? "7" : "5"} fill={activeStep === 0 ? "#C56C4F" : "#384401"} className="transition-all duration-300 pointer-events-none" />
 
           {/* Node 2 */}
-          <circle 
-            cx="147.231" 
-            cy="148.934" 
-            r={activeStep === 1 ? "13" : "10"} 
-            fill="#fdfaf3" 
-            stroke={activeStep === 1 ? "#C56C4F" : "#384401"} 
-            strokeWidth={activeStep === 1 ? "4" : "3"} 
-            className="transition-all duration-300 pointer-events-auto cursor-pointer" 
+          <circle
+            cx="147.231"
+            cy="148.934"
+            r={activeStep === 1 ? "13" : "10"}
+            fill="#fdfaf3"
+            stroke={activeStep === 1 ? "#C56C4F" : "#384401"}
+            strokeWidth={activeStep === 1 ? "4" : "3"}
+            className="transition-all duration-300 pointer-events-auto cursor-pointer"
             onMouseEnter={() => setActiveStep(1)}
           />
           <circle cx="147.231" cy="148.934" r={activeStep === 1 ? "7" : "5"} fill={activeStep === 1 ? "#C56C4F" : "#384401"} className="transition-all duration-300 pointer-events-none" />
 
           {/* Node 3 */}
-          <circle 
-            cx="241.767" 
-            cy="288.725" 
-            r={activeStep === 2 ? "13" : "10"} 
-            fill="#fdfaf3" 
-            stroke={activeStep === 2 ? "#384401" : "#C56C4F"} 
-            strokeWidth={activeStep === 2 ? "4" : "3"} 
-            className="transition-all duration-300 pointer-events-auto cursor-pointer" 
+          <circle
+            cx="241.767"
+            cy="288.725"
+            r={activeStep === 2 ? "13" : "10"}
+            fill="#fdfaf3"
+            stroke={activeStep === 2 ? "#384401" : "#C56C4F"}
+            strokeWidth={activeStep === 2 ? "4" : "3"}
+            className="transition-all duration-300 pointer-events-auto cursor-pointer"
             onMouseEnter={() => setActiveStep(2)}
           />
           <circle cx="241.767" cy="288.725" r={activeStep === 2 ? "7" : "5"} fill={activeStep === 2 ? "#384401" : "#C56C4F"} className="transition-all duration-300 pointer-events-none" />
 
           {/* Node 4 */}
-          <circle 
-            cx="55.8989" 
-            cy="438.156" 
-            r={activeStep === 3 ? "13" : "10"} 
-            fill="#fdfaf3" 
-            stroke={activeStep === 3 ? "#C56C4F" : "#384401"} 
-            strokeWidth={activeStep === 3 ? "4" : "3"} 
-            className="transition-all duration-300 pointer-events-auto cursor-pointer" 
+          <circle
+            cx="55.8989"
+            cy="438.156"
+            r={activeStep === 3 ? "13" : "10"}
+            fill="#fdfaf3"
+            stroke={activeStep === 3 ? "#C56C4F" : "#384401"}
+            strokeWidth={activeStep === 3 ? "4" : "3"}
+            className="transition-all duration-300 pointer-events-auto cursor-pointer"
             onMouseEnter={() => setActiveStep(3)}
           />
           <circle cx="55.8989" cy="438.156" r={activeStep === 3 ? "7" : "5"} fill={activeStep === 3 ? "#C56C4F" : "#384401"} className="transition-all duration-300 pointer-events-none" />
 
           {/* Node 5 */}
-          <circle 
-            cx="382.77" 
-            cy="661.958" 
-            r={activeStep === 4 ? "13" : "10"} 
-            fill="#fdfaf3" 
-            stroke={activeStep === 4 ? "#384401" : "#C56C4F"} 
-            strokeWidth={activeStep === 4 ? "4" : "3"} 
-            className="transition-all duration-300 pointer-events-auto cursor-pointer" 
+          <circle
+            cx="382.77"
+            cy="661.958"
+            r={activeStep === 4 ? "13" : "10"}
+            fill="#fdfaf3"
+            stroke={activeStep === 4 ? "#384401" : "#C56C4F"}
+            strokeWidth={activeStep === 4 ? "4" : "3"}
+            className="transition-all duration-300 pointer-events-auto cursor-pointer"
             onMouseEnter={() => setActiveStep(4)}
           />
           <circle cx="382.77" cy="661.958" r={activeStep === 4 ? "7" : "5"} fill={activeStep === 4 ? "#384401" : "#C56C4F"} className="transition-all duration-300 pointer-events-none" />
 
           {/* Node 6 */}
-          <circle 
-            cx="279.421" 
-            cy="876.12" 
-            r={activeStep === 5 ? "13" : "10"} 
-            fill="#fdfaf3" 
-            stroke={activeStep === 5 ? "#C56C4F" : "#384401"} 
-            strokeWidth={activeStep === 5 ? "4" : "3"} 
-            className="transition-all duration-300 pointer-events-auto cursor-pointer" 
+          <circle
+            cx="279.421"
+            cy="876.12"
+            r={activeStep === 5 ? "13" : "10"}
+            fill="#fdfaf3"
+            stroke={activeStep === 5 ? "#C56C4F" : "#384401"}
+            strokeWidth={activeStep === 5 ? "4" : "3"}
+            className="transition-all duration-300 pointer-events-auto cursor-pointer"
             onMouseEnter={() => setActiveStep(5)}
           />
           <circle cx="279.421" cy="876.12" r={activeStep === 5 ? "7" : "5"} fill={activeStep === 5 ? "#C56C4F" : "#384401"} className="transition-all duration-300 pointer-events-none" />
@@ -226,7 +226,7 @@ export default function OurProcessSection() {
           </span>
           <h2 className="lg:text-[2.3vw] font-poetsen leading-[1.1] lg:mb-[1vw] text-[#384401] relative">
             From Our Village
-            <span 
+            <span
               className="text-[#C56C4F] block lg:mt-[0.2vw] normal-case tracking-normal"
               style={{ fontFamily: "'Splash', cursive", fontSize: '2.7vw', fontWeight: 'normal' }}
             >
@@ -234,11 +234,11 @@ export default function OurProcessSection() {
             </span>
             {/* Small leaf next to heading */}
             <span className="absolute -right-[3.5vw] top-[1.25vw] lg:w-[4.1vw] lg:h-[4.1vw] transform rotate-12 opacity-90 pointer-events-none animate-sway-3">
-              <Image 
-                src="/images/product-section/products-leaf.svg" 
-                alt="decorative leaf" 
-                fill 
-                className="object-contain" 
+              <Image
+                src="/images/product-section/products-leaf.svg"
+                alt="decorative leaf"
+                fill
+                className="object-contain"
               />
             </span>
           </h2>
@@ -248,11 +248,10 @@ export default function OurProcessSection() {
         </div>
 
         {/* Step 1: Organic Farming */}
-        <div 
+        <div
           onMouseEnter={() => setActiveStep(0)}
-          className={`absolute left-[48%] top-[6%] text-left z-30 transition-all duration-500  ${
-            activeStep === 0 ? 'scale-[1.04] opacity-100' : 'scale-100 opacity-60'
-          }`}
+          className={`absolute left-[48%] top-[6%] text-left z-30 transition-all duration-500  ${activeStep === 0 ? 'scale-[1.04] opacity-100' : 'scale-100 opacity-60'
+            }`}
         >
           <h3 className="font-poetsen flex items-end lg:gap-[0.6vw]">
             <span className="text-[#384401] lg:text-[2.8vw] font-extrabold leading-none">01</span>
@@ -262,21 +261,19 @@ export default function OurProcessSection() {
             Grown naturally in our fertile fields without chemicals.
           </p>
         </div>
-        <div 
+        <div
           onMouseEnter={() => setActiveStep(0)}
-          className={`absolute left-[62%] top-[3%] w-[19%] aspect-[1.3] z-20 pointer-events-auto transition-all duration-500  ${
-            activeStep === 0 ? 'scale-[1.08]' : 'scale-100 opacity-80'
-          }`}
+          className={`absolute left-[62%] top-[3%] w-[19%] aspect-[1.3] z-20 pointer-events-auto transition-all duration-500  ${activeStep === 0 ? 'scale-[1.08]' : 'scale-100 opacity-80'
+            }`}
         >
           <Image src="/images/process-section/organic-farming-1.webp" alt="" fill className="object-contain" />
         </div>
 
         {/* Step 2: Hand Selection */}
-        <div 
+        <div
           onMouseEnter={() => setActiveStep(1)}
-          className={`absolute left-[26%] top-[25%] text-left z-30 transition-all duration-500  ${
-            activeStep === 1 ? 'scale-[1.04] opacity-100' : 'scale-100 opacity-60'
-          }`}
+          className={`absolute left-[26%] top-[25%] text-left z-30 transition-all duration-500  ${activeStep === 1 ? 'scale-[1.04] opacity-100' : 'scale-100 opacity-60'
+            }`}
         >
           <h3 className="font-poetsen flex items-end lg:gap-[0.6vw]">
             <span className="text-[#384401] lg:text-[2.8vw] font-extrabold leading-none">02</span>
@@ -286,21 +283,19 @@ export default function OurProcessSection() {
             Carefully handpicked grain for the best quality.
           </p>
         </div>
-        <div 
+        <div
           onMouseEnter={() => setActiveStep(1)}
-          className={`absolute left-[4%] top-[24%] w-[21%] aspect-[1.3] z-20 pointer-events-auto transition-all duration-500  ${
-            activeStep === 1 ? 'scale-[1.08]' : 'scale-100 opacity-80'
-          }`}
+          className={`absolute left-[4%] top-[24%] w-[21%] aspect-[1.3] z-20 pointer-events-auto transition-all duration-500  ${activeStep === 1 ? 'scale-[1.08]' : 'scale-100 opacity-80'
+            }`}
         >
           <Image src="/images/process-section/hand-selection-2.webp" alt="" fill className="object-contain" />
         </div>
 
         {/* Step 3: Traditional Strong Graining */}
-        <div 
+        <div
           onMouseEnter={() => setActiveStep(2)}
-          className={`absolute left-[56%] top-[36%] text-left z-30 transition-all duration-500  ${
-            activeStep === 2 ? 'scale-[1.04] opacity-100' : 'scale-100 opacity-60'
-          }`}
+          className={`absolute left-[56%] top-[36%] text-left z-30 transition-all duration-500  ${activeStep === 2 ? 'scale-[1.04] opacity-100' : 'scale-100 opacity-60'
+            }`}
         >
           <h3 className="font-poetsen flex items-end lg:gap-[0.6vw]">
             <span className="text-[#C56C4F] lg:text-[2.8vw] font-extrabold leading-none">03</span>
@@ -310,21 +305,19 @@ export default function OurProcessSection() {
             Strong-ground slowly to retain nutrients and natural taste.
           </p>
         </div>
-        <div 
+        <div
           onMouseEnter={() => setActiveStep(2)}
-          className={`absolute left-[77%] top-[34%] w-[19%] aspect-[1.25] z-20 pointer-events-auto transition-all duration-500  ${
-            activeStep === 2 ? 'scale-[1.08]' : 'scale-100 opacity-80'
-          }`}
+          className={`absolute left-[77%] top-[34%] w-[19%] aspect-[1.25] z-20 pointer-events-auto transition-all duration-500  ${activeStep === 2 ? 'scale-[1.08]' : 'scale-100 opacity-80'
+            }`}
         >
           <Image src="/images/process-section/traditional-strong-graining-3.webp" alt="" fill className="object-contain" />
         </div>
 
         {/* Step 4: Homemade Preparation */}
-        <div 
+        <div
           onMouseEnter={() => setActiveStep(3)}
-          className={`absolute left-[20%] top-[57%] text-left z-30 transition-all duration-500  ${
-            activeStep === 3 ? 'scale-[1.04] opacity-100' : 'scale-100 opacity-60'
-          }`}
+          className={`absolute left-[20%] top-[57%] text-left z-30 transition-all duration-500  ${activeStep === 3 ? 'scale-[1.04] opacity-100' : 'scale-100 opacity-60'
+            }`}
         >
           <h3 className="font-poetsen flex items-end lg:gap-[0.6vw]">
             <span className="text-[#384401] lg:text-[2.8vw] font-extrabold leading-none">04</span>
@@ -334,21 +327,19 @@ export default function OurProcessSection() {
             Hygienically Prepared in small batches with love and care.
           </p>
         </div>
-        <div 
+        <div
           onMouseEnter={() => setActiveStep(3)}
-          className={`absolute left-[3%] top-[60%] w-[21%] aspect-[1.3] z-20 pointer-events-auto transition-all duration-500  ${
-            activeStep === 3 ? 'scale-[1.08]' : 'scale-100 opacity-80'
-          }`}
+          className={`absolute left-[3%] top-[60%] w-[21%] aspect-[1.3] z-20 pointer-events-auto transition-all duration-500  ${activeStep === 3 ? 'scale-[1.08]' : 'scale-100 opacity-80'
+            }`}
         >
           <Image src="/images/process-section/home-made-preparation-4.webp" alt="" fill className="object-contain" />
         </div>
 
         {/* Step 5: Hygienic Packing */}
-        <div 
+        <div
           onMouseEnter={() => setActiveStep(4)}
-          className={`absolute left-[64%] top-[65%] text-left z-20 transition-all duration-500  ${
-            activeStep === 4 ? 'scale-[1.04] opacity-100' : 'scale-100 opacity-60'
-          }`}
+          className={`absolute left-[64%] top-[65%] text-left z-20 transition-all duration-500  ${activeStep === 4 ? 'scale-[1.04] opacity-100' : 'scale-100 opacity-60'
+            }`}
         >
           <h3 className="font-poetsen flex items-end lg:gap-[0.6vw]">
             <span className="text-[#C56C4F] lg:text-[2.8vw] font-extrabold leading-none">05</span>
@@ -358,21 +349,19 @@ export default function OurProcessSection() {
             Packed with modern hygiene for your family's <br /> health.
           </p>
         </div>
-        <div 
+        <div
           onMouseEnter={() => setActiveStep(4)}
-          className={`absolute left-[78%] top-[68%] w-[19%] aspect-[1.25] z-20 pointer-events-auto transition-all duration-500  ${
-            activeStep === 4 ? 'scale-[1.08]' : 'scale-100 opacity-80'
-          }`}
+          className={`absolute left-[78%] top-[68%] w-[19%] aspect-[1.25] z-20 pointer-events-auto transition-all duration-500  ${activeStep === 4 ? 'scale-[1.08]' : 'scale-100 opacity-80'
+            }`}
         >
           <Image src="/images/process-section/hygienic-packing-5.webp" alt="" fill className="object-contain" />
         </div>
 
         {/* Step 6: Delivered Fresh */}
-        <div 
+        <div
           onMouseEnter={() => setActiveStep(5)}
-          className={`absolute left-[28%] top-[86%] text-left z-30 transition-all duration-500  ${
-            activeStep === 5 ? 'scale-[1.04] opacity-100' : 'scale-100 opacity-60'
-          }`}
+          className={`absolute left-[28%] top-[86%] text-left z-30 transition-all duration-500  ${activeStep === 5 ? 'scale-[1.04] opacity-100' : 'scale-100 opacity-60'
+            }`}
         >
           <h3 className="font-poetsen flex items-end lg:gap-[0.6vw]">
             <span className="text-[#384401] lg:text-[2.8vw] font-extrabold leading-none">06</span>
@@ -382,11 +371,10 @@ export default function OurProcessSection() {
             Delivered fresh to your doorstep on time, every time.
           </p>
         </div>
-        <div 
+        <div
           onMouseEnter={() => setActiveStep(5)}
-          className={`absolute left-[51%] top-[77%] w-[20%] aspect-[1.35] z-20 pointer-events-auto transition-all duration-500  ${
-            activeStep === 5 ? 'scale-[1.08]' : 'scale-100 opacity-80'
-          }`}
+          className={`absolute left-[51%] top-[77%] w-[20%] aspect-[1.35] z-20 pointer-events-auto transition-all duration-500  ${activeStep === 5 ? 'scale-[1.08]' : 'scale-100 opacity-80'
+            }`}
         >
           <Image src="/images/process-section/delivered-fresh-6.webp" alt="" fill className="object-contain" />
         </div>

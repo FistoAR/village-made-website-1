@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, ShoppingBag, ShieldCheck, CheckCircle, Check, Download } from 'lucide-react';
+import { Loader2, ShoppingBag, ShieldCheck, Check, Download } from 'lucide-react';
 import { CartItem } from '@/lib/context/AppContext';
 import { jsPDF } from 'jspdf';
 
@@ -191,6 +191,26 @@ export default function CheckoutSimulations({
       );
 
     case 'payment_gateway':
+      if (paymentMethod !== 'cod') {
+        return (
+          <div className="min-h-[450px] flex flex-col justify-center items-center text-center max-w-xl mx-auto bg-white border border-[#eeddb9] rounded-[32px] p-8 md:p-12 shadow-md select-none animate-fade-in font-jakarta">
+            <div className="relative mb-6">
+              <Loader2 className="w-16 h-16 text-[#384401] animate-spin" />
+              <ShieldCheck className="w-7 h-7 text-[#C56C4F] absolute top-4.5 left-4.5" />
+            </div>
+            <h2 className="text-2xl font-black text-stone-950 mb-3 tracking-tight">
+              Secure Checkout Session
+            </h2>
+            <p className="text-stone-700 font-semibold text-sm max-w-sm mb-6 leading-relaxed">
+              We have initiated a secure checkout session. Please follow the instructions in the Razorpay payment window to complete your purchase.
+            </p>
+            <div className="w-full bg-[#FAF4E6] border border-[#eeddb9] rounded-xl p-4 text-left font-jakarta text-xs text-[#3E2C1C] font-extrabold shadow-xs">
+              Waiting for Razorpay gateway verification...
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div className="min-h-[420px] flex flex-col justify-center items-center text-center max-w-lg mx-auto bg-[#1a1008] border border-stone-800 rounded-[32px] p-6 sm:p-10 shadow-2xl text-white select-none animate-scale-up">
           {/* Header */}
@@ -221,7 +241,7 @@ export default function CheckoutSimulations({
             </div>
             <div>
               <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest mb-0.5">Payment Method</p>
-              <p className="text-stone-100 font-extrabold text-sm uppercase tracking-wide">{paymentMethod === 'cod' ? 'Cash on Delivery' : paymentMethod.toUpperCase()}</p>
+              <p className="text-stone-100 font-extrabold text-sm uppercase tracking-wide">Cash on Delivery</p>
               <p className="text-stone-400 font-semibold text-xs mt-0.5">Click Authorize & Pay to confirm your order</p>
             </div>
           </div>

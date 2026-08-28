@@ -1018,13 +1018,12 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#FDFBF7] text-[#3E2C1C] flex flex-col justify-between">
       <Navbar />
 
-      <main className="flex-grow pt-27 pb-20 px-4 sm:px-6 md:px-8 lg:pl-[292px] lg:pr-8 w-full">
+      <main className="flex-grow pt-16 pb-20 px-4 sm:px-6 md:px-8 lg:pl-[292px] lg:pr-8 w-full bg-white">
         
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-1 mt-5">
           <div>
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-6 h-6 text-[#384401]" />
               <h1 className="font-poetsen text-3xl font-medium tracking-relaxed text-stone-900">
                 <span className="lg:hidden">Village Made Organics Admin panel</span>
                 <span className="hidden lg:inline">Admin Control Panel</span>
@@ -1074,7 +1073,7 @@ export default function AdminPage() {
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 lg:gap-8 items-start">
           
           {/* Sidebar Nav controls */}
-          <nav className="flex flex-row lg:flex-col gap-1.5 lg:gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 scrollbar-none select-none lg:fixed lg:left-0 lg:top-[108px] lg:bottom-0 lg:w-[260px] lg:z-40 lg:bg-[#FAF8F5] lg:border-r lg:border-[#d3c099]/50 lg:p-6 lg:rounded-none lg:shadow-none justify-start">
+          <nav className="flex flex-row lg:flex-col gap-1.5 lg:gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 scrollbar-none select-none lg:fixed lg:left-0 lg:top-[64px] lg:bottom-0 lg:w-[260px] lg:z-40 lg:bg-[#FAF8F5] lg:border-r lg:border-[#d3c099]/50 lg:p-6 lg:rounded-none lg:shadow-none justify-start">
             {/* Top Branding Section on Desktop */}
             <div className="hidden lg:flex flex-col gap-1.5 px-2 mb-4">
               <div className="flex items-center gap-2">
@@ -1140,9 +1139,9 @@ export default function AdminPage() {
           </nav>
 
           {/* Core Content Window */}
-          <div className="bg-white border border-[#d3c099] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-xs min-h-[500px] lg:max-h-[75vh] lg:overflow-y-auto overflow-x-hidden relative">
+          <div className="bg-white p-4 sm:p-6 lg:px-1 lg:py-5 min-h-[500px] lg:max-h-[75vh] lg:overflow-y-auto overflow-x-hidden relative">
             {loading && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1.5px] rounded-xl sm:rounded-2xl z-50">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1.5px] z-50">
                 <div className="flex flex-col items-center gap-3">
                   <div className="relative w-14 h-14">
                     <div className="absolute inset-0 rounded-full border-4 border-[#384401]/10"></div>

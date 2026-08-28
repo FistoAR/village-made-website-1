@@ -55,6 +55,12 @@ export function useBgMusic() {
     syncState();
     return () => {
       _subscribers.delete(syncState);
+      setTimeout(() => {
+        if (_subscribers.size === 0 && _audio && !_audio.paused) {
+          _audio.pause();
+          notifySubscribers();
+        }
+      }, 100);
     };
   }, [syncState]);
 

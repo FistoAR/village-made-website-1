@@ -30,7 +30,7 @@ export default function AdminBannersTab({
   banners,
   setBanners,
 }: AdminBannersTabProps) {
-  const comingSoon = true; // Set to false to enable banners tab
+  const comingSoon = false; // Set to false to enable banners tab
 
   if (comingSoon) {
     return (

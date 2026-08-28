@@ -17,6 +17,20 @@ import CheckoutSteps from '@/components/checkout/CheckoutSteps';
 import CheckoutOrderSummary from '@/components/checkout/CheckoutOrderSummary';
 import CheckoutSimulations from '@/components/checkout/CheckoutSimulations';
 
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (typeof window !== "undefined" && (window as any).Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 function CartQtyInput({ item, updateQuantity }: { item: any; updateQuantity: any }) {
   const [localVal, setLocalVal] = useState(item.quantity.toString());
 
@@ -323,17 +337,183 @@ export default function CartPage() {
         }
       }
 
-      // Complete allocation simulation
-      setTimeout(() => {
-        setCreationStatus('Generating secure unique invoice reference...');
-        setTimeout(() => {
-          const generatedId = `VM-${Math.floor(100000 + Math.random() * 900000)}`;
-          setSimulatedOrderId(generatedId);
-          
-          // Proceed to Payment screen
-          setCheckoutStep('payment_gateway');
-        }, 800);
-      }, 800);
+      const generatedId = `VM-${Math.floor(100000 + Math.random() * 900000)}`;
+      setSimulatedOrderId(generatedId);
+
+      // Handle Cash on Delivery
+      if (paymentMethod === 'cod') {
+        setCreationStatus('Generating Cash on Delivery order...');
+        const finalBillingAddr = sameAsShipping ? shippingAddress : billingAddress;
+        const orderData = {
+          id: generatedId,
+          mobile: user?.mobile || undefined,
+          date: new Date().toLocaleDateString('en-IN'),
+          subtotal: cartTotal,
+          shipping: shippingFee,
+          tax: estimatedTax,
+          total: grandTotal + 15, // Cash on Delivery has standard +15 fee
+          address: {
+            name: customerDetails.name,
+            phone: customerDetails.phone,
+            address: finalBillingAddr.address,
+            city: finalBillingAddr.city,
+            state: finalBillingAddr.state || 'Karnataka',
+            pincode: finalBillingAddr.pincode
+          },
+          items: cart
+        };
+
+        // Decrement stock in DB
+        setCreationStatus('Updating database ledger...');
+        const decStockRes = await fetch(`${baseUrl}/products/decrement-stock`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: cart.map(item => ({ id: item.id, quantity: item.quantity }))
+          })
+        });
+        const decStockData = await decStockRes.json();
+        if (!decStockRes.ok || !decStockData.success) {
+          throw new Error(decStockData.error || 'Failed to allocate stock in database.');
+        }
+
+        await fetchProducts();
+
+        setCreationStatus('Saving Cash on Delivery order...');
+        const orderResult = await createOrder(orderData);
+        if (orderResult.success) {
+          setCheckoutStep('order_confirmed');
+          setTimeout(() => {
+            setCheckoutStep('success');
+          }, 2000);
+        } else {
+          throw new Error(orderResult.error || 'Could not place Cash on Delivery order.');
+        }
+        return;
+      }
+
+      // Handle Razorpay Online Payment Flow
+      setCreationStatus('Loading secure Razorpay payment scripts...');
+      const loaded = await loadRazorpayScript();
+      if (!loaded) {
+        throw new Error('Razorpay SDK failed to load. Please check your network connection.');
+      }
+
+      setCreationStatus('Initializing transaction order reference...');
+      const razorpayOrderRes = await fetch(`${baseUrl}/orders/razorpay-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: grandTotal })
+      });
+      const razorpayOrderData = await razorpayOrderRes.json();
+
+      if (!razorpayOrderRes.ok || !razorpayOrderData.success) {
+        throw new Error(razorpayOrderData.error || 'Razorpay order creation failed.');
+      }
+
+      setSimulatedOrderId(razorpayOrderData.orderId);
+
+      setCreationStatus('Awaiting secure gateway verification...');
+      
+      const rzpOptions = {
+        key: razorpayOrderData.keyId,
+        amount: razorpayOrderData.amount,
+        currency: 'INR',
+        name: 'Village Made Organics',
+        description: 'Purchase Transaction Settlement',
+        order_id: razorpayOrderData.orderId,
+        prefill: {
+          name: customerDetails.name,
+          email: customerDetails.email || 'care@villagemade.com',
+          contact: customerDetails.phone
+        },
+        theme: {
+          color: '#384401'
+        },
+        modal: {
+          ondismiss: () => {
+            setCheckoutStep('checkout');
+            setActiveSubStep(3);
+            showToast('Payment window closed by user.', 'error');
+          }
+        },
+        handler: async function (response: any) {
+          setCheckoutStep('payment_verification');
+          setVerificationStatus('Validating secure transaction token with provider...');
+
+          try {
+            // Decrement Stock in DB
+            const decRes = await fetch(`${baseUrl}/products/decrement-stock`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                items: cart.map(item => ({ id: item.id, quantity: item.quantity }))
+              })
+            });
+            const decData = await decRes.json();
+            if (!decRes.ok || !decData.success) {
+              throw new Error(decData.error || 'Failed to update catalog stock.');
+            }
+
+            await fetchProducts();
+
+            setVerificationStatus('Verifying cryptographic signature hash...');
+            
+            const finalBillingAddr = sameAsShipping ? shippingAddress : billingAddress;
+            const orderData = {
+              id: generatedId,
+              mobile: user?.mobile || undefined,
+              date: new Date().toLocaleDateString('en-IN'),
+              subtotal: cartTotal,
+              shipping: shippingFee,
+              tax: estimatedTax,
+              total: grandTotal,
+              address: {
+                name: customerDetails.name,
+                phone: customerDetails.phone,
+                address: finalBillingAddr.address,
+                city: finalBillingAddr.city,
+                state: finalBillingAddr.state || 'Karnataka',
+                pincode: finalBillingAddr.pincode
+              },
+              items: cart
+            };
+
+            const verifyRes = await fetch(`${baseUrl}/orders/verify-payment`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderData
+              })
+            });
+            const verifyData = await verifyRes.json();
+
+            if (!verifyRes.ok || !verifyData.success) {
+              throw new Error(verifyData.error || 'Transaction verification signature invalid.');
+            }
+
+            // Sync context state & show celebration confirmed screen
+            setCheckoutStep('order_confirmed');
+            setTimeout(() => {
+              setCheckoutStep('success');
+            }, 2000);
+
+          } catch (verifyErr: any) {
+            setCheckoutStep('checkout');
+            setActiveSubStep(3);
+            showAlert('Payment Verification Failed', verifyErr.message || 'Signature validation failed.', 'error');
+          }
+        }
+      };
+
+      // Set step to something clean so the backdrop/loader is shown
+      setCheckoutStep('payment_gateway');
+
+      const paymentObject = new (window as any).Razorpay(rzpOptions);
+      paymentObject.open();
 
     } catch (err: any) {
       setCheckoutStep('checkout');
@@ -347,81 +527,80 @@ export default function CartPage() {
     if (!success) {
       showToast('The payment request was cancelled or declined. Please try again.', 'error');
       setCheckoutStep('checkout');
-      setActiveSubStep(3); // Go back to Review step (step 3 is the last valid step)
+      setActiveSubStep(3);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
     setCheckoutStep('payment_verification');
-    setVerificationStatus('Validating transaction with provider network...');
+    setVerificationStatus('Validating sandbox transaction token with provider...');
 
     try {
-      // Deduct stock in DB
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-      const res = await fetch(`${baseUrl}/products/decrement-stock`, {
+      
+      // Decrement Stock in database
+      const decRes = await fetch(`${baseUrl}/products/decrement-stock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: cart.map(item => ({ id: item.id, quantity: item.quantity }))
         })
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to allocate stock in database.');
+      const decData = await decRes.json();
+      if (!decRes.ok || !decData.success) {
+        throw new Error(decData.error || 'Failed to update catalog stock.');
       }
 
-      // Refresh frontend product catalog stock
       await fetchProducts();
 
-      setVerificationStatus('Securing tokenized handshake authorization...');
+      setVerificationStatus('Verifying cryptographic signature hash...');
+      
+      const finalBillingAddr = sameAsShipping ? shippingAddress : billingAddress;
+      const orderData = {
+        id: simulatedOrderId,
+        mobile: user?.mobile || undefined,
+        date: new Date().toLocaleDateString('en-IN'),
+        subtotal: cartTotal,
+        shipping: shippingFee,
+        tax: estimatedTax,
+        total: grandTotal,
+        address: {
+          name: customerDetails.name,
+          phone: customerDetails.phone,
+          address: finalBillingAddr.address,
+          city: finalBillingAddr.city,
+          state: finalBillingAddr.state || 'Karnataka',
+          pincode: finalBillingAddr.pincode
+        },
+        items: cart
+      };
+
+      const verifyRes = await fetch(`${baseUrl}/orders/verify-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          razorpay_order_id: simulatedOrderId || `order_mock_${Date.now()}`,
+          razorpay_payment_id: `pay_mock_${Date.now()}`,
+          razorpay_signature: `sig_mock_${Date.now()}`,
+          orderData
+        })
+      });
+      const verifyData = await verifyRes.json();
+
+      if (!verifyRes.ok || !verifyData.success) {
+        throw new Error(verifyData.error || 'Transaction verification signature invalid.');
+      }
+
+      // Sync context state & show celebration confirmed screen
+      setCheckoutStep('order_confirmed');
       setTimeout(() => {
-        setVerificationStatus('Finalizing ledger updates and saving order...');
-        setTimeout(async () => {
-          // Store order details in AppContext
-          const finalBillingAddr = sameAsShipping ? shippingAddress : billingAddress;
-          
-          const orderId = simulatedOrderId || `VM-${Math.floor(100000 + Math.random() * 900000)}`;
-          const orderData = {
-            id: orderId,
-            mobile: user?.mobile || undefined,
-            date: new Date().toLocaleDateString('en-IN'),
-            subtotal: cartTotal,
-            shipping: shippingFee,
-            tax: estimatedTax,
-            total: grandTotal,
-            address: {
-              name: customerDetails.name,
-              phone: customerDetails.phone,
-              address: finalBillingAddr.address,
-              city: finalBillingAddr.city,
-              state: finalBillingAddr.state || 'Karnataka',
-              pincode: finalBillingAddr.pincode
-            },
-            items: cart
-          };
-
-          const orderResult = await createOrder(orderData);
-
-          if (orderResult.success) {
-            // Transition to CONFIRMED celebration screen
-            setCheckoutStep('order_confirmed');
-            
-            // Confirmed splash duration before final receipts page
-            setTimeout(() => {
-              setCheckoutStep('success');
-            }, 2000);
-          } else {
-            setCheckoutStep('checkout');
-            setActiveSubStep(3); // Go back to Review step
-            showAlert('Checkout Settlement Failed', orderResult.error || 'Could not place order in database.', 'error');
-          }
-        }, 1200);
-      }, 1000);
+        setCheckoutStep('success');
+      }, 2000);
 
     } catch (err: any) {
       setCheckoutStep('checkout');
-      setActiveSubStep(3); // Go back to Review step
-      showAlert('Checkout Settlement Failed', err.message || 'Could not deduct stock and complete checkout.', 'error');
+      setActiveSubStep(3);
+      showAlert('Payment Verification Failed', err.message || 'Signature validation failed.', 'error');
     }
   };
 

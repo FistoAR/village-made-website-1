@@ -1,4 +1,4 @@
-import { Settings, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Settings, Eye, EyeOff, Sparkles, User, Lock, ShieldAlert } from 'lucide-react';
 
 interface AdminProfileTabProps {
   profName: string;
@@ -37,7 +37,7 @@ export default function AdminProfileTab({
   profileSaving,
   handleProfileUpdateSubmit,
 }: AdminProfileTabProps) {
-  const comingSoon = true; // Set to false to enable profile tab
+  const comingSoon = false; // Set to false to enable profile tab
 
   if (comingSoon) {
     return (
@@ -52,93 +52,113 @@ export default function AdminProfileTab({
   }
 
   return (
-    <div className="space-y-6">
-      <h3 className="text-sm font-extrabold uppercase tracking-wider text-stone-955 font-jakarta flex items-center gap-2">
+    <div className="space-y-6 animate-fade-in font-jakarta">
+      <h3 className="text-sm font-extrabold uppercase tracking-wider text-stone-700 flex items-center gap-2">
         <Settings className="w-4.5 h-4.5 text-[#384401]" />
         Modify Admin Attributes
       </h3>
       
-      <form onSubmit={handleProfileUpdateSubmit} className="max-w-xl space-y-5 font-jakarta text-stone-900">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <form onSubmit={handleProfileUpdateSubmit} className="max-w-3xl space-y-6 font-jakarta text-stone-900">
+        
+        {/* Profile Card */}
+        <div className="border border-[#d3c099] rounded-2xl p-6 bg-white shadow-2xs space-y-4">
+          <div className="flex items-center gap-2 pb-3 border-b border-[#eeddb9]/30">
+            <User className="w-5 h-5 text-[#C56C4F]" />
+            <h4 className="text-sm font-extrabold uppercase tracking-wider text-stone-850">Account Credentials</h4>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-stone-500 block mb-1.5">Admin User Name</label>
+              <input
+                type="text"
+                required
+                value={profName}
+                onChange={(e) => setProfName(e.target.value)}
+                className="w-full h-10 px-3.5 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-bold focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-stone-500 block mb-1.5">Admin Email Address</label>
+              <input
+                type="email"
+                required
+                value={profEmail}
+                onChange={(e) => setProfEmail(e.target.value)}
+                className="w-full h-10 px-3.5 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-bold focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 block mb-1.5">Admin User Name</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500 block mb-1.5">Admin Phone / Mobile</label>
             <input
-              type="text"
+              type="tel"
               required
-              value={profName}
-              onChange={(e) => setProfName(e.target.value)}
-              className="w-full h-11 px-4 border border-[#d3c099] rounded-xl text-stone-900 bg-white text-xs font-bold"
+              value={profPhone}
+              onChange={(e) => setProfPhone(e.target.value)}
+              className="w-full h-10 px-3.5 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-bold focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
             />
           </div>
+        </div>
+
+        {/* Security Credentials Card */}
+        <div className="border border-[#d3c099] rounded-2xl p-6 bg-white shadow-2xs space-y-4">
+          <div className="flex items-center gap-2 pb-3 border-b border-[#eeddb9]/30">
+            <Lock className="w-5 h-5 text-[#384401]" />
+            <h4 className="text-sm font-extrabold uppercase tracking-wider text-stone-850">Security Credentials</h4>
+          </div>
+
           <div>
-            <label className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 block mb-1.5">Admin Email Address</label>
-            <input
-              type="email"
-              required
-              value={profEmail}
-              onChange={(e) => setProfEmail(e.target.value)}
-              className="w-full h-11 px-4 border border-[#d3c099] rounded-xl text-stone-900 bg-white text-xs font-bold"
-            />
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500 block mb-1.5">New Account Password (Leave blank to keep current)</label>
+            <div className="relative">
+              <input
+                type={showProfPassword ? "text" : "password"}
+                placeholder="Enter new security password"
+                value={profPassword}
+                onChange={(e) => setProfPassword(e.target.value)}
+                className="w-full h-10 pl-3.5 pr-10 bg-white border border-[#d3c099] rounded-xl text-sm text-stone-900 font-bold focus:border-[#384401] focus:ring-1 focus:ring-[#384401] outline-none transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowProfPassword(!showProfPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-750 cursor-pointer"
+              >
+                {showProfPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 block mb-1.5">Admin Phone / Mobile</label>
-          <input
-            type="tel"
-            required
-            value={profPhone}
-            onChange={(e) => setProfPhone(e.target.value)}
-            className="w-full h-11 px-4 border border-[#d3c099] rounded-xl text-stone-900 bg-white text-xs font-bold"
-          />
-        </div>
-
-        <div>
-          <label className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 block mb-1">New Account Password (Leave blank to keep current)</label>
-          <div className="relative">
-            <input
-              type={showProfPassword ? "text" : "password"}
-              placeholder="Enter new security password"
-              value={profPassword}
-              onChange={(e) => setProfPassword(e.target.value)}
-              className="w-full h-11 pl-4 pr-10 border border-[#d3c099] rounded-xl text-stone-900 bg-white text-xs font-bold"
-            />
-            <button
-              type="button"
-              onClick={() => setShowProfPassword(!showProfPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-850 cursor-pointer"
-            >
-              {showProfPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-            </button>
-          </div>
-        </div>
-
-        <div className="pt-4 border-t border-stone-200">
-          <label className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 block mb-1">Security Passcode (1234)</label>
-          <div className="relative">
-            <input
-              type={showProfPasscode ? "text" : "password"}
-              required
-              maxLength={4}
-              placeholder="Enter 4-digit passcode to verify changes"
-              value={profPasscode}
-              onChange={(e) => setProfPasscode(e.target.value)}
-              className="w-full h-11 pl-4 pr-10 border border-amber-300 rounded-xl text-stone-900 bg-white text-xs font-black tracking-widest text-center"
-            />
-            <button
-              type="button"
-              onClick={() => setShowProfPasscode(!showProfPasscode)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-850 cursor-pointer"
-            >
-              {showProfPasscode ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-            </button>
+          <div className="pt-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-amber-700 block mb-1.5 flex items-center gap-1">
+              <ShieldAlert className="w-4 h-4 text-amber-600 animate-pulse" />
+              Security Passcode Verification (Enter 4-Digit Passcode)
+            </label>
+            <div className="relative max-w-xs">
+              <input
+                type={showProfPasscode ? "text" : "password"}
+                required
+                maxLength={4}
+                placeholder="Verify passcode"
+                value={profPasscode}
+                onChange={(e) => setProfPasscode(e.target.value)}
+                className="w-full h-10 pl-3.5 pr-10 bg-white border border-amber-300 rounded-xl text-sm text-stone-900 font-black tracking-widest text-center focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowProfPasscode(!showProfPasscode)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-750 cursor-pointer"
+              >
+                {showProfPasscode ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+              </button>
+            </div>
           </div>
         </div>
 
         <button
           type="submit"
           disabled={profileSaving}
-          className="h-11 px-6 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold rounded-xl transition-all cursor-pointer uppercase tracking-wider"
+          className="h-10 px-6 bg-[#384401] hover:bg-[#252d00] text-white text-xs font-bold rounded-xl transition-all cursor-pointer uppercase tracking-wider shadow-xs hover:shadow-sm"
         >
           {profileSaving ? 'Saving...' : 'Save Profile Changes'}
         </button>
@@ -146,3 +166,4 @@ export default function AdminProfileTab({
     </div>
   );
 }
+

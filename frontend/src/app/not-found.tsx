@@ -10,7 +10,7 @@ export default function NotFound() {
     <main className="relative w-full min-h-screen bg-[#fcf9f2] flex flex-col font-jakarta">
       <Navbar />
       
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-35 relative z-10 overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-32 relative z-10 overflow-hidden">
         {/* Background Decorative Elements */}
         <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#dce5c7] rounded-full blur-[100px] opacity-30 -z-10" />
         <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[#f8ebd0] rounded-full blur-[80px] opacity-40 -z-10" />

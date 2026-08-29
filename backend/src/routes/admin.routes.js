@@ -445,6 +445,150 @@ adminRouter.delete('/reviews/:reviewId', async (req, res, next) => {
   }
 });
 
+/**
+ * PUT /api/admin/settings/:key
+ * Update system/banner settings
+ */
+adminRouter.put('/settings/:key', async (req, res, next) => {
+  try {
+    const { key } = req.params;
+    const { value } = req.body;
+
+    const result = await query(
+      `INSERT INTO settings (key, value, updated_at)
+       VALUES ($1, $2, CURRENT_TIMESTAMP)
+       ON CONFLICT (key)
+       DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP
+       RETURNING key, value`,
+      [key, JSON.stringify(value)]
+    );
+
+    return res.status(200).json({
+      success: true,
+      setting: {
+        key: result.rows[0].key,
+        value: typeof result.rows[0].value === 'string' ? JSON.parse(result.rows[0].value) : result.rows[0].value
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/admin/deal-banners
+ * Get all deal of the day banners (history)
+ */
+adminRouter.get('/deal-banners', async (req, res, next) => {
+  try {
+    const result = await query(
+      'SELECT id, title, discount_text as "discountText", description, button_text as "buttonText", button_link as "buttonLink", image_url as "imageUrl", schedule_type as "scheduleType", start_date as "startDate", end_date as "endDate", days_of_week as "daysOfWeek", position, active, created_at FROM deal_of_the_day_banners ORDER BY id DESC'
+    );
+    return res.status(200).json({ success: true, banners: result.rows });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/admin/deal-banners
+ * Create a new deal of the day banner
+ */
+adminRouter.post('/deal-banners', async (req, res, next) => {
+  try {
+    const { title, discountText, description, buttonText, buttonLink, imageUrl, scheduleType, startDate, endDate, daysOfWeek, position, active } = req.body;
+    
+    if (!title) {
+      return res.status(400).json({ success: false, error: 'Banner Title is required.' });
+    }
+
+    const result = await query(
+      `INSERT INTO deal_of_the_day_banners (title, discount_text, description, button_text, button_link, image_url, schedule_type, start_date, end_date, days_of_week, position, active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       RETURNING id, title, discount_text as "discountText", description, button_text as "buttonText", button_link as "buttonLink", image_url as "imageUrl", schedule_type as "scheduleType", start_date as "startDate", end_date as "endDate", days_of_week as "daysOfWeek", position, active`,
+      [title, discountText || '', description || '', buttonText || 'Shop Now', buttonLink || '/products', imageUrl || '', scheduleType || 'always', startDate || '', endDate || '', JSON.stringify(daysOfWeek || [0,1,2,3,4,5,6]), position || 'center', active || false]
+    );
+
+    return res.status(201).json({ success: true, banner: result.rows[0] });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * PUT /api/admin/deal-banners/:id
+ * Update an existing deal of the day banner
+ */
+adminRouter.put('/deal-banners/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { title, discountText, description, buttonText, buttonLink, imageUrl, scheduleType, startDate, endDate, daysOfWeek, position, active } = req.body;
+    
+    if (!title) {
+      return res.status(400).json({ success: false, error: 'Banner Title is required.' });
+    }
+
+    const check = await query('SELECT * FROM deal_of_the_day_banners WHERE id = $1', [id]);
+    if (check.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Banner not found.' });
+    }
+
+    const result = await query(
+      `UPDATE deal_of_the_day_banners
+       SET title = $1, discount_text = $2, description = $3, button_text = $4, button_link = $5, image_url = $6, schedule_type = $7, start_date = $8, end_date = $9, days_of_week = $10, position = $11, active = $12
+       WHERE id = $13
+       RETURNING id, title, discount_text as "discountText", description, button_text as "buttonText", button_link as "buttonLink", image_url as "imageUrl", schedule_type as "scheduleType", start_date as "startDate", end_date as "endDate", days_of_week as "daysOfWeek", position, active`,
+      [title, discountText || '', description || '', buttonText || 'Shop Now', buttonLink || '/products', imageUrl || '', scheduleType || 'always', startDate || '', endDate || '', JSON.stringify(daysOfWeek || [0,1,2,3,4,5,6]), position || 'center', active || false, id]
+    );
+
+    return res.status(200).json({ success: true, banner: result.rows[0] });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * PUT /api/admin/deal-banners/:id/toggle
+ * Toggle active state of a banner
+ */
+adminRouter.put('/deal-banners/:id/toggle', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const check = await query('SELECT active FROM deal_of_the_day_banners WHERE id = $1', [id]);
+    if (check.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Banner not found.' });
+    }
+    const newActiveState = !check.rows[0].active;
+    
+    const result = await query(
+      'UPDATE deal_of_the_day_banners SET active = $1 WHERE id = $2 RETURNING id, active',
+      [newActiveState, id]
+    );
+    
+    return res.status(200).json({ success: true, banner: result.rows[0] });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * DELETE /api/admin/deal-banners/:id
+ * Delete a deal of the day banner
+ */
+adminRouter.delete('/deal-banners/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const check = await query('SELECT * FROM deal_of_the_day_banners WHERE id = $1', [id]);
+    if (check.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Banner not found.' });
+    }
+    await query('DELETE FROM deal_of_the_day_banners WHERE id = $1', [id]);
+    return res.status(200).json({ success: true, message: 'Banner deleted successfully from history.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 
 

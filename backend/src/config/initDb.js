@@ -182,6 +182,71 @@ export async function initDb() {
     await query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS remarks TEXT;');
     await query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS status_history JSONB DEFAULT '[]'::jsonb;");
     await query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS appeal_submitted BOOLEAN DEFAULT false;");
+    
+    // Create settings table and seed default settings
+    await query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key VARCHAR(100) PRIMARY KEY,
+        value JSONB NOT NULL,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await query(`
+      INSERT INTO settings (key, value)
+      VALUES ('deal_of_the_day', '{
+        "active": false,
+        "title": "Deal of the Day!",
+        "discountText": "15% OFF",
+        "description": "On all Organic Products",
+        "buttonText": "Shop Now",
+        "buttonLink": "/products",
+        "imageUrl": "",
+        "scheduleType": "always",
+        "startDate": "",
+        "endDate": "",
+        "daysOfWeek": [0,1,2,3,4,5,6]
+      }'::jsonb)
+      ON CONFLICT (key) DO NOTHING;
+    `);
+
+    // Create deal of the day banners history table
+    await query(`
+      CREATE TABLE IF NOT EXISTS deal_of_the_day_banners (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        discount_text VARCHAR(255),
+        description TEXT,
+        button_text VARCHAR(255) DEFAULT 'Shop Now',
+        button_link VARCHAR(255) DEFAULT '/products',
+        image_url VARCHAR(512),
+        schedule_type VARCHAR(50) DEFAULT 'always',
+        start_date VARCHAR(50),
+        end_date VARCHAR(50),
+        days_of_week JSONB DEFAULT '[0,1,2,3,4,5,6]'::jsonb,
+        position VARCHAR(50) DEFAULT 'center',
+        active BOOLEAN DEFAULT false,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Seed default deal of the day banner in history table if empty
+    const checkBanners = await query('SELECT COUNT(*) FROM deal_of_the_day_banners');
+    if (parseInt(checkBanners.rows[0].count) === 0) {
+      await query(`
+        INSERT INTO deal_of_the_day_banners (title, discount_text, description, button_text, button_link, image_url, schedule_type, position, active)
+        VALUES (
+          'Organic Millet Mix Special',
+          '20% OFF',
+          'Delicious traditional multigrain health mix for the entire family.',
+          'Order Now',
+          '/products/ragi-almond-health-mix',
+          '',
+          'always',
+          'center',
+          true
+        )
+      `);
+    }
     console.log('✅  Relational database tables initialized.');
 
     // Seed/Update categories

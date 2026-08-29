@@ -1301,6 +1301,7 @@ export default function AdminPage() {
                 handleAddBanner={handleAddBanner}
                 banners={banners}
                 setBanners={setBanners}
+                handleFileUpload={handleFileUpload}
               />
             )}
 

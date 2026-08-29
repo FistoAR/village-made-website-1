@@ -6,6 +6,7 @@ import { Menu, X, ShoppingCart, User as UserIcon, Bell, ShieldCheck, CheckCheck,
 import { useApp } from '@/lib/context/AppContext';
 import LanguageSelector from '@/components/Language/LanguageSelector';
 import gsap from 'gsap';
+import DealOfTheDayBanner from '@/components/DealOfTheDayBanner';
 
 interface NavbarProps {
   isHero?: boolean;
@@ -114,15 +115,16 @@ export default function Navbar({
   const isTransparent = isHero && !isScrolled && !isOpen;
 
   return (
-    <header
-      translate="no"
-      className={`notranslate fixed top-0 left-0 right-0 z-[150] flex items-center justify-between px-6 py-3 md:px-10 md:py-4 transition-all duration-300 ${isTransparent
-          ? 'bg-black/25 backdrop-blur-xs border-b border-white/5 text-white'
-          : 'bg-[#fcf9f2]/95 backdrop-blur-md border-b border-[#eeddb9]/50 shadow-md text-[#3d2b1f]'
-        }`}
-    >
-      {/* Left Side: Logo & Phase Indicator */}
-      <div className="flex items-center gap-3">
+    <>
+      <header
+        translate="no"
+        className={`notranslate fixed top-0 left-0 right-0 z-[150] flex items-center justify-between px-6 py-3 md:px-10 md:py-4 transition-all duration-300 ${isTransparent
+            ? 'bg-black/25 backdrop-blur-xs border-b border-white/5 text-white'
+            : 'bg-[#fcf9f2]/95 backdrop-blur-md border-b border-[#eeddb9]/50 shadow-md text-[#3d2b1f]'
+          }`}
+      >
+        {/* Left Side: Logo & Phase Indicator */}
+        <div className="flex items-center gap-3">
         {isHero ? (
           <a
             href="#"
@@ -485,5 +487,7 @@ export default function Navbar({
         </div>
       )}
     </header>
+    <DealOfTheDayBanner />
+    </>
   );
 }

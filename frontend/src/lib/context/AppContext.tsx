@@ -4,6 +4,8 @@ import { getDictionary } from '@/lib/translations';
 import Script from 'next/script';
 import { X, CheckCircle, AlertTriangle, AlertCircle, Info, Check } from 'lucide-react';
 import { io } from 'socket.io-client';
+import { PRODUCTS as INITIAL_PRODUCTS } from '@/data/products-list';
+import INITIAL_CATEGORIES from '@/data/categories.json';
 
 export interface CartItem {
   id: string;
@@ -192,8 +194,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
 
-  const [products, setProducts] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>(INITIAL_PRODUCTS || []);
+  const [categories, setCategories] = useState<any[]>(INITIAL_CATEGORIES || []);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
 
   useEffect(() => {
@@ -281,17 +283,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (data.success && Array.isArray(data.products) && data.products.length > 0) {
         setProducts(data.products);
       } else {
-        const localData = await import('@/data/products-list');
-        setProducts(localData.PRODUCTS);
+        setProducts(INITIAL_PRODUCTS);
       }
     } catch (err) {
       console.warn('⚠️ Failed to load products from API, falling back to local catalog:', err);
-      try {
-        const localData = await import('@/data/products-list');
-        setProducts(localData.PRODUCTS);
-      } catch (fallbackErr) {
-        console.error('❌ Failed to load local catalog fallback:', fallbackErr);
-      }
+      setProducts(INITIAL_PRODUCTS);
     }
   };
 
@@ -303,17 +299,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (data.success && Array.isArray(data.categories) && data.categories.length > 0) {
         setCategories(data.categories);
       } else {
-        const localCats = await import('@/data/categories.json');
-        setCategories(localCats.default || localCats);
+        setCategories(INITIAL_CATEGORIES);
       }
     } catch (err) {
       console.warn('⚠️ Failed to load categories from API, falling back to local configuration:', err);
-      try {
-        const localCats = await import('@/data/categories.json');
-        setCategories(localCats.default || localCats);
-      } catch (fallbackErr) {
-        console.error('❌ Failed to load local categories fallback:', fallbackErr);
-      }
+      setCategories(INITIAL_CATEGORIES);
     }
   };
 
@@ -427,6 +417,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Load cart and user sessions from localStorage on mount
   useEffect(() => {
+    setIsHydrated(true);
     const storedCart = localStorage.getItem('village_made_cart');
     if (storedCart) {
       try {
@@ -454,7 +445,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     fetchProducts();
     fetchCategories();
     fetchGalleryItems();
-    setIsHydrated(true);
   }, []);
 
   // Sync state language with Google Translate element in DOM and cookies

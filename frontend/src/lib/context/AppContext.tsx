@@ -71,6 +71,7 @@ export interface User {
   email?: string;
   phone?: string;
   role?: string;
+  is_guest?: boolean;
   addresses: UserAddress[];
   orders: UserOrder[];
   wishlist: string[];
@@ -120,6 +121,7 @@ interface AppContextType {
   user: User | null;
   registerUser: (mobile: string, password?: string, optionalData?: { name?: string; phone?: string; email?: string }) => Promise<{ success: boolean; user?: User; error?: string }>;
   loginUser: (mobile: string, password?: string) => Promise<{ success: boolean; user?: User; error?: string }>;
+  guestLoginUser: (mobile: string, name?: string) => Promise<{ success: boolean; user?: User; error?: string; isRegisteredUser?: boolean }>;
   resetPassword: (mobile: string, otp: string, newPassword?: string) => Promise<{ success: boolean; error?: string }>;
   logoutUser: () => void;
   updateUserProfile: (data: Partial<User>) => void;
@@ -670,6 +672,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       setUser(data.user);
+      return { success: true, user: data.user };
+    } catch (err) {
+      return { success: false, error: 'Network error connecting to auth server.' };
+    }
+  };
+
+  const guestLoginUser = async (mobile: string, name?: string) => {
+    const cleanMobile = mobile.trim();
+    if (!cleanMobile || cleanMobile.length < 10) {
+      return { success: false, error: 'Please enter a valid 10-digit mobile number.' };
+    }
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${baseUrl}/auth/guest-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          mobile: cleanMobile,
+          name: name ? name.trim() : undefined
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { 
+          success: false, 
+          isRegisteredUser: data.isRegisteredUser || false,
+          error: data.error || 'Guest login failed.' 
+        };
+      }
+
+      setUser({ ...data.user, is_guest: true });
       return { success: true, user: data.user };
     } catch (err) {
       return { success: false, error: 'Network error connecting to auth server.' };
@@ -1255,6 +1290,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         user,
         registerUser,
         loginUser,
+        guestLoginUser,
         resetPassword,
         logoutUser,
         updateUserProfile,

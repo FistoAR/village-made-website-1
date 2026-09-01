@@ -5,7 +5,7 @@ import { io } from 'socket.io-client';
 import { 
   BarChart3, Users, ShoppingBag, DollarSign, Package, 
   Check, AlertCircle, RefreshCw, ShieldCheck, Sparkles, FolderOpen,
-  Layers, Settings, MessageSquare
+  Layers, Settings, MessageSquare, Boxes
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -32,6 +32,7 @@ import AdminBannersTab from '@/components/admin/AdminBannersTab';
 import AdminMediaTab from '@/components/admin/AdminMediaTab';
 import AdminProfileTab from '@/components/admin/AdminProfileTab';
 import AdminReviewsTab from '@/components/admin/AdminReviewsTab';
+import AdminBulkInquiriesTab from '@/components/admin/AdminBulkInquiriesTab';
 
 export default function AdminPage() {
   const { loginUser, showConfirm, user, updateUserProfile, logoutUser, products, fetchProducts, categories, fetchCategories } = useApp();
@@ -1091,6 +1092,7 @@ export default function AdminPage() {
                 { id: 'customers', label: 'Customers', icon: Users },
                 { id: 'products', label: 'Products', icon: Package },
                 { id: 'orders', label: 'Orders', icon: ShoppingBag },
+                { id: 'bulk-inquiries', label: 'Bulk Orders', icon: Boxes },
                 { id: 'sales', label: 'Sales', icon: DollarSign },
                 { id: 'reviews', label: 'Reviews', icon: MessageSquare },
                 { id: 'banners', label: 'Banners', icon: Sparkles },
@@ -1273,6 +1275,10 @@ export default function AdminPage() {
                 orderSearch={orderSearch}
                 setOrderSearch={setOrderSearch}
               />
+            )}
+
+            {activeTab === 'bulk-inquiries' && (
+              <AdminBulkInquiriesTab />
             )}
 
             {activeTab === 'sales' && (

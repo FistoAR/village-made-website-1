@@ -8,13 +8,13 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useApp } from '@/lib/context/AppContext';
 
-type Tab = 'login' | 'register' | 'forgot';
+type Tab = 'login' | 'register' | 'forgot' | 'guest';
 
 export default function LoginPage() {
   const router = useRouter();
   const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('login');
-  const { user, loginUser, registerUser, resetPassword, isHydrated } = useApp();
+  const { user, loginUser, guestLoginUser, registerUser, resetPassword, isHydrated } = useApp();
   const [mounted, setMounted] = useState(false);
 
   // Form states
@@ -39,6 +39,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isRegisteredUserAlert, setIsRegisteredUserAlert] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -219,6 +220,31 @@ export default function LoginPage() {
     }
   };
 
+  const handleGuestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setIsRegisteredUserAlert(false);
+    setLoading(true);
+
+    try {
+      const res = await guestLoginUser(mobile, name);
+      setLoading(false);
+      if (res.success) {
+        setSuccess('Guest session verified! Fetching your orders...');
+        router.push(redirectTo);
+      } else {
+        if (res.isRegisteredUser) {
+          setIsRegisteredUserAlert(true);
+        }
+        setError(res.error || 'Guest login failed. Please check your mobile number.');
+      }
+    } catch (err) {
+      setLoading(false);
+      setError('An unexpected error occurred. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#3E2C1C] flex flex-col justify-between">
       <Navbar />
@@ -263,20 +289,23 @@ export default function LoginPage() {
               <h1 className="font-display text-3xl font-extrabold text-stone-900 tracking-tight mb-1">
                 {activeTab === 'login' && 'Sign In'}
                 {activeTab === 'register' && 'Register'}
+                {activeTab === 'guest' && 'Guest Order Tracking'}
                 {activeTab === 'forgot' && 'Account Recovery'}
               </h1>
               <p className="text-[#1a110a]/80 font-jakarta text-xs">
                 {activeTab === 'login' && 'Enter your registered credentials to continue.'}
                 {activeTab === 'register' && 'Enter details below to create your member profile.'}
+                {activeTab === 'guest' && 'Enter your mobile number to view and track your guest orders.'}
                 {activeTab === 'forgot' && 'Provide your mobile number to retrieve your credentials.'}
               </p>
             </div>
 
             {/* Clean sliding-line tab selector */}
-            <div className="flex gap-6 mb-8 pb-1 select-none font-jakarta text-xs font-bold uppercase tracking-wider">
+            <div className="flex flex-wrap gap-4 sm:gap-6 mb-8 pb-1 select-none font-jakarta text-xs font-bold uppercase tracking-wider">
               {[
                 { id: 'login', label: 'Login' },
                 { id: 'register', label: 'Register' },
+                { id: 'guest', label: 'Guest Track' },
                 { id: 'forgot', label: 'Forgot password' }
               ].map((t) => (
                 <button
@@ -299,9 +328,24 @@ export default function LoginPage() {
             {/* Alert Logs */}
             <div>
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs font-semibold mb-6 flex gap-2.5 items-center font-jakarta">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
-                  <span>{error}</span>
+                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs font-semibold mb-6 font-jakarta space-y-2">
+                  <div className="flex gap-2.5 items-center">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                    <span>{error}</span>
+                  </div>
+                  {isRegisteredUserAlert && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('login');
+                        setIsRegisteredUserAlert(false);
+                      }}
+                      className="text-xs font-extrabold text-[#384401] hover:underline cursor-pointer flex items-center gap-1.5 pt-1"
+                    >
+                      <ArrowRight className="w-3.5 h-3.5" />
+                      <span>Click here to Switch to Member Sign In & Enter Password</span>
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -523,11 +567,52 @@ export default function LoginPage() {
                     recoveryStep === 'mobile' ? 'Requesting...' : 'Resetting...'
                   ) : (
                     recoveryStep === 'mobile' ? (
-                      <>Request Recovery Code <HelpCircle className="w-4 h-4" /></>
+                      <>Send Verification OTP <ArrowRight className="w-4 h-4" /></>
                     ) : (
                       <>Update Password <ArrowRight className="w-4 h-4" /></>
                     )
                   )}
+                </button>
+              </form>
+            )}
+
+            {/* TAB: GUEST ORDER TRACKING */}
+            {activeTab === 'guest' && (
+              <form onSubmit={handleGuestSubmit} className="space-y-5">
+                <div>
+                  <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Mobile Number <span className="text-red-500">*</span></label>
+                  <input
+                    type="tel"
+                    required
+                    pattern="[0-9]{10}"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    placeholder="Enter 10-digit mobile number used during order"
+                    className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[#1a110a] text-xs font-bold block mb-2 font-jakarta">Your Name (Optional)</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter full name"
+                    className="w-full h-11 px-4 border border-[#eeddb9] rounded-xl text-stone-900 placeholder-stone-600 focus:outline-none focus:ring-1 focus:ring-[#384401] focus:border-[#384401] transition-all bg-white text-sm font-jakarta"
+                  />
+                </div>
+
+                <div className="p-3.5 bg-[#FAF4E6] rounded-xl border border-[#eeddb9]/60 text-xs text-stone-600 font-medium">
+                  💡 <strong>Guest Tracking:</strong> Allows you to view and track all orders placed with your mobile number without creating a password.
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-12 bg-[#384401] hover:bg-[#252d00] text-white font-bold rounded-xl transition-all shadow-xs cursor-pointer text-sm font-jakarta tracking-wide uppercase flex items-center justify-center gap-2"
+                >
+                  {loading ? 'Verifying Orders...' : <>Track Guest Orders <ArrowRight className="w-4 h-4" /></>}
                 </button>
               </form>
             )}

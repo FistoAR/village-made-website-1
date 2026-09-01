@@ -83,15 +83,41 @@ authRouter.post('/register', async (req, res, next) => {
   try {
     const checkUser = await query('SELECT * FROM users WHERE mobile = $1', [cleanMobile]);
     if (checkUser.rows.length > 0) {
-      return res.status(400).json({ success: false, error: 'Mobile number already registered.' });
+      const existing = checkUser.rows[0];
+      if (!existing.is_guest && existing.password) {
+        return res.status(400).json({ success: false, error: 'Mobile number already registered.' });
+      }
+
+      // Upgrade existing guest user account to a permanent account with password!
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password.trim(), salt);
+
+      await query(
+        `UPDATE users 
+         SET password = $1, 
+             name = COALESCE($2, name), 
+             email = COALESCE($3, email), 
+             phone = COALESCE($4, phone), 
+             is_guest = false 
+         WHERE id = $5`,
+        [hashedPassword, name || null, email || null, phone || cleanMobile, existing.id]
+      );
+
+      const updatedRes = await query('SELECT * FROM users WHERE id = $1', [existing.id]);
+      const userData = await fetchUserData(updatedRes.rows[0]);
+      return res.status(200).json({
+        success: true,
+        message: 'Guest account upgraded successfully!',
+        user: userData
+      });
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password.trim(), salt);
 
     const insertQuery = `
-      INSERT INTO users (mobile, password, name, email, phone, created_at)
-      VALUES ($1, $2, $3, $4, $5, NOW())
+      INSERT INTO users (mobile, password, name, email, phone, is_guest, created_at)
+      VALUES ($1, $2, $3, $4, $5, false, NOW())
       RETURNING id, mobile, name, email, phone, created_at
     `;
     const result = await query(insertQuery, [
@@ -157,6 +183,88 @@ authRouter.post('/login', async (req, res, next) => {
 
     const user = await fetchUserData(dbUser);
     return res.status(200).json({ success: true, user });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/auth/guest-login
+ * Allows guests to access & track their orders using Name + Mobile Number
+ */
+authRouter.post('/guest-login', async (req, res, next) => {
+  const { name, mobile } = req.body;
+
+  if (!mobile || mobile.trim().length < 10) {
+    return res.status(400).json({ success: false, error: 'Valid 10-digit mobile number is required.' });
+  }
+
+  const cleanMobile = mobile.trim();
+  const cleanName = (name || '').trim();
+
+  try {
+    const userRes = await query('SELECT * FROM users WHERE mobile = $1', [cleanMobile]);
+
+    if (userRes.rows.length > 0) {
+      const dbUser = userRes.rows[0];
+
+      // SECURITY RULE: Deny guest login if user has a password-protected registered account
+      if (!dbUser.is_guest && dbUser.password) {
+        return res.status(403).json({
+          success: false,
+          isRegisteredUser: true,
+          error: 'An account with password protection exists for this mobile number. Please log in using your password.'
+        });
+      }
+
+      // Update name if provided
+      if (cleanName && (!dbUser.name || dbUser.name !== cleanName)) {
+        await query('UPDATE users SET name = $1 WHERE id = $2', [cleanName, dbUser.id]);
+        dbUser.name = cleanName;
+      }
+
+      const userData = await fetchUserData(dbUser);
+      return res.status(200).json({
+        success: true,
+        message: 'Guest session active.',
+        user: { ...userData, is_guest: true }
+      });
+    } else {
+      // Check if there are orders placed with this mobile number
+      const ordersRes = await query(
+        `SELECT * FROM orders WHERE address->>'phone' = $1 OR address->>'mobile' = $1`,
+        [cleanMobile]
+      );
+
+      if (ordersRes.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'No orders found for this mobile number. Please check your mobile number or create an account.'
+        });
+      }
+
+      // Orders exist! Create guest user account and link orders
+      const insertGuest = await query(
+        `INSERT INTO users (mobile, name, is_guest, created_at)
+         VALUES ($1, $2, true, NOW())
+         RETURNING *`,
+        [cleanMobile, cleanName || 'Guest Customer']
+      );
+
+      const newGuest = insertGuest.rows[0];
+
+      await query(
+        `UPDATE orders SET user_id = $1 WHERE address->>'phone' = $2 OR address->>'mobile' = $2`,
+        [newGuest.id, cleanMobile]
+      );
+
+      const userData = await fetchUserData(newGuest);
+      return res.status(200).json({
+        success: true,
+        message: 'Guest session active.',
+        user: { ...userData, is_guest: true }
+      });
+    }
   } catch (error) {
     next(error);
   }

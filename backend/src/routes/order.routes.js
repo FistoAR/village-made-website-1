@@ -20,10 +20,22 @@ orderRouter.post('/', async (req, res, next) => {
   try {
     let userId = null;
 
-    if (mobile) {
-      const userRes = await query('SELECT id FROM users WHERE mobile = $1', [mobile]);
+    const phoneNum = (mobile || address?.phone || address?.mobile || '').trim();
+    if (phoneNum) {
+      const userRes = await query('SELECT id FROM users WHERE mobile = $1', [phoneNum]);
       if (userRes.rows.length > 0) {
         userId = userRes.rows[0].id;
+      } else {
+        // Auto-create a guest user account so the order is never orphaned
+        const name = address?.name || 'Guest Customer';
+        const email = address?.email || null;
+        const insertRes = await query(
+          `INSERT INTO users (mobile, name, email, phone, is_guest, created_at)
+           VALUES ($1, $2, $3, $4, true, NOW())
+           RETURNING id`,
+          [phoneNum, name, email, phoneNum]
+        );
+        userId = insertRes.rows[0].id;
       }
     }
 
@@ -177,10 +189,21 @@ orderRouter.post('/verify-payment', async (req, res, next) => {
     const { id, mobile, date, subtotal, shipping, tax, total, address, items } = orderData;
 
     let userId = null;
-    if (mobile) {
-      const userRes = await query('SELECT id FROM users WHERE mobile = $1', [mobile]);
+    const phoneNum = (mobile || address?.phone || address?.mobile || '').trim();
+    if (phoneNum) {
+      const userRes = await query('SELECT id FROM users WHERE mobile = $1', [phoneNum]);
       if (userRes.rows.length > 0) {
         userId = userRes.rows[0].id;
+      } else {
+        const name = address?.name || 'Guest Customer';
+        const email = address?.email || null;
+        const insertRes = await query(
+          `INSERT INTO users (mobile, name, email, phone, is_guest, created_at)
+           VALUES ($1, $2, $3, $4, true, NOW())
+           RETURNING id`,
+          [phoneNum, name, email, phoneNum]
+        );
+        userId = insertRes.rows[0].id;
       }
     }
 

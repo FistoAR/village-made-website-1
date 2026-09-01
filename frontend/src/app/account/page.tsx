@@ -514,11 +514,13 @@ export default function AccountPage() {
         <div className="bg-[#462617] rounded-[24px] p-6 md:p-8 text-white mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-md relative overflow-hidden">
           <div className="absolute inset-0 opacity-10 bg-cover" style={{ backgroundImage: "url('/images/product-section/bottom-paper-texture.webp')" }}></div>
           <div className="relative z-10">
-            <span className="text-[#D4E47A] text-xs font-bold uppercase tracking-widest block mb-1">MEMBER ACCOUNT</span>
+            <span className="text-[#D4E47A] text-xs font-bold uppercase tracking-widest block mb-1">
+              {user.is_guest ? 'GUEST TRACKING SESSION' : 'MEMBER ACCOUNT'}
+            </span>
             <h1 className="font-display text-2xl md:text-3xl font-bold">
-              Welcome, {user.name || 'Village Member'}!
+              Welcome, {user.name || (user.is_guest ? 'Guest Customer' : 'Village Member')}!
             </h1>
-            <p className="text-stone-200 text-xs mt-1 font-medium">Registered Mobile: {user.mobile}</p>
+            <p className="text-stone-200 text-xs mt-1 font-medium">Mobile: {user.mobile}</p>
           </div>
           <button
             onClick={handleLogout}
@@ -527,6 +529,29 @@ export default function AccountPage() {
             <LogOut className="w-4.5 h-4.5" /> Logout
           </button>
         </div>
+
+        {/* Guest Session Notice */}
+        {user.is_guest && (
+          <div className="bg-[#FAF4E6] border-2 border-[#eeddb9] rounded-2xl p-4 sm:p-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs font-medium text-[#3d2b1f] shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#384401]/10 text-[#384401] flex items-center justify-center shrink-0 font-extrabold text-base border border-[#384401]/20">
+                📌
+              </div>
+              <div>
+                <p className="font-extrabold text-[#384401] text-sm">Guest Session Active (Mobile: {user.mobile})</p>
+                <p className="text-[11px] text-stone-600 mt-0.5">
+                  You are tracking orders placed with this mobile number. Set an account password under <strong>Security</strong> to permanently convert this into a protected member account.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className="px-4 py-2.5 bg-[#384401] hover:bg-[#252d00] text-white rounded-xl font-bold uppercase tracking-wider text-[11px] transition-colors cursor-pointer shrink-0 shadow-xs"
+            >
+              Set Password
+            </button>
+          </div>
+        )}
 
         {/* Messaging Feedback Toasts */}
         {successMsg && (

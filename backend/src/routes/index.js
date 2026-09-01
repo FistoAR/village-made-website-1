@@ -7,6 +7,7 @@ import { orderRouter } from './order.routes.js';
 import { ticketRouter } from './ticket.routes.js';
 import { galleryRouter } from './gallery.routes.js';
 import { settingsRouter } from './settings.routes.js';
+import { bulkRouter } from './bulk.routes.js';
 
 export const router = Router();
 
@@ -19,3 +20,4 @@ router.use('/orders', orderRouter);
 router.use('/tickets', ticketRouter);
 router.use('/gallery', galleryRouter);
 router.use('/settings', settingsRouter);
+router.use('/bulk', bulkRouter);

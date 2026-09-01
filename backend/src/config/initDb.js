@@ -247,6 +247,76 @@ export async function initDb() {
         )
       `);
     }
+    // Create bulk inquiries table for B2B and event orders
+    await query(`
+      CREATE TABLE IF NOT EXISTS bulk_inquiries (
+        id VARCHAR(50) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        company_name VARCHAR(255),
+        email VARCHAR(255) NOT NULL,
+        phone VARCHAR(50) NOT NULL,
+        purpose VARCHAR(100) NOT NULL,
+        needed_by_date VARCHAR(50),
+        city VARCHAR(100),
+        pincode VARCHAR(20),
+        estimated_qty INT DEFAULT 1,
+        selected_products JSONB DEFAULT '[]'::jsonb,
+        customizations JSONB DEFAULT '{}'::jsonb,
+        notes TEXT,
+        quoted_price DECIMAL(10, 2) DEFAULT NULL,
+        admin_notes TEXT,
+        status VARCHAR(50) DEFAULT 'Pending',
+        is_sample_request BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Add is_guest column to users table if missing
+    await query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN DEFAULT false;
+    `);
+
+    // Auto-link any orphan orders (where user_id IS NULL) to guest user accounts
+    try {
+      const orphanOrders = await query(`
+        SELECT id, address, date 
+        FROM orders 
+        WHERE user_id IS NULL AND address IS NOT NULL
+      `);
+
+      for (const orderRow of orphanOrders.rows) {
+        let addr = orderRow.address;
+        if (typeof addr === 'string') {
+          try { addr = JSON.parse(addr); } catch (e) { addr = {}; }
+        }
+        const phone = (addr?.phone || addr?.mobile || '').trim();
+        const name = (addr?.name || 'Guest Customer').trim();
+        const email = (addr?.email || '').trim();
+
+        if (phone && phone.length >= 10) {
+          let gRes = await query('SELECT id FROM users WHERE mobile = $1', [phone]);
+          let guestId = null;
+          if (gRes.rows.length > 0) {
+            guestId = gRes.rows[0].id;
+          } else {
+            const newG = await query(
+              `INSERT INTO users (mobile, name, email, phone, is_guest, created_at)
+               VALUES ($1, $2, $3, $4, true, NOW())
+               RETURNING id`,
+              [phone, name, email || null, phone]
+            );
+            guestId = newG.rows[0].id;
+          }
+          if (guestId) {
+            await query('UPDATE orders SET user_id = $1 WHERE id = $2', [guestId, orderRow.id]);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Orphan order sync warning:', e.message);
+    }
+
     console.log('✅  Relational database tables initialized.');
 
     // Seed/Update categories

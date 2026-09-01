@@ -108,6 +108,7 @@ export default function Navbar({
   const navLinks = [
     { label: 'Home', href: isHero ? '#' : '/' },
     { label: 'Products', href: '/products', isExternal: true },
+    { label: 'Bulk Orders', href: '/bulk-orders', isExternal: true },
     { label: 'Contact', href: '/contact', isExternal: true },
   ];
 

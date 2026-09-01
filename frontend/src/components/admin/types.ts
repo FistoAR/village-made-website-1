@@ -48,6 +48,7 @@ export interface AdminCustomer {
   email: string;
   mobile: string;
   phone: string;
+  is_guest?: boolean;
   created_at: string;
 }
 

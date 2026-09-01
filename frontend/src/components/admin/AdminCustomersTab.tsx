@@ -515,7 +515,20 @@ export default function AdminCustomersTab({
                 paginatedCustomers.map((c, index) => (
                   <tr key={c.id} className="hover:bg-stone-50/40 font-medium">
                     <td className="p-3.5 pl-5 text-center font-bold text-stone-550 border border-[#d3c099]">{startIndex + index + 1}</td>
-                    <td className="p-3.5 text-stone-900 font-bold border border-[#d3c099]">{c.name || 'Anonymous Member'}</td>
+                    <td className="p-3.5 text-stone-900 font-bold border border-[#d3c099]">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span>{c.name || 'Anonymous Customer'}</span>
+                        {c.is_guest ? (
+                          <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase bg-amber-100 text-amber-900 rounded-md border border-amber-300 shrink-0">
+                            Guest
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase bg-[#384401]/10 text-[#384401] rounded-md border border-[#384401]/20 shrink-0">
+                            Member
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="p-3.5 font-bold text-[#384401] border border-[#d3c099]">{c.mobile || c.phone || 'N/A'}</td>
                     <td className="p-3.5 text-stone-600 border border-[#d3c099]">{c.email || 'No email attached'}</td>
                     <td className="p-3.5 text-center font-bold text-stone-850 border border-[#d3c099]">

@@ -20,6 +20,7 @@ const fetchUserData = async (dbUser) => {
     email: dbUser.email || '',
     phone: dbUser.phone || dbUser.mobile,
     role: dbUser.role || 'customer',
+    is_guest: Boolean(dbUser.is_guest || !dbUser.password),
     addresses: addressesRes.rows.map(a => ({
       id: a.id,
       name: a.name,

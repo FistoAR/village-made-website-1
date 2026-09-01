@@ -4,10 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 /**
- * Slim progress bar at the top of the page — appears immediately on
- * route change and completes when the new page renders.
- *
- * Works with Next.js App Router by watching pathname + searchParams.
+ * Premium Navigation Progress Bar
+ * - Triggers instantly on link click and route change
+ * - Automatically resets window scroll to top (0,0) so page navigation feels like a real multi-page website
  */
 export default function NavigationProgress() {
   const pathname = usePathname();
@@ -17,46 +16,54 @@ export default function NavigationProgress() {
   const [visible, setVisible] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const prevPathRef = useRef(pathname + searchParams.toString());
 
-  // Kick off progress bar whenever the route changes
+  // Trigger progress bar and scroll-to-top on route changes
   useEffect(() => {
-    const current = pathname + searchParams.toString();
+    // Scroll to top immediately on route change to make it feel like a real new page load
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
 
-    if (current === prevPathRef.current) return; // same page, no bar needed
-    prevPathRef.current = current;
+    // Show top loading indicator
+    setVisible(true);
+    setProgress(35);
 
-    // Clear any previous timers
     if (timerRef.current) clearInterval(timerRef.current);
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
 
-    // Instantly show at 20%
-    setProgress(20);
-    setVisible(true);
-
-    // Quickly advance to ~85% to show progress
     timerRef.current = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 85) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          return 85;
-        }
-        return prev + (85 - prev) * 0.08; // eased growth
-      });
-    }, 80);
+      setProgress((prev) => (prev >= 90 ? 90 : prev + 12));
+    }, 60);
 
-    // Immediately complete + fade out once the new page renders
-    // (this effect runs after the new pathname renders, so we can complete now)
-    setProgress(100);
-    if (timerRef.current) clearInterval(timerRef.current);
-
-    hideTimerRef.current = setTimeout(() => setVisible(false), 600);
+    const doneTimer = setTimeout(() => {
+      setProgress(100);
+      if (timerRef.current) clearInterval(timerRef.current);
+      hideTimerRef.current = setTimeout(() => setVisible(false), 250);
+    }, 120);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      clearTimeout(doneTimer);
     };
   }, [pathname, searchParams]);
+
+  // Intercept click on any internal link to start progress bar instantly before route transition
+  useEffect(() => {
+    const handleLinkClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest('a');
+      if (target && target.href && target.href.startsWith(window.location.origin)) {
+        const targetUrl = new URL(target.href);
+        if (targetUrl.pathname !== window.location.pathname) {
+          setVisible(true);
+          setProgress(25);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleLinkClick);
+    return () => document.removeEventListener('click', handleLinkClick);
+  }, []);
 
   if (!visible) return null;
 
@@ -68,8 +75,8 @@ export default function NavigationProgress() {
         top: 0,
         left: 0,
         right: 0,
-        zIndex: 9999,
-        height: '3px',
+        zIndex: 99999,
+        height: '3.5px',
         pointerEvents: 'none',
       }}
     >
@@ -77,13 +84,9 @@ export default function NavigationProgress() {
         style={{
           height: '100%',
           width: `${progress}%`,
-          background: 'linear-gradient(90deg, #384401, #6B8E23, #D4AF37)',
-          boxShadow: '0 0 8px rgba(107,142,35,0.7)',
-          transition: progress === 100
-            ? 'width 0.2s ease-out, opacity 0.4s ease 0.2s'
-            : 'width 0.08s linear',
-          opacity: progress === 100 ? 0 : 1,
-          borderRadius: '0 2px 2px 0',
+          background: 'linear-gradient(90deg, #384401 0%, #C56C4F 50%, #D4E47A 100%)',
+          transition: 'width 150ms ease-out, opacity 250ms ease-in-out',
+          boxShadow: '0 0 12px rgba(197, 108, 79, 0.9)',
         }}
       />
     </div>

@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
+  reactStrictMode: false, // Prevents double component rendering and double effect execution in dev mode
   images: {
     remotePatterns: [
       {
@@ -16,9 +17,9 @@ const nextConfig: NextConfig = {
   },
   // Faster server-side compilation
   experimental: {
-    optimizePackageImports: ['lucide-react', 'gsap'],
+    optimizePackageImports: ['lucide-react', 'gsap', 'jspdf', 'exceljs'],
   },
-  // Tell Turbopack the correct workspace root (silences the "multiple lockfiles" warning)
+  // Tell Turbopack the correct workspace root
   turbopack: {
     root: path.resolve(__dirname),
   },

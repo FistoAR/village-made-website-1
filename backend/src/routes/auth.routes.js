@@ -367,6 +367,7 @@ authRouter.put('/profile', async (req, res, next) => {
       const hashedPassword = await bcrypt.hash(req.body.password.trim(), salt);
       fieldsToUpdate.push(`password = $${paramIdx++}`);
       params.push(hashedPassword);
+      fieldsToUpdate.push(`is_guest = false`);
     }
 
     if (fieldsToUpdate.length > 0) {

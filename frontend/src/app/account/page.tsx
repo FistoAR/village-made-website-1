@@ -133,6 +133,13 @@ export default function AccountPage() {
     }
   }, [user, mounted, isHydrated, router]);
 
+  // Default guest sessions to My Orders tab
+  useEffect(() => {
+    if (user?.is_guest && activeTab !== 'orders' && activeTab !== 'profile') {
+      setActiveTab('orders');
+    }
+  }, [user]);
+
   const handleCancelOrder = (orderId: string) => {
     showConfirm(
       'Cancel Order?',
@@ -386,7 +393,8 @@ export default function AccountPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        triggerNotification('Password updated successfully!');
+        updateUserProfile({ is_guest: false });
+        triggerNotification('Password set successfully! Your account is now a full member account.');
         setNewPassword('');
         setConfirmPassword('');
       } else {
@@ -494,7 +502,10 @@ export default function AccountPage() {
     router.push('/');
   };
 
-  const menuItems = [
+  const menuItems = user?.is_guest ? [
+    { id: 'orders', label: 'My Orders & Tracking', icon: ShoppingBag },
+    { id: 'profile', label: 'Create Account & Password', icon: Shield },
+  ] : [
     { id: 'dashboard', label: 'Dashboard Overview', icon: Home },
     { id: 'profile', label: 'Profile & Security', icon: UserIcon },
     { id: 'addresses', label: 'Address Book', icon: MapPin },

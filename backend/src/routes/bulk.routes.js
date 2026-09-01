@@ -24,10 +24,10 @@ bulkRouter.post('/inquire', async (req, res, next) => {
     isSampleRequest
   } = req.body;
 
-  if (!name || !email || !phone || !purpose) {
+  if (!name || !phone || !purpose) {
     return res.status(400).json({
       success: false,
-      error: 'Name, email, phone number, and purpose are required.'
+      error: 'Name, phone number, and purpose are required.'
     });
   }
 
@@ -49,7 +49,7 @@ bulkRouter.post('/inquire', async (req, res, next) => {
         id,
         name,
         companyName || '',
-        email,
+        email || '',
         phone,
         purpose,
         neededByDate || '',

@@ -253,7 +253,7 @@ export async function initDb() {
         id VARCHAR(50) PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         company_name VARCHAR(255),
-        email VARCHAR(255) NOT NULL,
+        email VARCHAR(255),
         phone VARCHAR(50) NOT NULL,
         purpose VARCHAR(100) NOT NULL,
         needed_by_date VARCHAR(50),
@@ -270,6 +270,7 @@ export async function initDb() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE bulk_inquiries ALTER COLUMN email DROP NOT NULL;
     `);
 
     // Add is_guest column to users table if missing

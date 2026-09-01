@@ -23,6 +23,7 @@ export default function CertificationSection() {
             alt="Leaf Icon"
             width={64}
             height={58}
+            style={{ width: 'auto', height: 'auto' }}
             className="w-10 h-9 sm:w-14 sm:h-13 lg:w-16 lg:h-15 shrink-0 rotate-[-12deg]"
           />
           <h2 
@@ -44,6 +45,7 @@ export default function CertificationSection() {
                 src={cert.src}
                 alt={cert.name}
                 fill
+                sizes="(max-width: 768px) 25vw, 15vw"
                 className="object-contain"
               />
             </div>

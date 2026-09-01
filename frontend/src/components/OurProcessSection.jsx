@@ -102,6 +102,7 @@ export default function OurProcessSection() {
                   src={step.image}
                   alt={step.title}
                   fill
+                  sizes="(max-width: 1024px) 100vw, 30vw"
                   className="object-contain"
                 />
               </div>
@@ -266,7 +267,7 @@ export default function OurProcessSection() {
           className={`absolute left-[62%] top-[3%] w-[19%] aspect-[1.3] z-20 pointer-events-auto transition-all duration-500  ${activeStep === 0 ? 'scale-[1.08]' : 'scale-100 opacity-80'
             }`}
         >
-          <Image src="/images/process-section/organic-farming-1.webp" alt="" fill className="object-contain" />
+          <Image src="/images/process-section/organic-farming-1.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 30vw" className="object-contain" />
         </div>
 
         {/* Step 2: Hand Selection */}
@@ -288,7 +289,7 @@ export default function OurProcessSection() {
           className={`absolute left-[4%] top-[24%] w-[21%] aspect-[1.3] z-20 pointer-events-auto transition-all duration-500  ${activeStep === 1 ? 'scale-[1.08]' : 'scale-100 opacity-80'
             }`}
         >
-          <Image src="/images/process-section/hand-selection-2.webp" alt="" fill className="object-contain" />
+          <Image src="/images/process-section/hand-selection-2.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 30vw" className="object-contain" />
         </div>
 
         {/* Step 3: Traditional Strong Graining */}
@@ -310,7 +311,7 @@ export default function OurProcessSection() {
           className={`absolute left-[77%] top-[34%] w-[19%] aspect-[1.25] z-20 pointer-events-auto transition-all duration-500  ${activeStep === 2 ? 'scale-[1.08]' : 'scale-100 opacity-80'
             }`}
         >
-          <Image src="/images/process-section/traditional-strong-graining-3.webp" alt="" fill className="object-contain" />
+          <Image src="/images/process-section/traditional-strong-graining-3.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 30vw" className="object-contain" />
         </div>
 
         {/* Step 4: Homemade Preparation */}
@@ -332,7 +333,7 @@ export default function OurProcessSection() {
           className={`absolute left-[3%] top-[60%] w-[21%] aspect-[1.3] z-20 pointer-events-auto transition-all duration-500  ${activeStep === 3 ? 'scale-[1.08]' : 'scale-100 opacity-80'
             }`}
         >
-          <Image src="/images/process-section/home-made-preparation-4.webp" alt="" fill className="object-contain" />
+          <Image src="/images/process-section/home-made-preparation-4.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 30vw" className="object-contain" />
         </div>
 
         {/* Step 5: Hygienic Packing */}
@@ -354,7 +355,7 @@ export default function OurProcessSection() {
           className={`absolute left-[78%] top-[68%] w-[19%] aspect-[1.25] z-20 pointer-events-auto transition-all duration-500  ${activeStep === 4 ? 'scale-[1.08]' : 'scale-100 opacity-80'
             }`}
         >
-          <Image src="/images/process-section/hygienic-packing-5.webp" alt="" fill className="object-contain" />
+          <Image src="/images/process-section/hygienic-packing-5.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 30vw" className="object-contain" />
         </div>
 
         {/* Step 6: Delivered Fresh */}
@@ -376,7 +377,7 @@ export default function OurProcessSection() {
           className={`absolute left-[51%] top-[77%] w-[20%] aspect-[1.35] z-20 pointer-events-auto transition-all duration-500  ${activeStep === 5 ? 'scale-[1.08]' : 'scale-100 opacity-80'
             }`}
         >
-          <Image src="/images/process-section/delivered-fresh-6.webp" alt="" fill className="object-contain" />
+          <Image src="/images/process-section/delivered-fresh-6.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 30vw" className="object-contain" />
         </div>
       </div>
     </section>

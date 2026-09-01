@@ -37,6 +37,7 @@ export default function WhyChooseSection() {
           src="/images/why-choose/why-choose-product-image.webp"
           alt="Village Made Organics products showcase"
           fill
+          sizes="(max-width: 1280px) 100vw, 50vw"
           className="object-cover object-center xl:object-left"
           priority
         />
@@ -104,6 +105,7 @@ export default function WhyChooseSection() {
                     src={point.iconSrc}
                     alt={point.title}
                     fill
+                    sizes="(max-width: 768px) 64px, 80px"
                     className="object-contain"
                   />
                 </div>
@@ -140,6 +142,7 @@ export default function WhyChooseSection() {
           src="/images/why-choose/why-choose-right-image.webp"
           alt="decorative grain plant"
           fill
+          sizes="224px"
           className="object-contain object-bottom object-right"
         />
       </div>

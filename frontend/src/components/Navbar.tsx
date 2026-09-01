@@ -487,7 +487,7 @@ export default function Navbar({
         </div>
       )}
     </header>
-    <DealOfTheDayBanner />
+    <DealOfTheDayBanner isPreloading={isPreloading} />
     </>
   );
 }

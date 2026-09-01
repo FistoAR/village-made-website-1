@@ -21,8 +21,26 @@ interface DealBanner {
   active: boolean;
 }
 
-export default function DealOfTheDayBanner() {
+interface DealOfTheDayBannerProps {
+  isPreloading?: boolean;
+}
+
+export default function DealOfTheDayBanner({ isPreloading = false }: DealOfTheDayBannerProps) {
   const pathname = usePathname();
+
+  // Track if preloader is active on page
+  const [isPreloaderActive, setIsPreloaderActive] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    if (isPreloading) return true;
+    if (pathname === '/' && sessionStorage.getItem('hasExplored') !== 'true') return true;
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const active = isPreloading || (pathname === '/' && sessionStorage.getItem('hasExplored') !== 'true');
+    setIsPreloaderActive(active);
+  }, [isPreloading, pathname]);
   
   // States for active banners matching current path and schedule
   const [topBanner, setTopBanner] = useState<DealBanner | null>(null);
@@ -35,8 +53,12 @@ export default function DealOfTheDayBanner() {
   const [showTop, setShowTop] = useState(true);
 
   useEffect(() => {
-    // Only allow center and bottom-right popups on Homepage or Product Details Page
-    const isEligiblePage = pathname === '/' || (pathname.startsWith('/products/') && pathname !== '/products');
+    // Don't display or trigger popups while preloader is active
+    if (isPreloaderActive) return;
+
+    // Allow popups on all eligible pages including homepage after scrolling past hero
+    const isEligiblePage = true;
+    let cleanupScrollListener: (() => void) | null = null;
 
     const fetchActiveBanners = async () => {
       try {
@@ -56,22 +78,48 @@ export default function DealOfTheDayBanner() {
           setCenterBanner(center);
           setBottomRightBanner(bottomRight);
 
-          // Evaluate session-based visibility for popups
-          if (isEligiblePage) {
-            if (center) {
-              const shownCenter = sessionStorage.getItem(`deal_shown_center_${center.id}`) === 'true';
-              if (!shownCenter) {
-                setShowCenter(true);
-                sessionStorage.setItem(`deal_shown_center_${center.id}`, 'true');
+          // Evaluate session-based visibility for popups after 2-3 scrolls / past Hero section
+          if (isEligiblePage && (center || bottomRight)) {
+            const checkAndTrigger = () => {
+              if (center) {
+                const shownCenter = sessionStorage.getItem(`deal_shown_center_${center.id}`) === 'true';
+                if (!shownCenter) {
+                  setShowCenter(true);
+                  sessionStorage.setItem(`deal_shown_center_${center.id}`, 'true');
+                }
               }
-            }
-            if (bottomRight) {
-              const shownBR = sessionStorage.getItem(`deal_shown_br_${bottomRight.id}`) === 'true';
-              if (!shownBR) {
-                setShowBottomRight(true);
-                sessionStorage.setItem(`deal_shown_br_${bottomRight.id}`, 'true');
+              if (bottomRight) {
+                const shownBR = sessionStorage.getItem(`deal_shown_br_${bottomRight.id}`) === 'true';
+                if (!shownBR) {
+                  setShowBottomRight(true);
+                  sessionStorage.setItem(`deal_shown_br_${bottomRight.id}`, 'true');
+                }
               }
-            }
+            };
+
+            // Track distinct scroll gestures with a debounced timestamp gap
+            let gestureCount = 0;
+            let lastGestureTime = 0;
+
+            const handleScroll = () => {
+              const currentScrollY = window.scrollY;
+              const now = Date.now();
+
+              // Count a new distinct scroll gesture only if at least 350ms passed since last counted gesture
+              if (now - lastGestureTime > 350) {
+                gestureCount += 1;
+                lastGestureTime = now;
+              }
+
+              // Trigger ONLY after at least 3 distinct scroll gestures AND scrolled past 600px
+              if (gestureCount >= 3 && currentScrollY >= 600) {
+                checkAndTrigger();
+                window.removeEventListener('scroll', handleScroll);
+              }
+            };
+
+            window.addEventListener('scroll', handleScroll, { passive: true });
+            cleanupScrollListener = () => window.removeEventListener('scroll', handleScroll);
           }
         }
       } catch (err) {
@@ -80,7 +128,13 @@ export default function DealOfTheDayBanner() {
     };
 
     fetchActiveBanners();
-  }, [pathname]);
+
+    return () => {
+      if (cleanupScrollListener) {
+        cleanupScrollListener();
+      }
+    };
+  }, [pathname, isPreloaderActive]);
 
   const evaluateSchedule = (cfg: DealBanner): boolean => {
     if (!cfg.active) return false;
@@ -108,6 +162,8 @@ export default function DealOfTheDayBanner() {
   // Helper flags to check if popup is "Image-Only" (image exists but no promo texts are typed)
   const isCenterImageOnly = !!centerBanner?.imageUrl && !centerBanner.title && !centerBanner.discountText && !centerBanner.description;
   const isBottomRightImageOnly = !!bottomRightBanner?.imageUrl && !bottomRightBanner.title && !bottomRightBanner.discountText && !bottomRightBanner.description;
+
+  if (isPreloaderActive) return null;
 
   return (
     <>

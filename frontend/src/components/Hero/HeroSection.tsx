@@ -431,7 +431,7 @@ export default function HeroSection() {
         <div
           ref={preloaderRef}
           id="preloader-overlay"
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#fdfaf3] text-[#3e2c1c] overflow-hidden"
+          className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#fdfaf3] text-[#3e2c1c] overflow-hidden"
         >
           {/* Top-Left Leaf Watermark */}
           <div className="absolute top-0 left-0 w-28 sm:w-44 md:w-56 opacity-90 pointer-events-none mix-blend-multiply z-20 animate-sway-1">
